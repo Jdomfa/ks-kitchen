@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  /* K's Kitchen brand palette — from Brand Guidelines 2026 */
+  --color-coconut-cream: #e5d8c8;
+  --color-banana-leaf: #394133;
+  --color-clay-pot: #a85f3b;
+  --color-tamarind-bark: #4b3a2e;
+  --color-terracotta: #844631;
+  --color-roasted-coffee: #32261f;
+  --color-curry-leaf: #59614a;
+  --color-brushed-brass: #b28a54;
+
+  --background: var(--color-coconut-cream);
+  --foreground: var(--color-roasted-coffee);
+}
+
+@theme inline {
+  --color-coconut-cream: var(--color-coconut-cream);
+  --color-banana-leaf: var(--color-banana-leaf);
+  --color-clay-pot: var(--color-clay-pot);
+  --color-tamarind-bark: var(--color-tamarind-bark);
+  --color-terracotta: var(--color-terracotta);
+  --color-roasted-coffee: var(--color-roasted-coffee);
+  --color-curry-leaf: var(--color-curry-leaf);
+  --color-brushed-brass: var(--color-brushed-brass);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-display: var(--font-display);
+  --font-hand: var(--font-hand);
+  --font-sans: var(--font-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
