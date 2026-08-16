@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { PlayCircle } from 'lucide-react';
 import { menu } from '@/lib/menu-data';
 import { DietaryTags } from './DietaryIcons';
 import { BrandPattern } from './BrandPattern';
+import { VideoModal } from './VideoModal';
 
 const containerVariants = {
   hidden: {},
@@ -26,8 +28,12 @@ function formatNaira(amount: number) {
   return `NGN ${amount.toLocaleString('en-NG')}`;
 }
 
+const DOSA_VIDEO_SRC =
+  'https://player.cloudinary.com/embed/?cloud_name=ansp9yim&public_id=0_Masala_Dosa_Indian_Food_3840x2160';
+
 export function MenuSection() {
   const [activeTab, setActiveTab] = useState(menu[0].id);
+  const [videoOpen, setVideoOpen] = useState(false);
   const active = menu.find((t) => t.id === activeTab)!;
 
   return (
@@ -49,9 +55,9 @@ export function MenuSection() {
             Our Menu
           </h1>
           <p className="mt-3 font-hand text-2xl text-clay-pot">
-            K's Kitchen is a stage created - to showcase the goodness of
-            everything in the world & our love for Food, Tea, Kappi & Everything
-            LIFE.
+            K&apos;s Kitchen is a stage created - to showcase the goodness of
+            everything in the world &amp; our love for Food, Tea, Kappi &amp;
+            Everything LIFE.
           </p>
         </motion.div>
 
@@ -72,84 +78,121 @@ export function MenuSection() {
         </div>
       </div>
 
-      {/* Menu body — color-blocked against the brand's own pattern artwork */}
-      <div
-        className="relative overflow-hidden bg-banana-leaf bg-cover bg-center"
-        style={{
-          backgroundImage: "url('/brand/patterns/philosophy-pattern.svg')",
-        }}
-      >
+      {/* Menu body — single column, sequential categories, each closing
+          with a plain image band before the next category begins. */}
+      <div className="relative overflow-hidden bg-banana-leaf">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/brand/patterns/philosophy-pattern.svg')",
+          }}
+        />
         {/* Slight scrim so item text stays legible over the busier parts of the artwork */}
         <div className="absolute inset-0 bg-banana-leaf/55" />
-        <div className="relative mx-auto max-w-5xl px-6 py-16">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={active.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.28, ease: 'easeOut' }}
-              className="grid md:grid-cols-2 gap-x-16 gap-y-14"
-            >
-              {active.categories.map((cat, i) => (
-                <motion.div
-                  key={cat.id}
-                  variants={containerVariants}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, margin: '-60px' }}
-                  className={i % 2 === 0 ? '' : 'md:mt-0'}
-                >
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={active.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.28, ease: 'easeOut' }}
+            className="relative"
+          >
+            {active.categories.map((cat) => (
+              <div key={cat.id}>
+                {/* Category content */}
+                <div className="relative mx-auto max-w-2xl px-6 py-16">
                   <motion.div
-                    variants={itemVariants}
-                    className="text-center mb-2"
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: '-60px' }}
                   >
-                    <span className="inline-flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.25em] text-brushed-brass">
-                      <span className="h-px w-4 bg-brushed-brass/70 inline-block" />
-                      Menu
-                      <span className="h-px w-4 bg-brushed-brass/70 inline-block" />
-                    </span>
-                  </motion.div>
-                  <motion.h2
-                    variants={itemVariants}
-                    className="font-display text-3xl md:text-4xl uppercase tracking-wide text-coconut-cream text-center mb-2"
-                  >
-                    {cat.name}
-                  </motion.h2>
-                  {cat.description && (
-                    <motion.p
+                    <motion.div
                       variants={itemVariants}
-                      className="italic font-sans text-sm text-coconut-cream/60 text-center max-w-sm mx-auto mb-8"
+                      className="text-center mb-2"
                     >
-                      {cat.description}
-                    </motion.p>
-                  )}
-                  <div className="space-y-8">
-                    {cat.items.map((item) => (
-                      <motion.div
-                        key={item.id}
+                      <span className="inline-flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.25em] text-brushed-brass">
+                        <span className="h-px w-4 bg-brushed-brass/70 inline-block" />
+                        Menu
+                        <span className="h-px w-4 bg-brushed-brass/70 inline-block" />
+                      </span>
+                    </motion.div>
+                    <motion.h2
+                      variants={itemVariants}
+                      className="font-display text-3xl md:text-4xl uppercase tracking-wide text-coconut-cream text-center mb-2"
+                    >
+                      {cat.name}
+                    </motion.h2>
+                    {cat.description && (
+                      <motion.p
                         variants={itemVariants}
-                        className="text-center pb-8 border-b border-coconut-cream/15 last:border-0"
+                        className="italic font-sans text-sm text-coconut-cream/60 text-center max-w-sm mx-auto mb-4"
                       >
-                        <h3 className="font-display text-lg text-coconut-cream">
-                          {item.name}
-                        </h3>
-                        <p className="mt-1 font-sans text-sm text-coconut-cream/60 max-w-sm mx-auto">
-                          {item.description}
-                        </p>
-                        <span className="mt-2 inline-block font-sans text-md tracking-wide text-brushed-brass">
-                          {formatNaira(item.price)}
-                        </span>
-                        <DietaryTags tags={item.tags} />
+                        {cat.description}
+                      </motion.p>
+                    )}
+                    {cat.id === 'dosa-collective' && (
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex justify-center mb-8"
+                      >
+                        <button
+                          onClick={() => setVideoOpen(true)}
+                          className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-brushed-brass/60 text-brushed-brass font-sans text-sm tracking-wide hover:bg-brushed-brass hover:text-roasted-coffee transition-colors"
+                        >
+                          <PlayCircle className="h-4 w-4" strokeWidth={1.8} />
+                          What is a Dosa?
+                        </button>
                       </motion.div>
-                    ))}
+                    )}
+                    <div className="space-y-8 mt-8">
+                      {cat.items.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          variants={itemVariants}
+                          className="text-center pb-8 border-b border-coconut-cream/15 last:border-0"
+                        >
+                          <h3 className="font-display text-lg text-coconut-cream">
+                            {item.name}
+                          </h3>
+                          <p className="mt-1 font-sans text-sm text-coconut-cream/60 max-w-sm mx-auto">
+                            {item.description}
+                          </p>
+                          <span className="mt-2 inline-block font-sans text-md tracking-wide text-brushed-brass">
+                            {formatNaira(item.price)}
+                          </span>
+                          <DietaryTags tags={item.tags} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Plain image band closing the category — scrolls with
+                    the page like any normal image, no fixed-attachment
+                    parallax. */}
+                {cat.image && (
+                  <div
+                    className="relative h-64 md:h-96 w-full bg-cover bg-center"
+                    style={{ backgroundImage: `url(${cat.image})` }}
+                  >
+                    <div className="absolute inset-0 bg-roasted-coffee/35" />
                   </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+                )}
+              </div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </div>
+
+      <VideoModal
+        open={videoOpen}
+        onClose={() => setVideoOpen(false)}
+        src={DOSA_VIDEO_SRC}
+        title="What is a Dosa?"
+      />
     </section>
   );
 }

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { SteamBowl } from './LoadingScreen';
 
-const SPLASH_DURATION_MS = 3000;
+const SPLASH_DURATION_MS = 600;
+const SPLASH_VIDEO_URL =
+  'https://res.cloudinary.com/ansp9yim/video/upload/v1786913518/0_Dosa_Indian_Food_1280x720.mp4';
 
 /**
  * Guaranteed first-visit splash — shown for a fixed duration on the initial
@@ -37,23 +38,17 @@ export function SplashScreen() {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: 'easeInOut' }}
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-5 bg-coconut-cream"
+          className="fixed inset-0 z-[200] overflow-hidden bg-roasted-coffee"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          >
-            <SteamBowl className="h-28 w-28" />
-          </motion.div>
-          <motion.span
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
-            className="font-hand text-2xl text-clay-pot"
-          >
-            K&apos;s Kitchen
-          </motion.span>
+          <video
+            src={SPLASH_VIDEO_URL}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
         </motion.div>
       )}
     </AnimatePresence>
