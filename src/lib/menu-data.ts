@@ -48,6 +48,8 @@ export const menu: MenuTab[] = [
         id: "dosa-collective",
         name: "The Dosa Collective",
         description: "Dosa is a crisp savoury crepe from South India, made from naturally fermented rice and black lentils. A beloved staple enjoyed for breakfast, dinner or as street-side comfort food, now celebrated around the world.",
+        image:
+          "https://res.cloudinary.com/ansp9yim/image/upload/v1786954926/masala-dosa-is-south-indian-meal-served-with-sambhar-coconut-chutney-selective-focus_1.jpg_2.jpg",
         items: [
           {
             id: "dosa-classic",
