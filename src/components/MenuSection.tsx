@@ -141,7 +141,7 @@ export function MenuSection() {
                       >
                         <button
                           onClick={() => setVideoOpen(true)}
-                          className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-brushed-brass/60 text-brushed-brass font-sans text-sm tracking-wide hover:bg-brushed-brass hover:text-roasted-coffee transition-colors"
+                          className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-brushed-brass/60 text-brushed-brass font-sans text-sm tracking-wide hover:bg-brushed-brass hover:text-roasted-coffee transition-colors mb-8"
                         >
                           <PlayCircle className="h-4 w-4" strokeWidth={1.8} />
                           What is a Dosa?
