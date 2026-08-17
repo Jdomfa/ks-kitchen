@@ -156,13 +156,17 @@ export function MenuSection() {
                     item list begins. Scrolls normally, no fixed-attachment
                     parallax. */}
                 {cat.image && (
-                  <div className="py-10 md:py-14">
-                    <div
+                  <div className="py-10 md:py-14 overflow-hidden">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 1.08, y: 30 }}
+                      whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                      viewport={{ once: true, margin: '-100px' }}
+                      transition={{ duration: 0.9, ease: 'easeOut' }}
                       className="relative h-64 md:h-96 w-full bg-cover bg-center"
                       style={{ backgroundImage: `url(${cat.image})` }}
                     >
                       <div className="absolute inset-0 bg-roasted-coffee/35" />
-                    </div>
+                    </motion.div>
                   </div>
                 )}
 
