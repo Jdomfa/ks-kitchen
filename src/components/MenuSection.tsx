@@ -78,8 +78,9 @@ export function MenuSection() {
         </div>
       </div>
 
-      {/* Menu body — single column, sequential categories, each closing
-          with a plain image band before the next category begins. */}
+      {/* Menu body — single column, sequential categories. Each category's
+          image sits right after its heading/description (and the dosa
+          video button, where present), before the item list begins. */}
       <div className="relative overflow-hidden bg-banana-leaf">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -101,8 +102,8 @@ export function MenuSection() {
           >
             {active.categories.map((cat) => (
               <div key={cat.id}>
-                {/* Category content */}
-                <div className="relative mx-auto max-w-2xl px-6 py-16">
+                {/* Heading + description + (optional) dosa video button */}
+                <div className="relative mx-auto max-w-2xl px-6 pt-16">
                   <motion.div
                     variants={containerVariants}
                     initial="hidden"
@@ -136,7 +137,7 @@ export function MenuSection() {
                     {cat.id === 'dosa-collective' && (
                       <motion.div
                         variants={itemVariants}
-                        className="flex justify-center mb-8"
+                        className="flex justify-center"
                       >
                         <button
                           onClick={() => setVideoOpen(true)}
@@ -147,40 +148,53 @@ export function MenuSection() {
                         </button>
                       </motion.div>
                     )}
-                    <div className="space-y-8 mt-8">
-                      {cat.items.map((item) => (
-                        <motion.div
-                          key={item.id}
-                          variants={itemVariants}
-                          className="text-center pb-8 border-b border-coconut-cream/15 last:border-0"
-                        >
-                          <h3 className="font-display text-lg text-coconut-cream">
-                            {item.name}
-                          </h3>
-                          <p className="mt-1 font-sans text-sm text-coconut-cream/60 max-w-sm mx-auto">
-                            {item.description}
-                          </p>
-                          <span className="mt-2 inline-block font-sans text-md tracking-wide text-brushed-brass">
-                            {formatNaira(item.price)}
-                          </span>
-                          <DietaryTags tags={item.tags} />
-                        </motion.div>
-                      ))}
-                    </div>
                   </motion.div>
                 </div>
 
-                {/* Plain image band closing the category — scrolls with
-                    the page like any normal image, no fixed-attachment
+                {/* Image band — right after heading/description/button,
+                    with generous breathing room on both sides, before the
+                    item list begins. Scrolls normally, no fixed-attachment
                     parallax. */}
                 {cat.image && (
-                  <div
-                    className="relative h-64 md:h-96 w-full bg-cover bg-center"
-                    style={{ backgroundImage: `url(${cat.image})` }}
-                  >
-                    <div className="absolute inset-0 bg-roasted-coffee/35" />
+                  <div className="py-10 md:py-14">
+                    <div
+                      className="relative h-64 md:h-96 w-full bg-cover bg-center"
+                      style={{ backgroundImage: `url(${cat.image})` }}
+                    >
+                      <div className="absolute inset-0 bg-roasted-coffee/35" />
+                    </div>
                   </div>
                 )}
+
+                {/* Item list */}
+                <div className="relative mx-auto max-w-2xl px-6 pb-16">
+                  <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: '-60px' }}
+                    className="space-y-8"
+                  >
+                    {cat.items.map((item) => (
+                      <motion.div
+                        key={item.id}
+                        variants={itemVariants}
+                        className="text-center pb-8 border-b border-coconut-cream/15 last:border-0"
+                      >
+                        <h3 className="font-display text-lg text-coconut-cream">
+                          {item.name}
+                        </h3>
+                        <p className="mt-1 font-sans text-sm text-coconut-cream/60 max-w-sm mx-auto">
+                          {item.description}
+                        </p>
+                        <span className="mt-2 inline-block font-sans text-md tracking-wide text-brushed-brass">
+                          {formatNaira(item.price)}
+                        </span>
+                        <DietaryTags tags={item.tags} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
               </div>
             ))}
           </motion.div>

@@ -32,7 +32,7 @@ export const menu: MenuTab[] = [
         name: "Comfort Meets Tradition",
         description: '"Almost left out of our menu, this beloved dish never quite fit into our dosa or uthappam collection. But perhapsthat\'s exactly what makes it so special. Prepared the traditional way our ancestors would have approved of, it is soft, wholesome, nourishing, andwonderfully delicate—a timeless classic that deserves a place of its own" ',
         image:
-          "",
+          "https://res.cloudinary.com/ansp9yim/image/upload/v1786913007/menu-bg-2.jpg",
         items: [
           {
             id: "chatti-idli",
@@ -48,8 +48,6 @@ export const menu: MenuTab[] = [
         id: "dosa-collective",
         name: "The Dosa Collective",
         description: "Dosa is a crisp savoury crepe from South India, made from naturally fermented rice and black lentils. A beloved staple enjoyed for breakfast, dinner or as street-side comfort food, now celebrated around the world.",
-        image:
-          "https://res.cloudinary.com/ansp9yim/image/upload/v1786913007/menu-bg-2.jpg",
         items: [
           {
             id: "dosa-classic",
