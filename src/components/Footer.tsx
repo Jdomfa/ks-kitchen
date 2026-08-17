@@ -167,7 +167,7 @@ export function Footer() {
                 View Menu
               </Link>
               <Link
-                href="/#reservation"
+                href="/reservation"
                 className="px-6 py-2.5 rounded-full font-sans text-sm tracking-wide bg-clay-pot text-coconut-cream hover:bg-clay-pot/90 transition-colors"
               >
                 Reserve a Table

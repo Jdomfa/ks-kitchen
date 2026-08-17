@@ -245,7 +245,7 @@ export function ReservationSection() {
                         min={todayISO}
                         value={form.date}
                         onChange={(e) => update('date', e.target.value)}
-                        className={inputClass}
+                        className={`${inputClass} appearance-none [-webkit-appearance:none]`}
                       />
                     </Field>
                     <Field

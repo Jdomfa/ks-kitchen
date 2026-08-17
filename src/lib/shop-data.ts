@@ -7,6 +7,7 @@ export type Product = {
   size: string;
   price: number; // NGN — PLACEHOLDER, confirm real pricing before launch
   tags: DietTag[];
+  pairsWith?: string; // optional, for products that are meant to be paired with other items
 };
 
 // Sourced from the "Branding Mockups" pantry jar lineup in the Brand
