@@ -66,7 +66,8 @@ export const menu: MenuTab[] = [
               'Cultured cow ghee, naturally fermented rice and lentils, served with fresh chutneys and traditional sambar.',
             price: 15000,
             tags: ['veggie'],
-            image: '/menu-items/dosa-classic.jpg',
+            image:
+              'https://res.cloudinary.com/ansp9yim/image/upload/v1787002833/delicious-indian-dosa-composition.jpg',
             chefNote:
               'Our batter ferments for 18 hours — the tang you taste is time, not shortcuts.',
           },
@@ -77,7 +78,8 @@ export const menu: MenuTab[] = [
               "Smashed potatoes, masala, roasted spices and curry leaf on the chef's own fermented batter.",
             price: 15000,
             tags: ['veggie'],
-            image: '/menu-items/dosa-signature.jpg',
+            image:
+              'https://res.cloudinary.com/ansp9yim/image/upload/v1787002842/29492.jpg',
             chefNote:
               "The potato masala recipe hasn't changed since our very first pop-up.",
           },
