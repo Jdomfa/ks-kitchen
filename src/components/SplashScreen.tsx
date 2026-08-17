@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const SPLASH_DURATION_MS = 600;
+const SPLASH_DURATION_MS = 6000;
 const SPLASH_VIDEO_URL =
   'https://res.cloudinary.com/ansp9yim/video/upload/v1786913518/0_Dosa_Indian_Food_1280x720.mp4';
 
@@ -17,6 +17,7 @@ const SPLASH_VIDEO_URL =
  */
 export function SplashScreen() {
   const [visible, setVisible] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(false), SPLASH_DURATION_MS);
@@ -31,6 +32,18 @@ export function SplashScreen() {
     };
   }, [visible]);
 
+  // The `muted`/`autoPlay` JSX attributes alone aren't reliable enough —
+  // Safari in particular can ignore autoplay unless `muted` is also set as
+  // an imperative DOM property and `.play()` is called explicitly. Any
+  // rejection (e.g. a browser still blocking it) is swallowed since the
+  // dark background alone is a fine fallback if playback never starts.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.play().catch(() => {});
+  }, []);
+
   return (
     <AnimatePresence>
       {visible && (
@@ -38,16 +51,17 @@ export function SplashScreen() {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: 'easeInOut' }}
-          className="fixed inset-0 z-[200] overflow-hidden bg-roasted-coffee"
+          className="fixed inset-0 z-[200] overflow-hidden bg-white"
         >
           <video
+            ref={videoRef}
             src={SPLASH_VIDEO_URL}
             autoPlay
             muted
             loop
             playsInline
             preload="auto"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain"
           />
         </motion.div>
       )}

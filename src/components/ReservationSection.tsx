@@ -334,8 +334,8 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="flex items-center gap-1.5 font-sans text-xs uppercase tracking-wide text-roasted-coffee/60 mb-1.5">
+    <label className="block min-w-0">
+      <span className="w-full min-w-0 flex items-center gap-1.5 font-sans text-xs uppercase tracking-wide text-roasted-coffee/60 mb-1.5">
         {icon}
         {label}
       </span>
