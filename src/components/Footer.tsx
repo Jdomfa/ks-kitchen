@@ -153,7 +153,7 @@ export function Footer() {
           {/* Logo + CTAs */}
           <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8 pb-12 border-b border-coconut-cream/10">
             <Image
-              src="/brand/logo.png"
+              src="/brand/main_logo.svg"
               alt="K's Kitchen"
               width={120}
               height={92}

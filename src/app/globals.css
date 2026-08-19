@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   /* K's Kitchen brand palette — from Brand Guidelines 2026 */
@@ -30,6 +30,7 @@
 
   --font-display: var(--font-display);
   --font-hand: var(--font-hand);
+  --font-flourish: var(--font-flourish);
   --font-sans: var(--font-sans);
 }
 

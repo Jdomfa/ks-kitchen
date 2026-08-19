@@ -75,7 +75,7 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2 shrink-0">
           {/* Logo: clear space + no distortion, per brand guide */}
           <Image
-            src="/brand/logo.png"
+            src="/brand/main_logo.svg"
             alt="K's Kitchen"
             width={120}
             height={92}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { PlayCircle } from 'lucide-react';
+import { PlayCircle, ChevronRight } from 'lucide-react';
 import { menu, MenuItem } from '@/lib/menu-data-trial';
 import { DietaryTags } from './DietaryIcons';
 import { BrandPattern } from './BrandPattern';
@@ -180,7 +180,10 @@ export function MenuSectionTrial() {
                   </div>
                 )}
 
-                {/* Item list */}
+                {/* Item list — each row is tappable to open the item modal.
+                    The name reads as a link (brass color, dotted underline
+                    that solidifies on hover) with a small arrow, since
+                    hover alone won't signal "clickable" on touch devices. */}
                 <div className="relative mx-auto max-w-2xl px-6 pb-16">
                   <motion.div
                     variants={containerVariants}
@@ -197,15 +200,20 @@ export function MenuSectionTrial() {
                         onClick={() =>
                           setSelectedItem({ item, categoryImage: cat.image })
                         }
-                        className="text-center pb-8 border-b border-coconut-cream/15 last:border-0 cursor-pointer transition-opacity hover:opacity-80"
+                        whileTap={{ scale: 0.98 }}
+                        className="group text-center pb-8 border-b border-coconut-cream/15 last:border-0 cursor-pointer rounded-lg transition-colors hover:bg-coconut-cream/5 -mx-3 px-3 py-1"
                       >
-                        <h3 className="font-display text-lg text-coconut-cream">
+                        <h3 className="inline-flex items-center gap-1 font-display text-lg text-brushed-brass underline decoration-brushed-brass/35 decoration-dotted underline-offset-4 group-hover:decoration-solid transition-colors">
                           {item.name}
+                          <ChevronRight
+                            className="h-4 w-4 opacity-60 group-hover:translate-x-0.5 transition-transform"
+                            strokeWidth={1.8}
+                          />
                         </h3>
                         <p className="mt-1 font-sans text-sm text-coconut-cream/60 max-w-sm mx-auto">
                           {item.description}
                         </p>
-                        <span className="mt-2 inline-block font-sans text-md tracking-wide text-brushed-brass">
+                        <span className="mt-2 inline-block font-sans text-md tracking-wide text-coconut-cream/80">
                           {formatNaira(item.price)}
                         </span>
                         <DietaryTags tags={item.tags} />
