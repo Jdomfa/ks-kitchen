@@ -7,7 +7,6 @@ import { menu, MenuItem } from '@/lib/menu-data';
 import { DietaryTags } from './DietaryIcons';
 import { BrandPattern } from './BrandPattern';
 import { VideoModal } from './VideoModal';
-import { ItemModal } from './ItemModal';
 
 const containerVariants = {
   hidden: {},
@@ -227,12 +226,6 @@ export function MenuSection() {
         onClose={() => setVideoOpen(false)}
         src={DOSA_VIDEO_SRC}
         title="What is a Dosa?"
-      />
-
-      <ItemModal
-        item={selectedItem?.item ?? null}
-        categoryImage={selectedItem?.categoryImage}
-        onClose={() => setSelectedItem(null)}
       />
     </section>
   );
