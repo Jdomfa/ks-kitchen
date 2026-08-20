@@ -4,6 +4,7 @@ import { display, hand, flourish } from './fonts';
 import './globals.css';
 import { CartProvider } from '@/lib/cart-context';
 import { SplashScreen } from '@/components/SplashScreen';
+import { Header } from '@/components/Header';
 
 // NOTE ON FONTS: the brand guide specifies AndyHand (hand-drawn),
 // Studio MN (display), and Open Sans (sans serif). Two accent scripts
@@ -34,7 +35,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     >
       <body className="min-h-full flex flex-col bg-coconut-cream text-roasted-coffee">
         <SplashScreen />
-        <CartProvider>{children}</CartProvider>
+        <CartProvider>
+          <Header />
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

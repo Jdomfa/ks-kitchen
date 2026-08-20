@@ -1,74 +1,91 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import type { Product } from '@/lib/shop-data';
-import { DietaryTags } from './DietaryIcons';
-import { useCart } from '@/lib/cart-context';
 import { useState } from 'react';
-import { Check } from 'lucide-react';
-
-function formatNaira(amount: number) {
-  return `NGN ${amount.toLocaleString('en-NG')}`;
-}
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ShoppingBag, Check } from 'lucide-react';
+import { categories, type Product } from '@/lib/store-data';
+import { useCart } from '@/lib/cart-context';
+import { formatNaira } from '@/lib/format';
 
 export function ProductCard({ product }: { product: Product }) {
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
   const [justAdded, setJustAdded] = useState(false);
+  const categoryLabel = categories.find(
+    (c) => c.id === product.category,
+  )?.label;
 
-  const handleAdd = () => {
-    addItem({
-      id: product.id,
-      name: `${product.name} (${product.size})`,
-      price: product.price,
-    });
+  function handleAdd(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product, 1);
     setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 1200);
-  };
+    window.setTimeout(() => setJustAdded(false), 1600);
+  }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      whileHover={{ y: -4 }}
-      className="group flex flex-col rounded-2xl border border-roasted-coffee/10 bg-white/40 p-6 text-center transition-shadow hover:shadow-lg hover:shadow-roasted-coffee/5"
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="group rounded-xl bg-coconut-cream p-3 shadow-[0_6px_20px_-8px_rgba(50,38,31,0.25)]"
     >
-      <motion.div
-        whileHover={{ rotate: -4, scale: 1.05 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 12 }}
-        className="mx-auto mb-4 flex h-28 w-28 items-center justify-center rounded-full bg-curry-leaf/10"
-      >
-        <span className="font-hand text-2xl text-curry-leaf">K&apos;s</span>
-      </motion.div>
-      <h3 className="font-display text-lg text-roasted-coffee">
-        {product.name}
-      </h3>
-      <p className="mt-1 text-xs uppercase tracking-wide text-brushed-brass">
-        {product.size}
-      </p>
-      <p className="mt-2 font-sans text-sm text-roasted-coffee/70 flex-1">
-        {product.description}
-      </p>
-      {product.pairsWith && (
-        <p className="mt-2 font-sans italic text-xs text-clay-pot/80">
-          {product.pairsWith}
-        </p>
-      )}
-      <DietaryTags tags={product.tags} />
-      <p className="mt-3 font-sans text-sm text-roasted-coffee">
-        {formatNaira(product.price)}
-      </p>
+      <Link href={`/store/${product.slug}`} className="block">
+        <div className="relative aspect-square overflow-hidden rounded-lg bg-coconut-cream/80">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+            {product.isNew && (
+              <span className="rounded-full bg-clay-pot px-2.5 py-1 font-sans text-[10px] uppercase tracking-widest text-coconut-cream">
+                New
+              </span>
+            )}
+            {product.compareAtPrice && (
+              <span className="rounded-full bg-roasted-coffee px-2.5 py-1 font-sans text-[10px] uppercase tracking-widest text-coconut-cream">
+                Sale
+              </span>
+            )}
+            {!product.inStock && (
+              <span className="rounded-full bg-roasted-coffee/70 px-2.5 py-1 font-sans text-[10px] uppercase tracking-widest text-coconut-cream">
+                Sold Out
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-3 text-center">
+          <p className="font-sans text-[11px] uppercase tracking-[0.2em] text-brushed-brass/70">
+            {categoryLabel}
+          </p>
+          <h3 className="mt-1 inline-flex items-center gap-1 font-display text-lg text-roasted-coffee underline decoration-brushed-brass/0 decoration-dotted underline-offset-4 group-hover:decoration-brushed-brass/60 transition-colors">
+            {product.name}
+          </h3>
+          <div className="mt-1 flex items-center justify-center gap-2">
+            <span className="font-sans text-sm text-clay-pot">
+              {formatNaira(product.price)}
+            </span>
+          </div>
+        </div>
+      </Link>
+
       <button
         onClick={handleAdd}
-        className="mt-4 flex items-center justify-center gap-2 rounded-full bg-clay-pot px-6 py-2.5 font-sans text-sm text-coconut-cream transition-transform hover:scale-[1.02] active:scale-[0.98]"
+        disabled={!product.inStock}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-roasted-coffee/15 py-2 font-sans text-xs uppercase tracking-wide text-roasted-coffee transition-colors hover:border-clay-pot hover:text-clay-pot disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-roasted-coffee/15 disabled:hover:text-roasted-coffee"
       >
         {justAdded ? (
           <>
-            <Check className="h-4 w-4" /> Added
+            <Check className="h-3.5 w-3.5" strokeWidth={2} /> Added
           </>
         ) : (
-          'Add to cart'
+          <>
+            <ShoppingBag className="h-3.5 w-3.5" strokeWidth={1.8} />
+            {product.inStock ? 'Add to cart' : 'Sold out'}
+          </>
         )}
       </button>
     </motion.div>
