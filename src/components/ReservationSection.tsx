@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CalendarDays, Clock, Users, Check } from 'lucide-react';
 import { BrandPattern } from './BrandPattern';
 import { siteConfig } from '@/lib/site-config';
+import { createClient } from '@/lib/supabase/client';
 
 const PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -13,20 +14,56 @@ function buildSlots(open: string, close: string) {
   const parse = (t: string) => {
     const [time, mer] = t.split(' ');
     const [h, m] = time.split(':').map(Number);
+
     let hour = h % 12;
+
     if (mer === 'PM') hour += 12;
+
     return hour * 60 + m;
   };
+
   const fmt = (mins: number) => {
     const h24 = Math.floor(mins / 60);
     const m = mins % 60;
     const mer = h24 >= 12 ? 'PM' : 'AM';
     const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+
     return `${h12}:${m.toString().padStart(2, '0')} ${mer}`;
   };
+
   const slots: string[] = [];
-  for (let t = parse(open); t <= parse(close) - 30; t += 30) slots.push(fmt(t));
+
+  for (let t = parse(open); t <= parse(close) - 30; t += 30) {
+    slots.push(fmt(t));
+  }
+
   return slots;
+}
+
+/**
+ * Converts the display format used by the form:
+ *
+ * 7:00 PM
+ *
+ * into the PostgreSQL time format expected by Supabase:
+ *
+ * 19:00:00
+ */
+function convertTimeTo24Hour(time: string) {
+  const [timePart, meridiem] = time.split(' ');
+  let [hours, minutes] = timePart.split(':').map(Number);
+
+  if (meridiem === 'PM' && hours !== 12) {
+    hours += 12;
+  }
+
+  if (meridiem === 'AM' && hours === 12) {
+    hours = 0;
+  }
+
+  return `${hours.toString().padStart(2, '0')}:${minutes
+    .toString()
+    .padStart(2, '0')}:00`;
 }
 
 // Slightly earlier last seating than closing time, reused for every day.
@@ -54,62 +91,120 @@ const initialForm: FormState = {
 
 export function ReservationSection() {
   const [form, setForm] = useState<FormState>(initialForm);
+
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>(
     'idle',
   );
+
   const [error, setError] = useState<string | null>(null);
 
   const todayISO = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((f) => ({ ...f, [key]: value }));
+    setForm((f) => ({
+      ...f,
+      [key]: value,
+    }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     setError(null);
 
-    if (!form.name || !form.email || !form.phone || !form.date || !form.time) {
+    // Basic frontend validation
+    if (
+      !form.name.trim() ||
+      !form.email.trim() ||
+      !form.phone.trim() ||
+      !form.date ||
+      !form.time
+    ) {
       setError('Please fill in every field so we can confirm your table.');
       return;
     }
 
     setStatus('submitting');
-    // PLACEHOLDER — wire this up to a real reservations endpoint/email/CRM.
-    await new Promise((res) => setTimeout(res, 900));
-    setStatus('success');
+
+    try {
+      const supabase = createClient();
+
+      const { error: insertError } = await supabase
+        .from('reservations')
+        .insert({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          party_size: form.guests,
+          reservation_date: form.date,
+          reservation_time: convertTimeTo24Hour(form.time),
+          note: form.notes.trim() || null,
+          status: 'pending',
+        });
+
+      if (insertError) {
+        console.error('Supabase reservation error:', insertError);
+
+        throw new Error('Unable to submit reservation.');
+      }
+
+      setStatus('success');
+    } catch (err) {
+      console.error('Reservation submission failed:', err);
+
+      setError(
+        'We couldn’t submit your reservation. Please try again or call us directly.',
+      );
+
+      setStatus('idle');
+    }
   }
 
   return (
     <section className="relative overflow-hidden">
-      {/* Hero — cream, matches Menu/Store hero treatment */}
+      {/* HERO */}
       <div className="relative mx-auto max-w-5xl px-6 pt-20 pb-14">
         <BrandPattern
           className="text-clay-pot/[0.06]"
           position="bottom-right"
         />
+
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+            margin: '-80px',
+          }}
+          transition={{
+            duration: 0.6,
+            ease: 'easeOut',
+          }}
           className="relative text-center"
         >
-          <p className="flex items-center justify-center gap-2 font-sans text-xs uppercase tracking-[0.25em] text-brushed-brass mb-3">
-            <span className="h-px w-5 bg-brushed-brass/70 inline-block" />
+          <p className="mb-3 flex items-center justify-center gap-2 font-sans text-xs uppercase tracking-[0.25em] text-brushed-brass">
+            <span className="inline-block h-px w-5 bg-brushed-brass/70" />
             Book ahead
-            <span className="h-px w-5 bg-brushed-brass/70 inline-block" />
+            <span className="inline-block h-px w-5 bg-brushed-brass/70" />
           </p>
-          <h1 className="font-display text-4xl md:text-5xl text-roasted-coffee">
+
+          <h1 className="font-display text-4xl text-roasted-coffee md:text-5xl">
             Reserve a Table
           </h1>
+
           <p className="mt-3 font-hand text-2xl text-clay-pot">
             Come hungry, leave full of stories
           </p>
         </motion.div>
       </div>
 
-      {/* Form panel — dark color-blocked ground, same family as the menu section */}
+      {/* FORM PANEL */}
       <div className="relative overflow-hidden bg-banana-leaf">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -117,33 +212,37 @@ export function ReservationSection() {
             backgroundImage: "url('/brand/patterns/philosophy-pattern.svg')",
           }}
         />
+
         <div className="absolute inset-0 bg-banana-leaf/55" />
 
-        <div className="relative mx-auto max-w-5xl px-6 py-16 grid md:grid-cols-[1fr_1.4fr] gap-12">
-          {/* Left: quick info, mirrors the footer's info columns */}
+        <div className="relative mx-auto grid max-w-5xl gap-12 px-6 py-16 md:grid-cols-[1fr_1.4fr]">
+          {/* LEFT: QUICK INFO */}
           <div className="font-sans text-sm text-coconut-cream/70">
-            <h2 className="font-display text-xl text-coconut-cream mb-4">
+            <h2 className="mb-4 font-display text-xl text-coconut-cream">
               Good to know
             </h2>
+
             <ul className="space-y-3">
               {siteConfig.hours.map((h) => (
                 <li key={h.days} className="flex items-center gap-2">
                   <Clock
-                    className="h-4 w-4 text-brushed-brass shrink-0"
+                    className="h-4 w-4 shrink-0 text-brushed-brass"
                     strokeWidth={1.8}
                   />
                   {h.days}: {h.time}
                 </li>
               ))}
+
               <li className="flex items-center gap-2">
                 <Users
-                  className="h-4 w-4 text-brushed-brass shrink-0"
+                  className="h-4 w-4 shrink-0 text-brushed-brass"
                   strokeWidth={1.8}
                 />
                 Parties of 9+ — call us directly at{' '}
                 {siteConfig.reservationPhone}
               </li>
             </ul>
+
             <p className="mt-6 italic text-coconut-cream/60">
               We hold tables for 15 minutes past the reserved time. Running
               late? A quick call to {siteConfig.reservationPhone} keeps your
@@ -151,54 +250,81 @@ export function ReservationSection() {
             </p>
           </div>
 
-          {/* Right: the form itself */}
-          <div className="relative bg-coconut-cream rounded-lg shadow-xl p-6 md:p-8">
+          {/* FORM */}
+          <div className="relative rounded-lg bg-coconut-cream p-6 shadow-xl md:p-8">
             <AnimatePresence mode="wait">
+              {/* SUCCESS */}
               {status === 'success' ? (
                 <motion.div
                   key="success"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
-                  className="flex flex-col items-center text-center py-10"
+                  initial={{
+                    opacity: 0,
+                    y: 8,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                  }}
+                  transition={{
+                    duration: 0.4,
+                    ease: 'easeOut',
+                  }}
+                  className="flex flex-col items-center py-10 text-center"
                 >
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-curry-leaf/15 mb-4">
+                  <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-curry-leaf/15">
                     <Check
                       className="h-7 w-7 text-curry-leaf"
                       strokeWidth={2.2}
                     />
                   </span>
-                  <h3 className="font-display text-2xl text-roasted-coffee mb-2">
+
+                  <h3 className="mb-2 font-display text-2xl text-roasted-coffee">
                     Table requested
                   </h3>
-                  <p className="font-sans text-sm text-roasted-coffee/70 max-w-xs">
+
+                  <p className="max-w-xs font-sans text-sm text-roasted-coffee/70">
                     We&apos;ll confirm by email at{' '}
-                    <span className="text-clay-pot">{form.email}</span> shortly.
+                    <span className="text-clay-pot">{form.email}</span> shortly.{' '}
                     See you {form.date && `on ${form.date}`}
                     {form.time && ` at ${form.time}`}.
                   </p>
+
                   <button
+                    type="button"
                     onClick={() => {
                       setForm(initialForm);
                       setStatus('idle');
+                      setError(null);
                     }}
-                    className="mt-6 px-6 py-2.5 rounded-full font-sans text-sm border border-roasted-coffee/20 text-roasted-coffee hover:border-clay-pot transition-colors"
+                    className="mt-6 rounded-full border border-roasted-coffee/20 px-6 py-2.5 font-sans text-sm text-roasted-coffee transition-colors hover:border-clay-pot"
                   >
                     Make another reservation
                   </button>
                 </motion.div>
               ) : (
+                /* FORM */
                 <motion.form
                   key="form"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{
+                    opacity: 0,
+                  }}
+                  animate={{
+                    opacity: 1,
+                  }}
+                  exit={{
+                    opacity: 0,
+                  }}
+                  transition={{
+                    duration: 0.3,
+                  }}
                   onSubmit={handleSubmit}
                   className="space-y-5"
                 >
-                  <div className="grid sm:grid-cols-2 gap-5">
+                  {/* NAME + PHONE */}
+                  <div className="grid gap-5 sm:grid-cols-2">
                     <Field label="Full name">
                       <input
                         type="text"
@@ -209,6 +335,7 @@ export function ReservationSection() {
                         className={inputClass}
                       />
                     </Field>
+
                     <Field label="Phone">
                       <input
                         type="tel"
@@ -221,6 +348,7 @@ export function ReservationSection() {
                     </Field>
                   </div>
 
+                  {/* EMAIL */}
                   <Field label="Email">
                     <input
                       type="email"
@@ -232,7 +360,8 @@ export function ReservationSection() {
                     />
                   </Field>
 
-                  <div className="grid sm:grid-cols-3 gap-5">
+                  {/* DATE / TIME / GUESTS */}
+                  <div className="grid gap-5 sm:grid-cols-3">
                     <Field
                       label="Date"
                       icon={
@@ -248,6 +377,7 @@ export function ReservationSection() {
                         className={`${inputClass} appearance-none [-webkit-appearance:none]`}
                       />
                     </Field>
+
                     <Field
                       label="Time"
                       icon={<Clock className="h-4 w-4" strokeWidth={1.8} />}
@@ -261,6 +391,7 @@ export function ReservationSection() {
                         <option value="" disabled>
                           Select
                         </option>
+
                         {TIME_SLOTS.map((t) => (
                           <option key={t} value={t}>
                             {t}
@@ -268,6 +399,7 @@ export function ReservationSection() {
                         ))}
                       </select>
                     </Field>
+
                     <Field
                       label="Guests"
                       icon={<Users className="h-4 w-4" strokeWidth={1.8} />}
@@ -288,6 +420,7 @@ export function ReservationSection() {
                     </Field>
                   </div>
 
+                  {/* NOTES */}
                   <Field label="Notes (optional)">
                     <textarea
                       value={form.notes}
@@ -298,14 +431,16 @@ export function ReservationSection() {
                     />
                   </Field>
 
+                  {/* ERROR */}
                   {error && (
                     <p className="font-sans text-sm text-clay-pot">{error}</p>
                   )}
 
+                  {/* SUBMIT */}
                   <button
                     type="submit"
                     disabled={status === 'submitting'}
-                    className="w-full rounded-full bg-clay-pot text-coconut-cream font-sans text-sm tracking-wide py-3 hover:bg-clay-pot/90 transition-colors disabled:opacity-60"
+                    className="w-full rounded-full bg-clay-pot py-3 font-sans text-sm tracking-wide text-coconut-cream transition-colors hover:bg-clay-pot/90 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {status === 'submitting'
                       ? 'Sending…'
@@ -335,10 +470,11 @@ function Field({
 }) {
   return (
     <label className="block min-w-0">
-      <span className="w-full min-w-0 flex items-center gap-1.5 font-sans text-xs uppercase tracking-wide text-roasted-coffee/60 mb-1.5">
+      <span className="mb-1.5 flex w-full min-w-0 items-center gap-1.5 font-sans text-xs uppercase tracking-wide text-roasted-coffee/60">
         {icon}
         {label}
       </span>
+
       {children}
     </label>
   );
