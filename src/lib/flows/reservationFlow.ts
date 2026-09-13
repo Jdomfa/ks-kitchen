@@ -7,7 +7,7 @@ import {
 } from '@/lib/reservations/tools';
 import { sendReservationConfirmations } from '@/lib/notifications/confirmation';
 import { notifyStaffOfHandoff } from '@/lib/notifications/handoff';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { siteConfig } from '@/lib/site-config.ts';
 
 export type FlowStep =
   | 'MAIN_MENU'
@@ -74,26 +74,25 @@ const RESERVATION_MENU_TEXT =
   '1. Make a new reservation\n2. Manage an existing reservation\n\nReply with a number, or 0 for the main menu.';
 
 // ---------------------------------------------------------
-// Enquiry content
+// Enquiry content — sourced from siteConfig where possible.
 // ---------------------------------------------------------
 
 const ENQUIRY_TOPICS = {
   hours: {
     label: 'Opening Hours',
-    text: 'Monday–Saturday: 8:00 AM – 10:00 PM\nSunday: 12:00 PM – 10:00 PM',
+    text: siteConfig.hours.map((h) => `${h.days}: ${h.time}`).join('\n'),
   },
   location: {
     label: 'Location',
-    text: "Cino's Square, 39 Onikoyi Rd, Ikoyi, Lagos.\nDine-in available via reservation or walk-in.",
+    text: `${siteConfig.address.line1}, ${siteConfig.address.line2}\nDine-in available via reservation or walk-in.\n${siteConfig.address.map}`,
   },
   takeaway: {
     label: 'Takeaway & Delivery',
-    text:
-      'Takeaway: TODO — confirm yes/no and any conditions.\nDelivery: TODO — confirm which platforms (e.g. Chowdeck, Glovo) or in-house.',
+    text: `Takeaway: TODO — confirm yes/no and any conditions.\nDelivery: TODO — confirm which platforms (e.g. Chowdeck, Glovo) or in-house.\nOrders: ${siteConfig.orderEmail}`,
   },
   contact: {
     label: 'Contact & Parking',
-    text: 'Phone: +2347070377712\nParking: TODO — confirm availability.',
+    text: `Phone: ${siteConfig.reservationPhone}\nEmail: ${siteConfig.reservationEmail}\nParking: TODO — confirm availability.`,
   },
 } as const;
 

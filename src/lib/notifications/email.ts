@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { siteConfig } from '@/lib/site-config.ts';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
@@ -93,7 +94,10 @@ function buildEmailHtml(args: ReservationEmailArgs): string {
             <tr>
               <td style="background-color:#f5ece0; padding:20px 32px; text-align:center;">
                 <p style="margin:0; font-size:12px; color:#a08b6f;">
-                  Turnbull Road, Lagos, Nigeria
+                  ${siteConfig.address.line1}, ${siteConfig.address.line2}
+                </p>
+                <p style="margin:4px 0 0; font-size:12px; color:#a08b6f;">
+                  ${siteConfig.reservationPhone} · ${siteConfig.reservationEmail}
                 </p>
               </td>
             </tr>
