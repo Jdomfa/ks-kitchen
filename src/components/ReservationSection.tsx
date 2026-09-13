@@ -7,7 +7,7 @@ import { siteConfig } from '@/lib/site-config';
 
 // Flip to true once WhatsApp business verification clears and the
 // live production number (not the Meta test number) is in place.
-const WHATSAPP_LIVE = false;
+const WHATSAPP_LIVE = true;
 
 function toTelHref(phone: string) {
   return `tel:${phone.replace(/[^\d+]/g, '')}`;
