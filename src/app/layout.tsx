@@ -5,6 +5,7 @@ import './globals.css';
 import { CartProvider } from '@/lib/cart-context';
 import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/Header';
+import ReservationChatWidget from '@/components/ReservationChatWidget';
 
 // NOTE ON FONTS: the brand guide specifies AndyHand (hand-drawn),
 // Studio MN (display), and Open Sans (sans serif). Two accent scripts
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <CartProvider>
           <Header />
           {children}
+          <ReservationChatWidget />
         </CartProvider>
       </body>
     </html>
