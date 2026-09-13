@@ -7,7 +7,7 @@ import {
 } from '@/lib/reservations/tools';
 import { sendReservationConfirmations } from '@/lib/notifications/confirmation';
 import { notifyStaffOfHandoff } from '@/lib/notifications/handoff';
-import { siteConfig } from '@/lib/site-config.ts';
+import { siteConfig } from '@/lib/site-config';
 
 export type FlowStep =
   | 'MAIN_MENU'

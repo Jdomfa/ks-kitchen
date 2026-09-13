@@ -1,5 +1,5 @@
 import { sendWhatsAppMessage } from '@/lib/whatsapp/client';
-import { siteConfig } from '@/lib/site-config.ts';
+import { siteConfig } from '@/lib/site-config';
 
 export async function notifyStaffOfHandoff(args: {
   message: string;
