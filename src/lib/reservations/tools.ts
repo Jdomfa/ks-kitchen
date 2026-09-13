@@ -96,3 +96,17 @@ export async function modifyReservationByCode(
 
   return data;
 }
+
+export async function getReservationByPhone(phone: string) {
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase.rpc('get_reservation_by_phone', {
+    p_phone: phone,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}

@@ -4,7 +4,7 @@ import { sendWhatsAppMessage } from '@/lib/whatsapp/client';
 
 type SendConfirmationsArgs = {
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   partySize: number;
   date: string;
@@ -13,7 +13,7 @@ type SendConfirmationsArgs = {
 };
 
 type ConfirmationOutcome = {
-  email: { success: boolean; error?: string };
+  email: { success: boolean; error?: string; skipped?: boolean };
   sms: { success: boolean; error?: string; skipped?: boolean };
   whatsapp: { success: boolean; error?: string; skipped?: boolean };
 };
@@ -23,13 +23,15 @@ export async function sendReservationConfirmations(
 ): Promise<ConfirmationOutcome> {
   const normalizedPhone = args.phone ? normalizePhoneNumber(args.phone) : null;
 
-  const emailPromise = sendReservationConfirmationEmail({
-    to: args.email,
-    name: args.name,
-    partySize: args.partySize,
-    date: args.date,
-    time: args.time,
-  });
+  const emailPromise = args.email
+    ? sendReservationConfirmationEmail({
+        to: args.email,
+        name: args.name,
+        partySize: args.partySize,
+        date: args.date,
+        time: args.time,
+      })
+    : Promise.resolve({ success: false, skipped: true });
 
   const smsPromise = normalizedPhone
     ? sendReservationConfirmationSms({
@@ -54,11 +56,7 @@ export async function sendReservationConfirmations(
             error: error instanceof Error ? error.message : 'Unknown WhatsApp error.',
           }));
 
-  const [email, sms, whatsapp] = await Promise.all([
-    emailPromise,
-    smsPromise,
-    whatsappPromise,
-  ]);
+  const [email, sms, whatsapp] = await Promise.all([emailPromise, smsPromise, whatsappPromise]);
 
   return { email, sms, whatsapp };
 }
