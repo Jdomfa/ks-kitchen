@@ -1,6 +1,5 @@
-import { checkAvailability } from '@/lib/reservations/availability';
+import { getSlotAvailability, createSlotReservation, modifySlotReservation } from '@/lib/reservations/slots';
 import {
-  createReservation,
   getReservationByCode,
   getReservationByPhone,
   cancelReservationByCode,
@@ -84,8 +83,6 @@ const PARTY_SIZE_BUTTONS: FlowButton[] = [
   { id: '3', title: '3 guests' },
   { id: '4+', title: '4+ guests' },
 ];
-
-const PRESET_TIME_SLOTS = ['16:00', '17:00', '18:00', '19:00'];
 
 // ---------------------------------------------------------
 // Enquiry content
@@ -249,20 +246,16 @@ function formatDisplayTime(time: string): string {
   return `${displayHour}${displayMinutes} ${period}`;
 }
 
-async function getAvailablePresetSlots(date: string, partySize: number): Promise<string[]> {
-  const checks = await Promise.all(
-    PRESET_TIME_SLOTS.map(async (time) => {
-      const result = await checkAvailability({ date, time, partySize });
-      return { time, available: result.available };
-    })
-  );
-
-  return checks.filter((c) => c.available).map((c) => c.time);
-}
-
 function looksLikePhoneNumber(raw: string): boolean {
   const digitsOnly = raw.replace(/\D/g, '');
   return digitsOnly.length >= 9 && digitsOnly.length === raw.replace(/[\s+()-]/g, '').length;
+}
+
+async function getBookableSlots(date: string, partySize: number) {
+  const slots = await getSlotAvailability(date);
+  return slots
+    .filter((s) => s.available_covers >= partySize)
+    .map((s) => s.slot_time.slice(0, 5)); // "16:00:00" -> "16:00"
 }
 
 // ---------------------------------------------------------
@@ -472,11 +465,24 @@ async function handleReservationDate(input: string, state: FlowState): Promise<F
     };
   }
 
-  const availableSlots = await getAvailablePresetSlots(date, partySize);
+  const slots = await getSlotAvailability(date);
 
-  if (availableSlots.length === 0) {
+  if (slots.length === 0) {
     return {
-      reply: `Sorry, we don't have any dinner slots available on ${date} for ${partySize} guests. We only take reservations between 4:00 PM and 7:00 PM — please choose another date.`,
+      reply:
+        "We only take reservations on Mondays, Wednesdays, and Saturdays — that date isn't one of those. Please choose another date.",
+      state: { step: 'RESERVATION_DATE', draft: state.draft },
+      inputType: 'date',
+    };
+  }
+
+  const bookableSlots = slots
+    .filter((s) => s.available_covers >= partySize)
+    .map((s) => s.slot_time.slice(0, 5));
+
+  if (bookableSlots.length === 0) {
+    return {
+      reply: `Sorry, we're fully booked on ${date} for ${partySize} guests. Please choose another date.`,
       state: { step: 'RESERVATION_DATE', draft: state.draft },
       inputType: 'date',
     };
@@ -484,14 +490,14 @@ async function handleReservationDate(input: string, state: FlowState): Promise<F
 
   return {
     reply: `Here's what's available on ${date}:`,
-    state: { step: 'RESERVATION_TIME', draft: { ...state.draft, date }, alternatives: availableSlots },
-    buttons: availableSlots.map((t) => ({ id: t, title: formatDisplayTime(t) })),
+    state: { step: 'RESERVATION_TIME', draft: { ...state.draft, date }, alternatives: bookableSlots },
+    buttons: bookableSlots.map((t) => ({ id: t, title: formatDisplayTime(t) })),
   };
 }
 
 function handleReservationTime(input: string, state: FlowState): FlowResult {
   const time = input.trim();
-  const options = state.alternatives ?? PRESET_TIME_SLOTS;
+  const options = state.alternatives ?? [];
 
   if (!options.includes(time)) {
     return {
@@ -579,7 +585,7 @@ async function handleReservationConfirm(
       };
     }
 
-    const result = (await createReservation({
+    const result = (await createSlotReservation({
       name,
       phone,
       party_size: partySize,
@@ -618,9 +624,10 @@ async function handleReservationConfirm(
       };
     }
 
-    const availableSlots = await getAvailablePresetSlots(date, partySize);
+    // Slot taken between confirmation screen and this click — refresh options.
+    const bookableSlots = await getBookableSlots(date, partySize);
 
-    if (availableSlots.length === 0) {
+    if (bookableSlots.length === 0) {
       return {
         reply: `Sorry, that time just became unavailable and there's nothing else open on ${date}. Please choose another date.`,
         state: { step: 'RESERVATION_DATE', draft: { partySize } },
@@ -630,8 +637,8 @@ async function handleReservationConfirm(
 
     return {
       reply: `Sorry, that time just became unavailable. Here's what's still open on ${date}:`,
-      state: { step: 'RESERVATION_TIME', draft: { partySize, date }, alternatives: availableSlots },
-      buttons: availableSlots.map((t) => ({ id: t, title: formatDisplayTime(t) })),
+      state: { step: 'RESERVATION_TIME', draft: { partySize, date }, alternatives: bookableSlots },
+      buttons: bookableSlots.map((t) => ({ id: t, title: formatDisplayTime(t) })),
     };
   }
 
@@ -794,7 +801,7 @@ async function handleManageAction(input: string, state: FlowState): Promise<Flow
   };
 }
 
-function handleManageModifyDate(input: string, state: FlowState): FlowResult {
+async function handleManageModifyDate(input: string, state: FlowState): Promise<FlowResult> {
   const date = parseDateInput(input);
   const todayISO = getLagosTodayISO();
 
@@ -805,6 +812,17 @@ function handleManageModifyDate(input: string, state: FlowState): FlowResult {
   if (date < todayISO) {
     return {
       reply: 'That date is in the past — please choose today or later.',
+      state,
+      inputType: 'date',
+    };
+  }
+
+  const slots = await getSlotAvailability(date);
+
+  if (slots.length === 0) {
+    return {
+      reply:
+        "We only take reservations on Mondays, Wednesdays, and Saturdays — that date isn't one of those. Please choose another date.",
       state,
       inputType: 'date',
     };
@@ -836,7 +854,7 @@ async function handleManageModifyTime(input: string, state: FlowState): Promise<
     };
   }
 
-  const result = (await modifyReservationByCode(code, date, time)) as {
+  const result = (await modifySlotReservation(code, date, time)) as {
     success: boolean;
     error?: string;
     reason?: string;
