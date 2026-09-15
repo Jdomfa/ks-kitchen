@@ -3,7 +3,6 @@ import {
   getReservationByCode,
   getReservationByPhone,
   cancelReservationByCode,
-  modifyReservationByCode,
 } from '@/lib/reservations/tools';
 import { sendReservationConfirmations } from '@/lib/notifications/confirmation';
 import { notifyStaffOfHandoff } from '@/lib/notifications/handoff';
@@ -40,6 +39,7 @@ export type FlowState = {
   alternatives?: string[];
   handoffMessage?: string;
   manageCode?: string;
+  managePartySize?: number;
 };
 
 export const INITIAL_STATE: FlowState = {
@@ -251,7 +251,7 @@ function looksLikePhoneNumber(raw: string): boolean {
   return digitsOnly.length >= 9 && digitsOnly.length === raw.replace(/[\s+()-]/g, '').length;
 }
 
-async function getBookableSlots(date: string, partySize: number) {
+async function getBookableSlots(date: string, partySize: number): Promise<string[]> {
   const slots = await getSlotAvailability(date);
   return slots
     .filter((s) => s.available_covers >= partySize)
@@ -624,7 +624,6 @@ async function handleReservationConfirm(
       };
     }
 
-    // Slot taken between confirmation screen and this click — refresh options.
     const bookableSlots = await getBookableSlots(date, partySize);
 
     if (bookableSlots.length === 0) {
@@ -742,7 +741,7 @@ function showManageSummary(
 
   return {
     reply: 'Here are your reservation details:',
-    state: { step: 'MANAGE_ACTION', draft: {}, manageCode: code },
+    state: { step: 'MANAGE_ACTION', draft: {}, manageCode: code, managePartySize: result.party_size },
     summary: [
       { label: 'Name', value: result.name ?? '' },
       { label: 'Party size', value: String(result.party_size ?? '') },
@@ -781,7 +780,7 @@ async function handleManageAction(input: string, state: FlowState): Promise<Flow
   if (normalized === '2' || normalized.includes('change') || normalized.includes('modify')) {
     return {
       reply: 'What date would you like to move it to?',
-      state: { step: 'MANAGE_MODIFY_DATE', draft: {}, manageCode: code },
+      state: { step: 'MANAGE_MODIFY_DATE', draft: {}, manageCode: code, managePartySize: state.managePartySize },
       inputType: 'date',
     };
   }
@@ -828,9 +827,27 @@ async function handleManageModifyDate(input: string, state: FlowState): Promise<
     };
   }
 
+  const partySize = state.managePartySize ?? 1;
+  const bookableSlots = await getBookableSlots(date, partySize);
+
+  if (bookableSlots.length === 0) {
+    return {
+      reply: `Sorry, we're fully booked on ${date} for ${partySize} guests. Please choose another date.`,
+      state,
+      inputType: 'date',
+    };
+  }
+
   return {
-    reply: 'And what time would you like instead? (e.g. 18:00)',
-    state: { step: 'MANAGE_MODIFY_TIME', draft: { date }, manageCode: state.manageCode },
+    reply: `Here's what's available on ${date}:`,
+    state: {
+      step: 'MANAGE_MODIFY_TIME',
+      draft: { date },
+      manageCode: state.manageCode,
+      managePartySize: partySize,
+      alternatives: bookableSlots,
+    },
+    buttons: bookableSlots.map((t) => ({ id: t, title: formatDisplayTime(t) })),
   };
 }
 
@@ -838,11 +855,14 @@ async function handleManageModifyTime(input: string, state: FlowState): Promise<
   const time = input.trim();
   const { date } = state.draft;
   const code = state.manageCode;
+  const partySize = state.managePartySize ?? 1;
+  const options = state.alternatives ?? [];
 
-  if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(time)) {
+  if (!options.includes(time)) {
     return {
-      reply: 'Please enter a time in HH:MM format, e.g. 18:00.',
+      reply: 'Please choose one of the available times below.',
       state,
+      buttons: options.map((t) => ({ id: t, title: formatDisplayTime(t) })),
     };
   }
 
@@ -868,8 +888,25 @@ async function handleManageModifyTime(input: string, state: FlowState): Promise<
     };
   }
 
+  const refreshedSlots = await getBookableSlots(date, partySize);
+
+  if (refreshedSlots.length === 0) {
+    return {
+      reply: `Sorry, that time just became unavailable and there's nothing else open on ${date}. Please choose another date.`,
+      state: { step: 'MANAGE_MODIFY_DATE', draft: {}, manageCode: code, managePartySize: partySize },
+      inputType: 'date',
+    };
+  }
+
   return {
-    reply: `Sorry, that time isn't available (${result.error ?? 'capacity reached'}). What time would you like instead?`,
-    state: { step: 'MANAGE_MODIFY_TIME', draft: { date }, manageCode: code },
+    reply: `Sorry, that time just became unavailable. Here's what's still open on ${date}:`,
+    state: {
+      step: 'MANAGE_MODIFY_TIME',
+      draft: { date },
+      manageCode: code,
+      managePartySize: partySize,
+      alternatives: refreshedSlots,
+    },
+    buttons: refreshedSlots.map((t) => ({ id: t, title: formatDisplayTime(t) })),
   };
 }
