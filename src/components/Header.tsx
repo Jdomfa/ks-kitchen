@@ -13,7 +13,7 @@ const NAV = [
   { href: '/menu', label: 'Menu' },
   { href: '/store', label: 'Store' },
   { href: '/reservation', label: 'Reservation' },
-  { href: '/#contact', label: 'Contact' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 /** Hamburger that morphs into an X — three bars animated with shared variants. */
