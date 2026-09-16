@@ -1,15 +1,15 @@
-import Link from 'next/link';
-
 import { createClient } from '@/lib/supabase/server';
+import { getDashboardSummary, getDashboardGrid } from '@/lib/reservations/dashboard';
+import { getTablesConfig } from '@/lib/reservations/tables';
+import {
+  updateReservationStatus,
+  deleteReservation,
+  assignTableAction,
+  unassignTableAction,
+  checkInAction,
+} from './actions';
 
-import { updateReservationStatus, deleteReservation } from './actions';
-
-type ReservationStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'completed'
-  | 'cancelled'
-  | 'no_show';
+type ReservationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 
 type Reservation = {
   id: string;
@@ -23,22 +23,37 @@ type Reservation = {
   status: ReservationStatus;
   reservation_code: string | null;
   created_at: string;
+  checked_in_at: string | null;
 };
+
+function getLagosTodayISO(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Lagos',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
 
 export default async function DashboardReservationsPage() {
   const supabase = await createClient();
+  const today = getLagosTodayISO();
 
-  const { data: reservations, error } = await supabase
-    .from('reservations')
-    .select('*')
-    .order('reservation_date', { ascending: true })
-    .order('reservation_time', { ascending: true });
+  const [{ data: reservations, error }, summary, grid, tables] = await Promise.all([
+    supabase.from('reservations').select('*').order('reservation_date', { ascending: true }).order('reservation_time', { ascending: true }),
+    getDashboardSummary(today),
+    getDashboardGrid(today),
+    getTablesConfig(),
+  ]);
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 
   const items = (reservations ?? []) as Reservation[];
+  const assignedIds = new Set(
+    Object.values(grid.cells)
+      .flatMap((byTime) => Object.values(byTime).map((c) => c.reservationId))
+      .filter(Boolean)
+  );
 
   const pending = items.filter((r) => r.status === 'pending');
   const confirmed = items.filter((r) => r.status === 'confirmed');
@@ -47,44 +62,137 @@ export default async function DashboardReservationsPage() {
   const noShow = items.filter((r) => r.status === 'no_show');
 
   return (
-    <div className="min-h-screen bg-coconut-cream px-6 py-16">
-      <div className="mx-auto max-w-4xl">
-        <Link
-          href="/dashboard"
-          className="font-sans text-sm text-roasted-coffee/60 hover:text-clay-pot"
-        >
-          ← Dashboard
-        </Link>
-
-        <h1 className="mt-3 mb-8 font-display text-3xl text-roasted-coffee">
-          Reservations
-        </h1>
-
-        <div className="mb-8 grid gap-4 sm:grid-cols-5">
-          <SummaryCard label="Pending" value={pending.length} />
-          <SummaryCard label="Confirmed" value={confirmed.length} />
-          <SummaryCard label="Completed" value={completed.length} />
-          <SummaryCard label="Cancelled" value={cancelled.length} />
-          <SummaryCard label="No-shows" value={noShow.length} />
-        </div>
-
-        <ReservationSection title="Pending Reservations" reservations={pending} />
-        <ReservationSection title="Confirmed Reservations" reservations={confirmed} />
-        <ReservationSection title="Completed Reservations" reservations={completed} />
-        <ReservationSection title="Cancelled Reservations" reservations={cancelled} />
-        <ReservationSection title="No-shows" reservations={noShow} />
+    <div className="space-y-8">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <MetricCard label="Expected guests today" value={summary.expectedGuests} />
+        <MetricCard label="Open slots today" value={summary.openSlotsToday} />
+        <MetricCard
+          label="Not checked in"
+          value={summary.notCheckedIn.length}
+          tone={summary.notCheckedIn.length > 0 ? 'warning' : 'default'}
+        />
       </div>
+
+      <section>
+        <h2 className="mb-3 text-[15px] font-medium text-admin-ink">Today's floor</h2>
+        <FloorGrid grid={grid} />
+      </section>
+
+      {summary.notCheckedIn.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-[15px] font-medium text-admin-ink">Call to reconfirm</h2>
+          <div className="divide-y divide-admin-border rounded-xl border border-admin-border bg-admin-surface">
+            {summary.notCheckedIn.map((entry) => (
+              <div key={entry.reservationId} className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-admin-ink">
+                    {entry.name} · party of {entry.partySize}
+                  </p>
+                  <p className="text-[13px] text-terracotta">
+                    {entry.time} · {entry.overdueMinutes} min overdue
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {entry.phone && (
+                    <a
+                      href={`tel:${entry.phone}`}
+                      className="rounded-lg border border-admin-border px-3 py-1.5 text-[13px] text-admin-muted transition-colors hover:border-admin-subtle hover:text-admin-ink"
+                    >
+                      Call
+                    </a>
+                  )}
+                  <form action={checkInAction}>
+                    <input type="hidden" name="reservationId" value={entry.reservationId} />
+                    <input type="hidden" name="checkedIn" value="true" />
+                    <button
+                      type="submit"
+                      className="rounded-lg bg-curry-leaf px-3 py-1.5 text-[13px] font-medium text-coconut-cream hover:opacity-90"
+                    >
+                      Mark arrived
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="space-y-8">
+        <ReservationSection title="Pending" reservations={pending} tables={tables} today={today} assignedIds={assignedIds} />
+        <ReservationSection title="Confirmed" reservations={confirmed} tables={tables} today={today} assignedIds={assignedIds} />
+        <ReservationSection title="Completed" reservations={completed} tables={tables} today={today} assignedIds={assignedIds} />
+        <ReservationSection title="Cancelled" reservations={cancelled} tables={tables} today={today} assignedIds={assignedIds} />
+        <ReservationSection title="No-shows" reservations={noShow} tables={tables} today={today} assignedIds={assignedIds} />
+      </section>
     </div>
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: number }) {
+function MetricCard({ label, value, tone = 'default' }: { label: string; value: number; tone?: 'default' | 'warning' }) {
   return (
-    <div className="rounded-2xl border border-roasted-coffee/10 bg-white/40 p-6">
-      <p className="font-sans text-xs uppercase tracking-[0.18em] text-roasted-coffee/50">
-        {label}
-      </p>
-      <p className="mt-2 font-display text-3xl text-roasted-coffee">{value}</p>
+    <div className={`rounded-xl px-4 py-3.5 ${tone === 'warning' ? 'bg-terracotta/10' : 'bg-admin-surface'}`}>
+      <p className="text-[13px] text-admin-subtle">{label}</p>
+      <p className={`mt-1 text-2xl font-medium ${tone === 'warning' ? 'text-terracotta' : 'text-admin-ink'}`}>{value}</p>
+    </div>
+  );
+}
+
+function FloorGrid({ grid }: { grid: Awaited<ReturnType<typeof getDashboardGrid>> }) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-admin-border">
+      <table className="w-full border-collapse text-[13px]">
+        <thead>
+          <tr className="border-b border-admin-border bg-admin-surface">
+            <th className="w-16 px-3 py-2 text-left font-medium text-admin-muted"></th>
+            {grid.tables.map((t) => (
+              <th key={t.number} className="px-2 py-2 text-center font-medium text-admin-muted">
+                T{t.number}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {grid.timeSlots.map((slot) => {
+            const skip = new Set<number>();
+            return (
+              <tr key={slot} className="border-b border-admin-border last:border-0">
+                <td className="px-3 py-2 text-admin-muted">{slot}</td>
+                {grid.tables.map((t) => {
+                  if (skip.has(t.number)) return null;
+                  const cell = grid.cells[t.number][slot];
+
+                  if (cell.status === 'open') {
+                    return (
+                      <td key={t.number} className="p-1">
+                        <div className="h-7 rounded-md bg-curry-leaf/15" />
+                      </td>
+                    );
+                  }
+
+                  if (cell.mergeGroup && !cell.isMergeStart) return null;
+
+                  const colSpan = cell.mergeGroup?.length ?? 1;
+                  if (cell.mergeGroup) {
+                    for (const n of cell.mergeGroup) if (n !== t.number) skip.add(n);
+                  }
+
+                  return (
+                    <td key={t.number} colSpan={colSpan} className="p-1">
+                      <div
+                        className="flex h-7 items-center justify-center rounded-md bg-terracotta/15 px-2 text-[11px] font-medium text-terracotta"
+                        title={`${cell.guestName} · party of ${cell.partySize}`}
+                      >
+                        {cell.half ? `${cell.guestName} (${cell.half})` : cell.guestName}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -92,72 +200,105 @@ function SummaryCard({ label, value }: { label: string; value: number }) {
 function ReservationSection({
   title,
   reservations,
+  tables,
+  today,
+  assignedIds,
 }: {
   title: string;
   reservations: Reservation[];
+  tables: Awaited<ReturnType<typeof getTablesConfig>>;
+  today: string;
+  assignedIds: Set<string | undefined>;
 }) {
   return (
-    <section className="mb-8">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-display text-xl text-roasted-coffee">{title}</h2>
-        <span className="rounded-full bg-roasted-coffee/5 px-3 py-1 font-sans text-xs text-roasted-coffee/60">
-          {reservations.length}
-        </span>
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-[15px] font-medium text-admin-ink">{title}</h2>
+        <span className="rounded-full bg-admin-surface px-2.5 py-0.5 text-xs text-admin-muted">{reservations.length}</span>
       </div>
 
       {reservations.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-roasted-coffee/15 bg-white/30 px-6 py-10 text-center">
-          <p className="font-sans text-sm text-roasted-coffee/50">
-            No reservations here.
-          </p>
+        <div className="rounded-xl border border-dashed border-admin-border px-6 py-8 text-center text-sm text-admin-subtle">
+          Nothing here.
         </div>
       ) : (
-        <div className="space-y-3">
-          {reservations.map((reservation) => (
-            <ReservationCard key={reservation.id} reservation={reservation} />
+        <div className="space-y-2">
+          {reservations.map((r) => (
+            <ReservationRow key={r.id} reservation={r} tables={tables} today={today} isAssigned={assignedIds.has(r.id)} />
           ))}
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
-function ReservationCard({ reservation }: { reservation: Reservation }) {
-  const formattedDate = formatDate(reservation.reservation_date);
-  const formattedTime = formatTime(reservation.reservation_time);
+function ReservationRow({
+  reservation,
+  tables,
+  today,
+  isAssigned,
+}: {
+  reservation: Reservation;
+  tables: Awaited<ReturnType<typeof getTablesConfig>>;
+  today: string;
+  isAssigned: boolean;
+}) {
+  const canAssign = reservation.status === 'confirmed' && reservation.reservation_date === today;
 
   return (
-    <div className="rounded-2xl border border-roasted-coffee/10 bg-white/40 p-6">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+    <div className="rounded-xl border border-admin-border bg-admin-surface p-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h3 className="font-sans text-sm font-medium text-roasted-coffee">
-              {reservation.name}
-            </h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-medium text-admin-ink">{reservation.name}</h3>
             <StatusBadge status={reservation.status} />
             {reservation.reservation_code && (
-              <span className="rounded-full border border-roasted-coffee/15 px-2 py-0.5 font-mono text-[10px] tracking-wide text-roasted-coffee/50">
+              <span className="rounded-full border border-admin-border px-2 py-0.5 font-mono text-[10px] text-admin-subtle">
                 {reservation.reservation_code}
               </span>
             )}
           </div>
-
-          <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-sans text-sm text-roasted-coffee/60">
-            <span>{formattedDate}</span>
-            <span>{formattedTime}</span>
+          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-admin-muted">
+            <span>{formatDate(reservation.reservation_date)}</span>
+            <span>{formatTime(reservation.reservation_time)}</span>
             <span>
-              {reservation.party_size}{' '}
-              {reservation.party_size === 1 ? 'guest' : 'guests'}
+              {reservation.party_size} {reservation.party_size === 1 ? 'guest' : 'guests'}
             </span>
           </div>
         </div>
 
-        <div className="font-sans text-sm text-roasted-coffee/60">
+        <div className="text-[13px] text-admin-muted">
           {reservation.phone && <p>{reservation.phone}</p>}
           {reservation.email && <p>{reservation.email}</p>}
         </div>
 
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {canAssign && !isAssigned && (
+            <form action={assignTableAction} className="flex items-center gap-1.5">
+              <input type="hidden" name="reservationId" value={reservation.id} />
+              <input type="hidden" name="date" value={today} />
+              <select name="tableNumbers" className="rounded-lg border border-admin-border bg-admin-bg px-2 py-1.5 text-[13px] text-admin-ink">
+                {tables.map((t) => (
+                  <option key={t.number} value={t.number}>
+                    Table {t.number}
+                  </option>
+                ))}
+              </select>
+              <button type="submit" className="rounded-lg bg-clay-pot px-3 py-1.5 text-[13px] font-medium text-coconut-cream hover:opacity-90">
+                Seat
+              </button>
+            </form>
+          )}
+
+          {canAssign && isAssigned && (
+            <form action={unassignTableAction}>
+              <input type="hidden" name="reservationId" value={reservation.id} />
+              <button type="submit" className="rounded-lg border border-admin-border px-3 py-1.5 text-[13px] text-admin-muted hover:text-admin-ink">
+                Unseat
+              </button>
+            </form>
+          )}
+
           {reservation.status === 'pending' && (
             <>
               <StatusActionButton id={reservation.id} status="confirmed" label="Confirm" filled />
@@ -179,10 +320,7 @@ function ReservationCard({ reservation }: { reservation: Reservation }) {
 
           <form action={deleteReservation}>
             <input type="hidden" name="id" value={reservation.id} />
-            <button
-              type="submit"
-              className="rounded-full border border-clay-pot/30 px-4 py-2 font-sans text-xs text-clay-pot hover:bg-clay-pot/5"
-            >
+            <button type="submit" className="rounded-lg border border-terracotta/30 px-3 py-1.5 text-[13px] text-terracotta hover:bg-terracotta/5">
               Delete
             </button>
           </form>
@@ -190,13 +328,9 @@ function ReservationCard({ reservation }: { reservation: Reservation }) {
       </div>
 
       {reservation.note && (
-        <div className="mt-5 border-t border-roasted-coffee/10 pt-4">
-          <p className="font-sans text-[10px] uppercase tracking-[0.15em] text-roasted-coffee/40">
-            Note
-          </p>
-          <p className="mt-1 font-sans text-sm text-roasted-coffee/70">
-            {reservation.note}
-          </p>
+        <div className="mt-4 border-t border-admin-border pt-3">
+          <p className="text-[11px] uppercase tracking-wide text-admin-subtle">Note</p>
+          <p className="mt-1 text-[13px] text-admin-muted">{reservation.note}</p>
         </div>
       )}
     </div>
@@ -222,8 +356,8 @@ function StatusActionButton({
         type="submit"
         className={
           filled
-            ? 'rounded-full bg-clay-pot px-4 py-2 font-sans text-xs text-coconut-cream hover:opacity-90'
-            : 'rounded-full border border-roasted-coffee/20 px-4 py-2 font-sans text-xs text-roasted-coffee hover:border-clay-pot'
+            ? 'rounded-lg bg-clay-pot px-3 py-1.5 text-[13px] font-medium text-coconut-cream hover:opacity-90'
+            : 'rounded-lg border border-admin-border px-3 py-1.5 text-[13px] text-admin-muted hover:border-admin-subtle hover:text-admin-ink'
         }
       >
         {label}
@@ -237,36 +371,21 @@ function StatusBadge({ status }: { status: ReservationStatus }) {
     pending: 'bg-brushed-brass/15 text-brushed-brass',
     confirmed: 'bg-clay-pot/10 text-clay-pot',
     completed: 'bg-curry-leaf/15 text-curry-leaf',
-    cancelled: 'bg-roasted-coffee/10 text-roasted-coffee/60',
+    cancelled: 'bg-admin-border text-admin-muted',
     no_show: 'bg-terracotta/15 text-terracotta',
   };
-
-  return (
-    <span
-      className={`rounded-full px-2.5 py-1 font-sans text-[10px] uppercase tracking-[0.12em] ${styles[status]}`}
-    >
-      {status.replace('_', ' ')}
-    </span>
-  );
+  return <span className={`rounded-full px-2 py-0.5 text-[11px] ${styles[status]}`}>{status.replace('_', ' ')}</span>;
 }
 
 function formatDate(date: string) {
-  return new Intl.DateTimeFormat('en-NG', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(`${date}T00:00:00`));
+  return new Intl.DateTimeFormat('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(
+    new Date(`${date}T00:00:00`)
+  );
 }
 
 function formatTime(time: string) {
   const [hours, minutes] = time.split(':');
   const date = new Date();
   date.setHours(Number(hours), Number(minutes), 0, 0);
-
-  return new Intl.DateTimeFormat('en-NG', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date);
+  return new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', hour12: true }).format(date);
 }

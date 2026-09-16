@@ -13,6 +13,19 @@
 
   --background: var(--color-coconut-cream);
   --foreground: var(--color-roasted-coffee);
+  /* Added: warm elevated surface (replaces stark white on cards/buttons) */
+  --color-surface: #efe6d8;
+  /* Added: distinct alert/error tone, separate from the terracotta CTA color */
+  --color-alert: #7a3226;
+
+  --color-admin-bg: #f7f4ef;
+  --color-admin-surface: #eee7dc;
+  --color-admin-border: #ded6ca;
+  --color-admin-border-soft: #e3ddd4;
+  --color-admin-ink: #29231f;
+  --color-admin-muted: #6f645a;
+  --color-admin-subtle: #9a8d80;
+
 }
 
 @theme inline {
@@ -32,6 +45,14 @@
   --font-hand: var(--font-hand);
   --font-flourish: var(--font-flourish);
   --font-sans: var(--font-sans);
+
+   --color-admin-bg: var(--color-admin-bg);
+  --color-admin-surface: var(--color-admin-surface);
+  --color-admin-border: var(--color-admin-border);
+  --color-admin-border-soft: var(--color-admin-border-soft);
+  --color-admin-ink: var(--color-admin-ink);
+  --color-admin-muted: var(--color-admin-muted);
+  --color-admin-subtle: var(--color-admin-subtle);
 }
 
 body {

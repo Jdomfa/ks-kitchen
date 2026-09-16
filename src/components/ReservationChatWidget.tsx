@@ -38,6 +38,14 @@ function HomeIcon({ className }: { className?: string }) {
   );
 }
 
+function AlertIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M12 9v4M12 17h.01M10.29 3.86l-8.4 14.55A1 1 0 0 0 2.7 20h18.6a1 1 0 0 0 .86-1.59l-8.4-14.55a1 1 0 0 0-1.72 0Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function isWhatsAppUrl(url?: string) {
   return !!url && url.includes('wa.me');
 }
@@ -53,9 +61,12 @@ export default function ReservationChatWidget() {
   const [direction, setDirection] = useState(1);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const currentScreen = screens[screenIndex];
   const isAtMainMenu = currentScreen?.session.step === 'MAIN_MENU';
+  const isFirstLoad = isSending && screens.length === 0;
+  const isAwaitingReply = isSending && screens.length > 0;
 
   useEffect(() => {
     function handleOpenChat() {
@@ -76,10 +87,21 @@ export default function ReservationChatWidget() {
     if (isOpen) {
       const original = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+      // Move focus into the dialog for keyboard and screen-reader users.
+      dialogRef.current?.focus();
       return () => {
         document.body.style.overflow = original;
       };
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') handleClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
   useEffect(() => {
@@ -198,7 +220,7 @@ export default function ReservationChatWidget() {
       <button
         onClick={() => setIsOpen(true)}
         aria-label="Open chat"
-        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-terracotta text-coconut-cream shadow-lg transition hover:bg-tamarind-bark"
+        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-terracotta text-coconut-cream shadow-[0_4px_14px_rgba(75,58,46,0.35)] transition-all duration-200 hover:bg-tamarind-bark active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path
@@ -212,21 +234,26 @@ export default function ReservationChatWidget() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="K's Kitchen reservations chat"
+            tabIndex={-1}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-coconut-cream"
+            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-coconut-cream outline-none"
             style={{ height: '100dvh' }}
           >
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between bg-terracotta px-5 py-4">
+            <header className="flex shrink-0 items-center justify-between bg-terracotta px-5 py-4">
               <div className="flex items-center gap-3">
                 {screenIndex > 0 && (
                   <button
                     onClick={goBack}
                     aria-label="Back"
-                    className="rounded-full p-1 text-coconut-cream/80 transition hover:bg-tamarind-bark hover:text-coconut-cream"
+                    className="rounded-full p-1 text-coconut-cream/80 transition-all duration-200 hover:bg-tamarind-bark hover:text-coconut-cream active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -234,24 +261,24 @@ export default function ReservationChatWidget() {
                   </button>
                 )}
                 <div>
-                  <p className="text-sm font-semibold text-coconut-cream">K's Kitchen Gourmet</p>
-                  <p className="text-xs text-coconut-cream/80">Reservations & questions</p>
+                  <p className="font-display text-base tracking-tight text-coconut-cream">K's Kitchen Gourmet</p>
+                  <p className="font-hand text-sm text-coconut-cream/80">Reservations &amp; questions</p>
                 </div>
               </div>
 
               <button
                 onClick={handleClose}
                 aria-label="Close chat"
-                className="rounded-full p-1 text-coconut-cream/80 transition hover:bg-tamarind-bark hover:text-coconut-cream"
+                className="rounded-full p-1 text-coconut-cream/80 transition-all duration-200 hover:bg-tamarind-bark hover:text-coconut-cream active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
                 </svg>
               </button>
-            </div>
+            </header>
 
             {/* Screen content */}
-            <div className="relative min-h-0 flex-1 overflow-hidden">
+            <main className="relative min-h-0 flex-1 overflow-hidden">
               <AnimatePresence mode="wait" custom={direction}>
                 {currentScreen && (
                   <motion.div
@@ -263,12 +290,15 @@ export default function ReservationChatWidget() {
                     transition={{ duration: 0.25, ease: 'easeOut' }}
                     className="absolute inset-0 flex flex-col overflow-y-auto px-6 py-8"
                   >
-                    <p className="whitespace-pre-line text-lg leading-relaxed text-roasted-coffee">
+                    <p
+                      className="whitespace-pre-line text-lg leading-relaxed text-roasted-coffee"
+                      aria-live="polite"
+                    >
                       {currentScreen.reply}
                     </p>
 
                     {currentScreen.summary && (
-                      <div className="mt-6 overflow-hidden rounded-2xl border border-clay-pot/20 bg-white shadow-sm">
+                      <div className="mt-6 overflow-hidden rounded-2xl border border-clay-pot/20 bg-surface shadow-[0_1px_4px_rgba(75,58,46,0.12)]">
                         {currentScreen.summary.map((row, i) => (
                           <div
                             key={row.label}
@@ -293,7 +323,7 @@ export default function ReservationChatWidget() {
                               key={button.id}
                               onClick={() => handleButtonClick(button)}
                               disabled={isSending}
-                              className="flex w-full items-center gap-3 rounded-xl border border-clay-pot/30 bg-white px-5 py-4 text-left text-base font-medium text-roasted-coffee shadow-sm transition hover:border-clay-pot hover:bg-clay-pot/5 disabled:opacity-50"
+                              className="flex w-full items-center gap-3 rounded-xl border border-clay-pot/30 bg-surface px-5 py-4 text-left text-base font-medium text-roasted-coffee shadow-[0_1px_3px_rgba(75,58,46,0.12)] transition-all duration-200 hover:border-clay-pot hover:bg-clay-pot/10 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
                             >
                               {isWhatsAppUrl(button.url) && (
                                 <WhatsAppIcon className="h-5 w-5 shrink-0 text-[#25D366]" />
@@ -309,7 +339,7 @@ export default function ReservationChatWidget() {
                             value={inputValue}
                             min={new Date().toISOString().slice(0, 10)}
                             onChange={(e) => setInputValue(e.target.value)}
-                            className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 px-4 py-3 text-base text-roasted-coffee outline-none focus:border-brushed-brass"
+                            className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50"
                             style={{
                               WebkitAppearance: 'none',
                               appearance: 'none',
@@ -319,7 +349,7 @@ export default function ReservationChatWidget() {
                           <button
                             type="submit"
                             disabled={isSending || !inputValue}
-                            className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition hover:bg-terracotta disabled:opacity-40"
+                            className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
                           >
                             Continue
                           </button>
@@ -333,30 +363,45 @@ export default function ReservationChatWidget() {
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder="Type your answer..."
                             disabled={isSending}
-                            className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 px-4 py-3 text-base text-roasted-coffee outline-none focus:border-brushed-brass disabled:opacity-60"
+                            className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
                             style={{ boxSizing: 'border-box' }}
                           />
                           <button
                             type="submit"
                             disabled={isSending || !inputValue.trim()}
-                            className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition hover:bg-terracotta disabled:opacity-40"
+                            className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
                           >
                             Send
                           </button>
                         </form>
                       )}
+
+                      {isAwaitingReply && (
+                        <div className="mt-4 flex items-center gap-2 text-sm text-roasted-coffee/50" aria-live="polite">
+                          <span className="flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.3s]" />
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.15s]" />
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-tamarind-bark/50" />
+                          </span>
+                          Thinking...
+                        </div>
+                      )}
                     </div>
 
                     {error && (
-                      <p className="mt-4 text-sm text-terracotta" role="alert">
-                        {error}
-                      </p>
+                      <div
+                        role="alert"
+                        className="mt-4 flex items-start gap-2 rounded-xl border border-alert/20 bg-alert/10 px-4 py-3 text-sm text-alert"
+                      >
+                        <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span>{error}</span>
+                      </div>
                     )}
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {isSending && !currentScreen && (
+              {isFirstLoad && (
                 <div className="flex h-full items-center justify-center">
                   <div className="flex items-center gap-1">
                     <span className="h-2 w-2 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.3s]" />
@@ -365,20 +410,20 @@ export default function ReservationChatWidget() {
                   </div>
                 </div>
               )}
-            </div>
+            </main>
 
             {/* Persistent bottom nav — only shown once away from the main menu */}
             {!isAtMainMenu && currentScreen && (
-              <div className="shrink-0 border-t border-roasted-coffee/10 bg-white px-5 py-3">
+              <nav className="shrink-0 border-t border-roasted-coffee/10 bg-surface px-5 py-3">
                 <button
                   onClick={goToMainMenu}
                   disabled={isSending}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-roasted-coffee/5 px-5 py-3.5 text-base font-medium text-roasted-coffee transition hover:bg-roasted-coffee/10 disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-roasted-coffee/5 px-5 py-3.5 text-base font-medium text-roasted-coffee transition-all duration-200 hover:bg-roasted-coffee/10 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
                 >
                   <HomeIcon className="h-5 w-5" />
                   Main menu
                 </button>
-              </div>
+              </nav>
             )}
           </motion.div>
         )}
