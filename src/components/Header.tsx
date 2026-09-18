@@ -84,7 +84,7 @@ export function Header() {
           />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8 font-sans text-sm tracking-wide uppercase text-xs">
+        <nav className="hidden md:flex items-center gap-8 font-display text-sm tracking-wide uppercase text-xs">
           {NAV.map((item) => {
             const isActive = pathname === item.href;
             return (

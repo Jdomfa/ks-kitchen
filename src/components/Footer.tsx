@@ -153,7 +153,7 @@ export function Footer() {
           {/* Logo + CTAs */}
           <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8 pb-12 border-b border-coconut-cream/10">
             <Image
-              src="/brand/main_logo.svg"
+              src="/brand/Footer_logo.svg"
               alt="K's Kitchen"
               width={120}
               height={92}
@@ -189,6 +189,8 @@ export function Footer() {
                 {siteConfig.address.line1}
                 <br />
                 {siteConfig.address.line2}
+                <br />
+                <Link href={siteConfig.address.map} target='_blank' rel='noopener noreferrer' className="underline decoration-dotted underline-offset-4 hover:text-coconut-cream hover:decoration-solid transition-colors">View on map</Link>
               </p>
             </div>
 

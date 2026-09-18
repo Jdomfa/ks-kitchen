@@ -33,7 +33,7 @@ export const menu: MenuTab[] = [
         id: 'comfort-meets-tradition',
         name: 'Comfort Meets Tradition',
         description:
-          '"Almost left out of our menu, this beloved dish never quite fit into our dosa or uthappam collection. But perhapsthat\'s exactly what makes it so special. Prepared the traditional way our ancestors would have approved of, it is soft, wholesome, nourishing, andwonderfully delicate—a timeless classic that deserves a place of its own" ',
+          '"Almost left out of our menu, this beloved dish never quite fit into our dosa or uthappam collection. But perhaps that\'s exactly what makes it so special. Prepared the traditional way our ancestors would have approved of, it is soft, wholesome, nourishing, and wonderfully delicate, a timeless classic that deserves a place of its own" ',
         image:
           'https://res.cloudinary.com/ansp9yim/image/upload/v1786913007/menu-bg-2.jpg',
         items: [
@@ -75,7 +75,7 @@ export const menu: MenuTab[] = [
             id: 'dosa-signature',
             name: 'Signature',
             description:
-              "Smashed potatoes, masala, roasted spices and curry leaf on the chef's own fermented batter.",
+              "Mashed potatoes, masala, roasted spices and curry leaf on the chef's own fermented batter.",
             price: 15000,
             tags: ['veggie'],
             image:
