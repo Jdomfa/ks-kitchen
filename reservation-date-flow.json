@@ -1,0 +1,39 @@
+{
+  "version": "7.1",
+  "screens": [
+    {
+      "id": "DATE_SCREEN",
+      "title": "Choose a date",
+      "terminal": true,
+      "success": true,
+      "data": {},
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "date_form",
+            "children": [
+              {
+                "type": "DatePicker",
+                "name": "date",
+                "label": "Reservation date",
+                "required": true
+              },
+              {
+                "type": "Footer",
+                "label": "Confirm date",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "date": "${form.date}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

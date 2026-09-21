@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     const text: string | undefined = message.text?.body?.trim();
     const buttonId: string | undefined =
-      message.interactive?.button_reply?.id;
+      message.interactive?.button_reply?.id ?? message.interactive?.list_reply?.id;
 
     const supabase = createServiceClient();
 
@@ -49,7 +49,15 @@ export async function POST(request: NextRequest) {
       .insert({ message_id: messageId });
 
     if (dupeError) {
-      return NextResponse.json({ status: 'duplicate' });
+      if (dupeError.code === '23505') {
+        return NextResponse.json({ status: 'duplicate' });
+      }
+
+      console.error('WhatsApp message tracking error:', dupeError);
+      return NextResponse.json(
+        { status: 'error' },
+        { status: 500 }
+      );
     }
 
     await markWhatsAppMessageRead(messageId);
@@ -71,7 +79,7 @@ export async function POST(request: NextRequest) {
       text: text ?? '',
       buttonId,
       state: currentState,
-      channel:'whatsapp',
+      channel: 'whatsapp',
       customerContact: from
     });
 
@@ -81,11 +89,21 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
     });
 
-    if (result.buttons && result.buttons.length > 0) {
-      await sendWhatsAppButtons(from, result.reply, result.buttons);
-    } else {
-      await sendWhatsAppMessage(from, result.reply);
-    }
+    const replyText = result.summary?.length
+  ? [
+      result.reply,
+      '',
+      ...result.summary.map(
+        ({ label, value }) => `*${label}:* ${value}`
+      ),
+    ].join('\n')
+  : result.reply;
+
+if (result.buttons && result.buttons.length > 0) {
+  await sendWhatsAppButtons(from, replyText, result.buttons);
+} else {
+  await sendWhatsAppMessage(from, replyText);
+}
 
     return NextResponse.json({ status: 'ok' });
   } catch (error) {

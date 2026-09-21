@@ -1,85 +1,112 @@
-// Thin JSON-RPC client for Odoo's external API.
-// Env vars intentionally left unset until the odoo.sh instance exists —
-// every call below will throw a clear config error until they're added.
+const ODOO_URL = process.env.ODOO_URL!;
+const ODOO_DB = process.env.ODOO_DB!;
+const ODOO_USERNAME = process.env.ODOO_USERNAME!;
+const ODOO_API_KEY = process.env.ODOO_API_KEY!;
 
-const ODOO_URL = process.env.ODOO_URL; // e.g. https://kskitchen.odoo.com
-const ODOO_DB = process.env.ODOO_DB;
-const ODOO_USERNAME = process.env.ODOO_USERNAME;
-const ODOO_API_KEY = process.env.ODOO_API_KEY;
+type JsonRpcResult<T> = { result?: T; error?: { message: string; data?: unknown } };
 
-let cachedUid: number | null = null;
-
-function assertConfigured() {
-  if (!ODOO_URL || !ODOO_DB || !ODOO_USERNAME || !ODOO_API_KEY) {
-    throw new Error(
-      'Odoo is not configured yet. Set ODOO_URL, ODOO_DB, ODOO_USERNAME, ODOO_API_KEY once the odoo.sh instance is live.'
-    );
-  }
-}
-
-async function jsonRpc(endpoint: string, params: Record<string, unknown>) {
-  assertConfigured();
-
-  const res = await fetch(`${ODOO_URL}${endpoint}`, {
+async function odooCall<T>(
+  model: string,
+  method: string,
+  args: unknown[],
+  kwargs: Record<string, unknown> = {}
+): Promise<T> {
+  const res = await fetch(`${ODOO_URL}/jsonrpc`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       jsonrpc: '2.0',
       method: 'call',
-      params,
-      id: Math.floor(Math.random() * 1e9),
+      params: {
+        service: 'object',
+        method: 'execute_kw',
+        args: [ODOO_DB, await getUid(), ODOO_API_KEY, model, method, args, kwargs],
+      },
     }),
   });
 
-  const json = await res.json();
-  if (json.error) {
-    throw new Error(json.error.data?.message || json.error.message || 'Odoo RPC error');
+  const data: JsonRpcResult<T> = await res.json();
+
+  if (data.error) {
+    throw new Error(`Odoo error: ${data.error.message}`);
   }
-  return json.result;
+
+  return data.result as T;
 }
 
-async function authenticate(): Promise<number> {
+let cachedUid: number | null = null;
+
+async function getUid(): Promise<number> {
   if (cachedUid) return cachedUid;
 
-  const uid = await jsonRpc('/jsonrpc', {
-    service: 'common',
-    method: 'authenticate',
-    args: [ODOO_DB, ODOO_USERNAME, ODOO_API_KEY, {}],
+  const res = await fetch(`${ODOO_URL}/jsonrpc`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'call',
+      params: {
+        service: 'common',
+        method: 'authenticate',
+        args: [ODOO_DB, ODOO_USERNAME, ODOO_API_KEY, {}],
+      },
+    }),
   });
 
-  if (!uid) throw new Error('Odoo authentication failed — check ODOO_USERNAME / ODOO_API_KEY.');
-  cachedUid = uid;
-  return uid;
+  const data = await res.json();
+
+  if (!data.result) {
+    throw new Error('Odoo authentication failed — check ODOO_DB, ODOO_USERNAME, ODOO_API_KEY.');
+  }
+
+  cachedUid = data.result as number;
+  return cachedUid;
 }
 
-export async function odooExecute<T = unknown>(
-  model: string,
-  method: string,
-  args: unknown[] = [],
-  kwargs: Record<string, unknown> = {}
-): Promise<T> {
-  const uid = await authenticate();
+export async function createHelpdeskTicket(args: {
+  customerName: string;
+  whatsappNumber: string;
+  message: string;
+}): Promise<number> {
+  const teamName = process.env.ODOO_HELPDESK_TEAM_NAME || 'WhatsApp Support';
 
-  return jsonRpc('/jsonrpc', {
-    service: 'object',
-    method: 'execute_kw',
-    args: [ODOO_DB, uid, ODOO_API_KEY, model, method, args, kwargs],
-  }) as Promise<T>;
+  const teamIds = await odooCall<number[]>('helpdesk.team', 'search', [
+    [['name', '=', teamName]],
+  ]);
+
+  if (!teamIds || teamIds.length === 0) {
+    throw new Error(`Odoo helpdesk team "${teamName}" not found.`);
+  }
+
+  const ticketId = await odooCall<number>('helpdesk.ticket', 'create', [
+    {
+      name: `WhatsApp: ${args.customerName}`,
+      description: args.message,
+      team_id: teamIds[0],
+      x_studio_whatsapp_number: args.whatsappNumber,
+    },
+  ]);
+
+  return ticketId;
 }
 
-export async function odooSearchRead<T = Record<string, unknown>>(
-  model: string,
-  domain: unknown[],
-  fields: string[],
-  opts: { limit?: number; order?: string } = {}
-): Promise<T[]> {
-  return odooExecute<T[]>(model, 'search_read', [domain, fields], opts);
+export async function logCustomerMessageOnTicket(ticketId: number, message: string): Promise<void> {
+  await odooCall('helpdesk.ticket', 'message_post', [ticketId], {
+    body: `<b>Customer:</b> ${message}`,
+    message_type: 'comment',
+  });
 }
 
-export async function odooCreate(model: string, values: Record<string, unknown>): Promise<number> {
-  return odooExecute<number>(model, 'create', [values]);
+export async function clearSendReplyFlag(ticketId: number): Promise<void> {
+  await odooCall('helpdesk.ticket', 'write', [
+    [ticketId],
+    { x_studio_send_reply_to_customer: false },
+  ]);
 }
 
-export async function odooWrite(model: string, ids: number[], values: Record<string, unknown>): Promise<boolean> {
-  return odooExecute<boolean>(model, 'write', [ids, values]);
+export async function logSentReplyOnTicket(ticketId: number, message: string): Promise<void> {
+  await odooCall('helpdesk.ticket', 'message_post', [ticketId], {
+    body: `<b>Sent to customer via WhatsApp:</b> ${message}`,
+    message_type: 'comment',
+  });
 }

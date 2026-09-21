@@ -191,7 +191,7 @@ export function Footer() {
                 {siteConfig.address.line2}
                 <br />
                 <Link href={siteConfig.address.map} target='_blank' rel='noopener noreferrer' className="underline decoration-dotted underline-offset-4 hover:text-coconut-cream hover:decoration-solid transition-colors">View on map</Link>
-              </p>
+              </p>  
             </div>
 
             <div className="font-sans text-sm">

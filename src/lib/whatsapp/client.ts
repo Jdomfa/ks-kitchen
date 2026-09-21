@@ -34,6 +34,34 @@ export async function sendWhatsAppButtons(
 ) {
   const url = `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/messages`;
 
+  const interactive =
+    buttons.length > 3
+      ? {
+          type: 'list',
+          body: { text: bodyText },
+          action: {
+            button: 'Choose an option',
+            sections: [
+              {
+                rows: buttons.slice(0, 10).map((b) => ({
+                  id: b.id,
+                  title: b.title.slice(0, 24),
+                })),
+              },
+            ],
+          },
+        }
+      : {
+          type: 'button',
+          body: { text: bodyText },
+          action: {
+            buttons: buttons.map((b) => ({
+              type: 'reply',
+              reply: { id: b.id, title: b.title.slice(0, 20) },
+            })),
+          },
+        };
+
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -44,16 +72,7 @@ export async function sendWhatsAppButtons(
       messaging_product: 'whatsapp',
       to,
       type: 'interactive',
-      interactive: {
-        type: 'button',
-        body: { text: bodyText },
-        action: {
-          buttons: buttons.map((b) => ({
-            type: 'reply',
-            reply: { id: b.id, title: b.title },
-          })),
-        },
-      },
+      interactive,
     }),
   });
 
