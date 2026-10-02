@@ -3,35 +3,37 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getTablesConfig, validateAssignment } from '@/lib/reservations/tables';
+import { createSlotReservation } from '@/lib/reservations/slots';
 
 const VALID_STATUSES = new Set(['pending', 'confirmed', 'completed', 'cancelled', 'no_show']);
 
 // ── Create Reservation ───────────────────────────────────────
+//
+// Deliberately routed through the same createSlotReservation() used
+// by WhatsApp and the website, rather than a direct table insert —
+// this is the one canonical path, so manual dashboard entries are
+// held to the exact same availability rules as every other channel
+// (no staff override, per team decision).
+
 
 export async function createReservation(formData: FormData) {
-  const supabase = await createClient();
-
   const name = String(formData.get('name') || '').trim();
-  const email = String(formData.get('email') || '').trim() || null;
-  const phone = String(formData.get('phone') || '').trim() || null;
+  const phone = String(formData.get('phone') || '').trim() || undefined;
   const party_size = Number(formData.get('party_size') || 0);
   const reservation_date = String(formData.get('reservation_date') || '');
   const reservation_time = String(formData.get('reservation_time') || '');
-  const note = String(formData.get('note') || '').trim() || null;
-  const status = String(formData.get('status') || 'pending');
 
-  const { error } = await supabase.from('reservations').insert({
+  const result = (await createSlotReservation({
     name,
-    email,
     phone,
     party_size,
-    reservation_date,
-    reservation_time,
-    note,
-    status,
-  });
+    date: reservation_date,
+    time: reservation_time,
+  })) as { success: boolean; error?: string; reason?: string; available_covers?: number };
 
-  if (error) throw new Error(error.message);
+  if (!result.success) {
+    throw new Error(result.error ?? 'Not enough availability for that time.');
+  }
 
   revalidatePath('/dashboard/reservations');
 }

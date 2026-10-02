@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { PlayCircle, ChevronRight } from 'lucide-react';
+import { PlayCircle, ChevronRight, ArrowLeftRight } from 'lucide-react';
 import { menu, MenuItem } from '@/lib/menu-data-trial';
 import { DietaryTags } from './DietaryIcons';
 import { BrandPattern } from './BrandPattern';
@@ -44,10 +44,36 @@ export function MenuSectionTrial() {
     item: MenuItem;
     categoryImage?: string;
   } | null>(null);
+  const [showSwitcher, setShowSwitcher] = useState(false);
   const active = menu.find((t) => t.id === activeTab)!;
+  const otherTab = menu.find((t) => t.id !== activeTab) ?? menu[0];
+
+  const sectionRef = useRef<HTMLElement>(null);
+  const selectorRef = useRef<HTMLDivElement>(null);
+
+  // Shows the quick-switch button once the tab selector itself has
+  // scrolled out of view — no point offering a shortcut to something
+  // already on screen.
+  useEffect(() => {
+    const target = selectorRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowSwitcher(!entry.isIntersecting),
+      { rootMargin: '-80px 0px 0px 0px' } // small buffer so it doesn't flicker right at the edge
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  function handleSwitchTab() {
+    setActiveTab(otherTab.id);
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   return (
-    <section className="relative overflow-hidden">
+    <section ref={sectionRef} className="relative overflow-hidden">
       {/* Hero — cream, with faint brand motif */}
       <div className="relative mx-auto max-w-5xl px-6 pt-20 pb-14">
         <BrandPattern
@@ -71,7 +97,7 @@ export function MenuSectionTrial() {
           </p>
         </motion.div>
 
-        <div className="relative flex justify-center gap-3 mt-12">
+        <div ref={selectorRef} className="relative flex justify-center gap-3 mt-12">
           {menu.map((tab) => (
             <button
               key={tab.id}
@@ -226,6 +252,27 @@ export function MenuSectionTrial() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Quick-switch floating button — appears once the tab selector has
+          scrolled out of view, lets you jump to the other tab without
+          scrolling back up. Bottom-left deliberately, since the site's
+          chat launcher already occupies bottom-right. */}
+      <AnimatePresence>
+        {showSwitcher && (
+          <motion.button
+            onClick={handleSwitchTab}
+            initial={{ opacity: 0, y: 16, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.92 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+            className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full bg-clay-pot px-5 py-3 text-sm font-sans tracking-wide text-coconut-cream shadow-lg transition-colors hover:bg-terracotta"
+          >
+            <ArrowLeftRight className="h-4 w-4" strokeWidth={1.8} />
+            View {otherTab.label}
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <VideoModal
         open={videoOpen}

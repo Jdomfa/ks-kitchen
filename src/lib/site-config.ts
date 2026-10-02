@@ -1,6 +1,6 @@
 // PLACEHOLDER — replace with K's Kitchen's real contact details before launch.
 export const siteConfig = {
-  whatsappNumber: "234 707 037 7712", // digits only, country code, no leading +
+  whatsappNumber: "2347070377712", // digits only, country code, no leading +
   orderEmail: "orders@ks.kitchen",
   address: {
     line1: "Cino's Square, 39 Onikoyi Rd, Ikoyi",

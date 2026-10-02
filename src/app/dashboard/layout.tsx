@@ -6,6 +6,11 @@ import { usePathname } from 'next/navigation';
 
 const navigation = [
   { href: '/dashboard', label: 'Overview', icon: 'grid' },
+  {
+    href: '/dashboard/odoo-slots',
+    label: 'Odoo Slots',
+    icon: 'database',
+  },
   { href: '/dashboard/reservations', label: 'Reservations', icon: 'calendar' },
   { href: '/dashboard/menu', label: 'Menu', icon: 'utensils' },
   { href: '/dashboard/store', label: 'Store', icon: 'store' },

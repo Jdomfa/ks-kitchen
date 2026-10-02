@@ -1,93 +1,11 @@
 import { createServiceClient } from '@/lib/supabase/service';
-import { checkAvailability } from './availability';
-
-export async function checkReservationAvailability(args: {
-  date: string;
-  time: string;
-  party_size: number;
-}) {
-  return checkAvailability({
-    date: args.date,
-    time: args.time,
-    partySize: args.party_size,
-  });
-}
-
-export async function createReservation(args: {
-  name: string;
-  email?: string;
-  phone?: string;
-  party_size: number;
-  date: string;
-  time: string;
-  note?: string;
-}) {
-  const supabase = await createServiceClient();
-
-  /*
-   * The database function performs the final availability
-   * check and insertion atomically.
-   */
-
-  const { data, error } = await supabase.rpc(
-    'create_reservation_atomic',
-    {
-      p_name: args.name,
-      p_email: args.email ?? null,
-      p_phone: args.phone ?? null,
-      p_party_size: args.party_size,
-      p_reservation_date: args.date,
-      p_reservation_time: args.time,
-      p_note: args.note ?? null,
-    }
-  );
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
-}
+import { deleteReservationFromOdoo } from '@/lib/odoo/client';
 
 export async function getReservationByCode(code: string) {
   const supabase = createServiceClient();
 
   const { data, error } = await supabase.rpc('get_reservation_by_code', {
     p_code: code,
-  });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
-}
-
-export async function cancelReservationByCode(code: string) {
-  const supabase = createServiceClient();
-
-  const { data, error } = await supabase.rpc('cancel_reservation_atomic', {
-    p_code: code,
-  });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
-}
-
-export async function modifyReservationByCode(
-  code: string,
-  date: string,
-  time: string
-) {
-  const supabase = createServiceClient();
-
-  const { data, error } = await supabase.rpc('modify_reservation_atomic', {
-    p_code: code,
-    p_new_date: date,
-    p_new_time: time,
   });
 
   if (error) {
@@ -109,4 +27,38 @@ export async function getReservationByPhone(phone: string) {
   }
 
   return data;
+}
+
+export async function cancelReservationByCode(code: string) {
+  const supabase = createServiceClient();
+
+  /*
+   * Fetch the linked Odoo event ID before cancelling — the RPC's
+   * own response doesn't include it, and matching the same
+   * upper/trim normalization the RPC uses internally so this finds
+   * the same row it's about to cancel.
+   */
+  const { data: existing } = await supabase
+    .from('reservations')
+    .select('odoo_event_id')
+    .eq('reservation_code', code.trim().toUpperCase())
+    .maybeSingle();
+
+  const { data, error } = await supabase.rpc('cancel_reservation_atomic', {
+    p_code: code,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const result = data as { success: boolean; error?: string };
+
+  if (result.success && existing?.odoo_event_id) {
+    deleteReservationFromOdoo(existing.odoo_event_id).catch((err) => {
+      console.error('Failed to delete cancelled reservation from Odoo:', err);
+    });
+  }
+
+  return result;
 }
