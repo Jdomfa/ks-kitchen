@@ -4,9 +4,8 @@ import {
 } from "next/server";
 
 import {
-  findAvailableReservationTimes,
-} from "@/lib/odoo/placeholder";
-
+  getBookableReservationTimes,
+} from "@/lib/odoo/reservation-allocation";
 export const dynamic =
   "force-dynamic";
 
@@ -65,7 +64,7 @@ export async function GET(
     }
 
     const times =
-      await findAvailableReservationTimes(
+      await getBookableReservationTimes(
         date,
         partySize
       );
