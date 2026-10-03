@@ -1749,31 +1749,23 @@ async function handleReservationConfirm(
     result.success
   ) {
     sendReservationConfirmations({
-      name,
+  name,
+  phone,
+  partySize,
+  date,
+  time,
 
-      phone,
+  reservationCode:
+    result.reservationCode,
 
-      partySize,
-
-      date,
-
-      time,
-
-      reservationCode:
-        result.reservationCode,
-
-      originChannel:
-        channel,
-    }).catch(
-      (
-        error
-      ) => {
-        console.error(
-          "Reservation confirmation send failed:",
-          error
-        );
-      }
-    );
+  originChannel:
+    channel,
+}).catch((error) => {
+  console.error(
+    'Reservation confirmation send failed:',
+    error
+  );
+});
 
     const codeLine =
       result.reservationCode

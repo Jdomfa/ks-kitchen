@@ -1,136 +1,112 @@
 const GRAPH_VERSION =
-  process.env.WHATSAPP_GRAPH_VERSION || "v21.0";
+  process.env.WHATSAPP_GRAPH_VERSION ||
+  'v21.0';
 
 const PHONE_NUMBER_ID =
-  process.env.WHATSAPP_PHONE_NUMBER_ID;
+  process.env.WHATSAPP_PHONE_NUMBER_ID!;
 
 const ACCESS_TOKEN =
-  process.env.WHATSAPP_ACCESS_TOKEN;
+  process.env.WHATSAPP_ACCESS_TOKEN!;
 
-/* ============================================================
- * Types
- * ========================================================== */
+type WhatsAppApiResponse = {
+  messaging_product?: string;
 
-export type WhatsAppTemplateParameter =
-  | {
-      type: "text";
-      text: string;
-    }
-  | {
-      type: "currency";
-      currency: {
-        fallback_value: string;
-        code: string;
-        amount_1000: number;
-      };
-    }
-  | {
-      type: "date_time";
-      date_time: {
-        fallback_value: string;
-      };
-    };
+  contacts?: {
+    input: string;
+    wa_id: string;
+  }[];
 
-export type WhatsAppTemplateComponent = {
-  type:
-    | "header"
-    | "body"
-    | "button";
+  messages?: {
+    id: string;
+    message_status?: string;
+  }[];
 
-  sub_type?:
-    | "url"
-    | "quick_reply";
-
-  index?: string;
-
-  parameters:
-    WhatsAppTemplateParameter[];
+  error?: {
+    message: string;
+    type?: string;
+    code?: number;
+    error_subcode?: number;
+    fbtrace_id?: string;
+  };
 };
 
-/* ============================================================
- * Configuration
- * ========================================================== */
+function assertWhatsAppConfig() {
+  const missing: string[] = [];
 
-function getWhatsAppConfig() {
   if (!PHONE_NUMBER_ID) {
-    throw new Error(
-      "WHATSAPP_PHONE_NUMBER_ID is not configured."
+    missing.push(
+      'WHATSAPP_PHONE_NUMBER_ID'
     );
   }
 
   if (!ACCESS_TOKEN) {
-    throw new Error(
-      "WHATSAPP_ACCESS_TOKEN is not configured."
+    missing.push(
+      'WHATSAPP_ACCESS_TOKEN'
     );
   }
 
-  return {
-    url:
-      `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/messages`,
-
-    accessToken:
-      ACCESS_TOKEN,
-  };
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing WhatsApp environment variables: ${missing.join(
+        ', '
+      )}`
+    );
+  }
 }
-
-/* ============================================================
- * Phone normalization
- * ========================================================== */
 
 export function normalizeWhatsAppRecipient(
   phone: string
 ): string {
-  const digits =
-    phone.replace(/\D/g, "");
-
-  if (!digits) {
-    throw new Error(
-      "WhatsApp recipient phone number is empty."
+  let digits =
+    phone.replace(
+      /\D/g,
+      ''
     );
-  }
 
   /**
-   * Nigerian local number:
-   *
+   * Nigerian local format:
    * 08012345678
-   * ->
+   *
+   * becomes:
    * 2348012345678
    */
   if (
     digits.length === 11 &&
-    digits.startsWith("0")
+    digits.startsWith('0')
   ) {
-    return `234${digits.slice(1)}`;
+    digits =
+      `234${digits.slice(
+        1
+      )}`;
   }
 
   return digits;
 }
 
-/* ============================================================
- * Generic Graph request
- * ========================================================== */
-
 async function sendWhatsAppRequest(
-  payload: Record<string, unknown>
-) {
-  const {
-    url,
-    accessToken,
-  } = getWhatsAppConfig();
+  payload: Record<
+    string,
+    unknown
+  >
+): Promise<WhatsAppApiResponse> {
+  assertWhatsAppConfig();
+
+  const url =
+    `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/messages`;
 
   const response =
     await fetch(
       url,
       {
         method:
-          "POST",
+          'POST',
 
         headers: {
           Authorization:
-            `Bearer ${accessToken}`,
+            `Bearer ${ACCESS_TOKEN}`,
 
-          "Content-Type":
-            "application/json",
+          'Content-Type':
+            'application/json',
         },
 
         body:
@@ -140,75 +116,52 @@ async function sendWhatsAppRequest(
       }
     );
 
-  const responseText =
-    await response.text();
-
-  let responseBody:
-    unknown = null;
-
-  if (responseText) {
-    try {
-      responseBody =
-        JSON.parse(
-          responseText
-        );
-    } catch {
-      responseBody =
-        responseText;
-    }
-  }
+  const data =
+    (await response.json()) as WhatsAppApiResponse;
 
   if (!response.ok) {
     console.error(
-      "WhatsApp Graph API error:",
-      responseBody
+      'WhatsApp Graph API error:',
+      data
     );
 
     throw new Error(
-      `WhatsApp request failed (${response.status}): ${
-        typeof responseBody === "string"
-          ? responseBody
-          : JSON.stringify(
-              responseBody
-            )
-      }`
+      data.error?.message ||
+        `WhatsApp request failed with status ${response.status}`
     );
   }
 
-  return responseBody;
+  return data;
 }
 
 /* ============================================================
  * Plain text message
  * ========================================================== */
 
-export async function sendWhatsAppMessage(
-  to: string,
-  text: string
-) {
+export async function sendWhatsAppMessage({
+  to,
+  text,
+}: {
+  to: string;
+  text: string;
+}) {
   const recipient =
     normalizeWhatsAppRecipient(
       to
     );
 
-  if (!text.trim()) {
-    throw new Error(
-      "Cannot send an empty WhatsApp message."
-    );
-  }
-
   return sendWhatsAppRequest({
     messaging_product:
-      "whatsapp",
+      'whatsapp',
 
     recipient_type:
-      "individual",
+      'individual',
 
     to:
       recipient,
 
     type:
-      "text",
+      'text',
 
     text: {
       preview_url:
@@ -227,41 +180,31 @@ export async function sendWhatsAppMessage(
 export async function sendWhatsAppTemplate({
   to,
   templateName,
-  languageCode = "en",
-  components = [],
+  languageCode = 'en',
+  bodyParameters = [],
 }: {
   to: string;
-
   templateName: string;
-
   languageCode?: string;
-
-  components?:
-    WhatsAppTemplateComponent[];
+  bodyParameters?: string[];
 }) {
   const recipient =
     normalizeWhatsAppRecipient(
       to
     );
 
-  if (!templateName.trim()) {
-    throw new Error(
-      "WhatsApp template name is required."
-    );
-  }
-
   return sendWhatsAppRequest({
     messaging_product:
-      "whatsapp",
+      'whatsapp',
 
     recipient_type:
-      "individual",
+      'individual',
 
     to:
       recipient,
 
     type:
-      "template",
+      'template',
 
     template: {
       name:
@@ -272,11 +215,25 @@ export async function sendWhatsAppTemplate({
           languageCode,
       },
 
-      ...(components.length > 0
-        ? {
-            components,
-          }
-        : {}),
+      components: [
+        {
+          type:
+            'body',
+
+          parameters:
+            bodyParameters.map(
+              (
+                value
+              ) => ({
+                type:
+                  'text',
+
+                text:
+                  value,
+              })
+            ),
+        },
+      ],
     },
   });
 }
@@ -284,24 +241,15 @@ export async function sendWhatsAppTemplate({
 /* ============================================================
  * Reservation confirmation template
  *
- * Meta template:
+ * Template:
  *
- * Name:
  * reservation_confirmation
  *
- * Header:
- * Reservation Confirmed
- *
- * Body:
- *
- * Hi {{1}}, your reservation at K's Kitchen Gourmet is confirmed ✅
- *
- * Guests: {{2}}
- * Date: {{3}}
- * Time: {{4}}
- * Reservation code: {{5}}
- *
- * We look forward to welcoming you.
+ * {{1}} Customer name
+ * {{2}} Guest count
+ * {{3}} Date
+ * {{4}} Time
+ * {{5}} Reservation code
  * ========================================================== */
 
 export async function sendReservationConfirmationTemplate({
@@ -313,100 +261,35 @@ export async function sendReservationConfirmationTemplate({
   reservationCode,
 }: {
   to: string;
-
   name: string;
-
   partySize: number;
-
   date: string;
-
   time: string;
-
   reservationCode: string;
 }) {
   return sendWhatsAppTemplate({
     to,
 
     templateName:
-      "reservation_confirmation",
+      'reservation_confirmation',
 
     languageCode:
-      "en",
+      'en',
 
-    components: [
-      {
-        type:
-          "body",
-
-        parameters: [
-          {
-            type:
-              "text",
-
-            text:
-              name,
-          },
-
-          {
-            type:
-              "text",
-
-            text:
-              String(
-                partySize
-              ),
-          },
-
-          {
-            type:
-              "text",
-
-            text:
-              date,
-          },
-
-          {
-            type:
-              "text",
-
-            text:
-              time,
-          },
-
-          {
-            type:
-              "text",
-
-            text:
-              reservationCode,
-          },
-        ],
-      },
+    bodyParameters: [
+      name,
+      String(
+        partySize
+      ),
+      date,
+      time,
+      reservationCode,
     ],
   });
 }
 
 /* ============================================================
  * Reservation updated template
- *
- * Meta template:
- *
- * Name:
- * reservation_updated
- *
- * Header:
- * Reservation Updated
- *
- * Body:
- *
- * Hi {{1}}, your reservation at K's Kitchen Gourmet has been updated ✅
- *
- * Guests: {{2}}
- * New date: {{3}}
- * New time: {{4}}
- * Reservation code: {{5}}
- *
- * We look forward to welcoming you.
  * ========================================================== */
 
 export async function sendReservationUpdatedTemplate({
@@ -418,235 +301,114 @@ export async function sendReservationUpdatedTemplate({
   reservationCode,
 }: {
   to: string;
-
   name: string;
-
   partySize: number;
-
   date: string;
-
   time: string;
-
   reservationCode: string;
 }) {
   return sendWhatsAppTemplate({
     to,
 
     templateName:
-      "reservation_updated",
+      'reservation_updated',
 
     languageCode:
-      "en",
+      'en',
 
-    components: [
-      {
-        type:
-          "body",
-
-        parameters: [
-          {
-            type:
-              "text",
-
-            text:
-              name,
-          },
-
-          {
-            type:
-              "text",
-
-            text:
-              String(
-                partySize
-              ),
-          },
-
-          {
-            type:
-              "text",
-
-            text:
-              date,
-          },
-
-          {
-            type:
-              "text",
-
-            text:
-              time,
-          },
-
-          {
-            type:
-              "text",
-
-            text:
-              reservationCode,
-          },
-        ],
-      },
+    bodyParameters: [
+      name,
+      String(
+        partySize
+      ),
+      date,
+      time,
+      reservationCode,
     ],
   });
 }
 
 /* ============================================================
- * Interactive messages
+ * Buttons
  * ========================================================== */
 
-export async function sendWhatsAppButtons(
-  to: string,
-
-  bodyText: string,
-
+export async function sendWhatsAppButtons({
+  to,
+  body,
+  buttons,
+}: {
+  to: string;
+  body: string;
   buttons: {
     id: string;
     title: string;
-  }[]
-) {
+  }[];
+}) {
   const recipient =
     normalizeWhatsAppRecipient(
       to
     );
 
-  if (!bodyText.trim()) {
-    throw new Error(
-      "WhatsApp interactive message body cannot be empty."
-    );
-  }
-
-  if (
-    buttons.length ===
-    0
-  ) {
-    throw new Error(
-      "At least one WhatsApp button is required."
-    );
-  }
-
-  const interactive =
-    buttons.length > 3
-      ? {
-          type:
-            "list",
-
-          body: {
-            text:
-              bodyText,
-          },
-
-          action: {
-            button:
-              "Choose an option",
-
-            sections: [
-              {
-                title:
-                  "Options",
-
-                rows:
-                  buttons
-                    .slice(
-                      0,
-                      10
-                    )
-                    .map(
-                      (
-                        button
-                      ) => ({
-                        id:
-                          button.id,
-
-                        title:
-                          button.title.slice(
-                            0,
-                            24
-                          ),
-                      })
-                    ),
-              },
-            ],
-          },
-        }
-      : {
-          type:
-            "button",
-
-          body: {
-            text:
-              bodyText,
-          },
-
-          action: {
-            buttons:
-              buttons.map(
-                (
-                  button
-                ) => ({
-                  type:
-                    "reply",
-
-                  reply: {
-                    id:
-                      button.id,
-
-                    title:
-                      button.title.slice(
-                        0,
-                        20
-                      ),
-                  },
-                })
-              ),
-          },
-        };
-
   return sendWhatsAppRequest({
     messaging_product:
-      "whatsapp",
+      'whatsapp',
 
     recipient_type:
-      "individual",
+      'individual',
 
     to:
       recipient,
 
     type:
-      "interactive",
+      'interactive',
 
-    interactive,
+    interactive: {
+      type:
+        'button',
+
+      body: {
+        text:
+          body,
+      },
+
+      action: {
+        buttons:
+          buttons.map(
+            (
+              button
+            ) => ({
+              type:
+                'reply',
+
+              reply: {
+                id:
+                  button.id,
+
+                title:
+                  button.title,
+              },
+            })
+          ),
+      },
+    },
   });
 }
 
 /* ============================================================
- * Read receipt
+ * Mark incoming message as read
  * ========================================================== */
 
 export async function markWhatsAppMessageRead(
   messageId: string
 ) {
-  if (!messageId.trim()) {
-    return;
-  }
+  return sendWhatsAppRequest({
+    messaging_product:
+      'whatsapp',
 
-  try {
-    await sendWhatsAppRequest({
-      messaging_product:
-        "whatsapp",
+    status:
+      'read',
 
-      status:
-        "read",
-
-      message_id:
-        messageId,
-    });
-  } catch (
-    error
-  ) {
-    console.error(
-      "Failed to mark WhatsApp message as read:",
-      error
-    );
-  }
+    message_id:
+      messageId,
+  });
 }
