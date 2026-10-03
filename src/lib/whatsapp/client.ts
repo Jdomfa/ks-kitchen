@@ -1,6 +1,5 @@
 const GRAPH_VERSION =
-  process.env.WHATSAPP_GRAPH_VERSION ||
-  'v21.0';
+  process.env.WHATSAPP_GRAPH_VERSION || 'v21.0';
 
 const PHONE_NUMBER_ID =
   process.env.WHATSAPP_PHONE_NUMBER_ID!;
@@ -11,15 +10,15 @@ const ACCESS_TOKEN =
 type WhatsAppApiResponse = {
   messaging_product?: string;
 
-  contacts?: {
+  contacts?: Array<{
     input: string;
     wa_id: string;
-  }[];
+  }>;
 
-  messages?: {
+  messages?: Array<{
     id: string;
     message_status?: string;
-  }[];
+  }>;
 
   error?: {
     message: string;
@@ -29,6 +28,33 @@ type WhatsAppApiResponse = {
     fbtrace_id?: string;
   };
 };
+
+type WhatsAppTextArgs = {
+  to: string;
+  text: string;
+};
+
+type WhatsAppButton = {
+  id: string;
+  title: string;
+};
+
+type WhatsAppButtonsArgs = {
+  to: string;
+  body: string;
+  buttons: WhatsAppButton[];
+};
+
+type WhatsAppTemplateArgs = {
+  to: string;
+  templateName: string;
+  languageCode?: string;
+  bodyParameters?: string[];
+};
+
+/* ============================================================
+ * Config
+ * ========================================================== */
 
 function assertWhatsAppConfig() {
   const missing: string[] = [];
@@ -54,20 +80,21 @@ function assertWhatsAppConfig() {
   }
 }
 
+/* ============================================================
+ * Phone normalization
+ * ========================================================== */
+
 export function normalizeWhatsAppRecipient(
   phone: string
 ): string {
   let digits =
-    phone.replace(
-      /\D/g,
-      ''
-    );
+    phone.replace(/\D/g, '');
 
   /**
-   * Nigerian local format:
-   * 08012345678
+   * Nigeria:
    *
-   * becomes:
+   * 08012345678
+   * ->
    * 2348012345678
    */
   if (
@@ -75,19 +102,18 @@ export function normalizeWhatsAppRecipient(
     digits.startsWith('0')
   ) {
     digits =
-      `234${digits.slice(
-        1
-      )}`;
+      `234${digits.slice(1)}`;
   }
 
   return digits;
 }
 
+/* ============================================================
+ * Graph API request
+ * ========================================================== */
+
 async function sendWhatsAppRequest(
-  payload: Record<
-    string,
-    unknown
-  >
+  payload: Record<string, unknown>
 ): Promise<WhatsAppApiResponse> {
   assertWhatsAppConfig();
 
@@ -98,8 +124,7 @@ async function sendWhatsAppRequest(
     await fetch(
       url,
       {
-        method:
-          'POST',
+        method: 'POST',
 
         headers: {
           Authorization:
@@ -135,16 +160,68 @@ async function sendWhatsAppRequest(
 }
 
 /* ============================================================
- * Plain text message
+ * Text messages
+ *
+ * Supports BOTH:
+ *
+ * sendWhatsAppMessage({
+ *   to: phone,
+ *   text: message
+ * })
+ *
+ * AND old code:
+ *
+ * sendWhatsAppMessage(phone, message)
  * ========================================================== */
 
-export async function sendWhatsAppMessage({
-  to,
-  text,
-}: {
-  to: string;
-  text: string;
-}) {
+export function sendWhatsAppMessage(
+  args: WhatsAppTextArgs
+): Promise<WhatsAppApiResponse>;
+
+export function sendWhatsAppMessage(
+  to: string,
+  text: string
+): Promise<WhatsAppApiResponse>;
+
+export async function sendWhatsAppMessage(
+  argsOrTo:
+    | WhatsAppTextArgs
+    | string,
+
+  maybeText?: string
+): Promise<WhatsAppApiResponse> {
+  let to: string;
+  let text: string;
+
+  if (
+    typeof argsOrTo ===
+    'string'
+  ) {
+    to =
+      argsOrTo;
+
+    text =
+      maybeText ?? '';
+  } else {
+    to =
+      argsOrTo.to;
+
+    text =
+      argsOrTo.text;
+  }
+
+  if (!to) {
+    throw new Error(
+      'WhatsApp recipient is required.'
+    );
+  }
+
+  if (!text) {
+    throw new Error(
+      'WhatsApp message text is required.'
+    );
+  }
+
   const recipient =
     normalizeWhatsAppRecipient(
       to
@@ -174,7 +251,7 @@ export async function sendWhatsAppMessage({
 }
 
 /* ============================================================
- * Generic template sender
+ * Generic template
  * ========================================================== */
 
 export async function sendWhatsAppTemplate({
@@ -182,16 +259,47 @@ export async function sendWhatsAppTemplate({
   templateName,
   languageCode = 'en',
   bodyParameters = [],
-}: {
-  to: string;
-  templateName: string;
-  languageCode?: string;
-  bodyParameters?: string[];
-}) {
+}: WhatsAppTemplateArgs): Promise<WhatsAppApiResponse> {
+  if (!to) {
+    throw new Error(
+      'WhatsApp recipient is required.'
+    );
+  }
+
+  if (!templateName) {
+    throw new Error(
+      'WhatsApp template name is required.'
+    );
+  }
+
   const recipient =
     normalizeWhatsAppRecipient(
       to
     );
+
+  const components =
+    bodyParameters.length >
+    0
+      ? [
+          {
+            type:
+              'body',
+
+            parameters:
+              bodyParameters.map(
+                (
+                  value
+                ) => ({
+                  type:
+                    'text',
+
+                  text:
+                    value,
+                })
+              ),
+          },
+        ]
+      : [];
 
   return sendWhatsAppRequest({
     messaging_product:
@@ -215,25 +323,12 @@ export async function sendWhatsAppTemplate({
           languageCode,
       },
 
-      components: [
-        {
-          type:
-            'body',
-
-          parameters:
-            bodyParameters.map(
-              (
-                value
-              ) => ({
-                type:
-                  'text',
-
-                text:
-                  value,
-              })
-            ),
-        },
-      ],
+      ...(components.length >
+      0
+        ? {
+            components,
+          }
+        : {}),
     },
   });
 }
@@ -241,12 +336,10 @@ export async function sendWhatsAppTemplate({
 /* ============================================================
  * Reservation confirmation template
  *
- * Template:
- *
  * reservation_confirmation
  *
  * {{1}} Customer name
- * {{2}} Guest count
+ * {{2}} Guests
  * {{3}} Date
  * {{4}} Time
  * {{5}} Reservation code
@@ -266,7 +359,7 @@ export async function sendReservationConfirmationTemplate({
   date: string;
   time: string;
   reservationCode: string;
-}) {
+}): Promise<WhatsAppApiResponse> {
   return sendWhatsAppTemplate({
     to,
 
@@ -278,18 +371,22 @@ export async function sendReservationConfirmationTemplate({
 
     bodyParameters: [
       name,
+
       String(
         partySize
       ),
+
       date,
+
       time,
+
       reservationCode,
     ],
   });
 }
 
 /* ============================================================
- * Reservation updated template
+ * Reservation update template
  * ========================================================== */
 
 export async function sendReservationUpdatedTemplate({
@@ -306,7 +403,7 @@ export async function sendReservationUpdatedTemplate({
   date: string;
   time: string;
   reservationCode: string;
-}) {
+}): Promise<WhatsAppApiResponse> {
   return sendWhatsAppTemplate({
     to,
 
@@ -318,32 +415,117 @@ export async function sendReservationUpdatedTemplate({
 
     bodyParameters: [
       name,
+
       String(
         partySize
       ),
+
       date,
+
       time,
+
       reservationCode,
     ],
   });
 }
 
 /* ============================================================
- * Buttons
+ * Interactive buttons
+ *
+ * Supports new style:
+ *
+ * sendWhatsAppButtons({
+ *   to,
+ *   body,
+ *   buttons
+ * })
+ *
+ * AND old style:
+ *
+ * sendWhatsAppButtons(
+ *   to,
+ *   body,
+ *   buttons
+ * )
  * ========================================================== */
 
-export async function sendWhatsAppButtons({
-  to,
-  body,
-  buttons,
-}: {
-  to: string;
-  body: string;
-  buttons: {
-    id: string;
-    title: string;
-  }[];
-}) {
+export function sendWhatsAppButtons(
+  args: WhatsAppButtonsArgs
+): Promise<WhatsAppApiResponse>;
+
+export function sendWhatsAppButtons(
+  to: string,
+  body: string,
+  buttons: WhatsAppButton[]
+): Promise<WhatsAppApiResponse>;
+
+export async function sendWhatsAppButtons(
+  argsOrTo:
+    | WhatsAppButtonsArgs
+    | string,
+
+  maybeBody?: string,
+
+  maybeButtons?: WhatsAppButton[]
+): Promise<WhatsAppApiResponse> {
+  let to: string;
+  let body: string;
+  let buttons: WhatsAppButton[];
+
+  if (
+    typeof argsOrTo ===
+    'string'
+  ) {
+    to =
+      argsOrTo;
+
+    body =
+      maybeBody ?? '';
+
+    buttons =
+      maybeButtons ?? [];
+  } else {
+    to =
+      argsOrTo.to;
+
+    body =
+      argsOrTo.body;
+
+    buttons =
+      argsOrTo.buttons;
+  }
+
+  if (!to) {
+    throw new Error(
+      'WhatsApp recipient is required.'
+    );
+  }
+
+  if (!body) {
+    throw new Error(
+      'WhatsApp button message body is required.'
+    );
+  }
+
+  if (
+    buttons.length ===
+    0
+  ) {
+    throw new Error(
+      'At least one WhatsApp button is required.'
+    );
+  }
+
+  /**
+   * WhatsApp reply-button messages support
+   * a maximum of 3 reply buttons.
+   */
+  const safeButtons =
+    buttons.slice(
+      0,
+      3
+    );
+
   const recipient =
     normalizeWhatsAppRecipient(
       to
@@ -373,7 +555,7 @@ export async function sendWhatsAppButtons({
 
       action: {
         buttons:
-          buttons.map(
+          safeButtons.map(
             (
               button
             ) => ({
@@ -395,12 +577,18 @@ export async function sendWhatsAppButtons({
 }
 
 /* ============================================================
- * Mark incoming message as read
+ * Mark inbound message read
  * ========================================================== */
 
 export async function markWhatsAppMessageRead(
   messageId: string
-) {
+): Promise<WhatsAppApiResponse> {
+  if (!messageId) {
+    throw new Error(
+      'WhatsApp message ID is required.'
+    );
+  }
+
   return sendWhatsAppRequest({
     messaging_product:
       'whatsapp',
