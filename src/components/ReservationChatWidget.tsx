@@ -3,8 +3,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-type FlowButton = { id: string; title: string; url?: string };
-type SummaryRow = { label: string; value: string };
+type FlowButton = {
+  id: string;
+  title: string;
+  url?: string;
+};
+
+type SummaryRow = {
+  label: string;
+  value: string;
+};
 
 type FlowState = {
   step: string;
@@ -20,209 +28,759 @@ type Screen = {
   session: FlowState;
 };
 
-const INITIAL_SESSION: FlowState = { step: 'MAIN_MENU', draft: {} };
+const INITIAL_SESSION: FlowState = {
+  step: 'MAIN_MENU',
+  draft: {},
+};
 
-function WhatsAppIcon({ className }: { className?: string }) {
+/* ============================================================
+ * Icons
+ * ========================================================== */
+
+function WhatsAppIcon({
+  className,
+}: {
+  className?: string;
+}) {
   return (
-    <svg viewBox="0 0 32 32" className={className} fill="currentColor" aria-hidden="true">
+    <svg
+      viewBox="0 0 32 32"
+      className={className}
+      fill="currentColor"
+      aria-hidden="true"
+    >
       <path d="M16.02 3C9.4 3 4 8.37 4 15c0 2.36.68 4.56 1.86 6.42L4 29l7.77-1.83A11.9 11.9 0 0 0 16.02 27C22.63 27 28 21.63 28 15S22.63 3 16.02 3Zm0 21.7c-1.98 0-3.83-.55-5.4-1.5l-.39-.23-4.61 1.09 1.13-4.5-.25-.4A9.63 9.63 0 0 1 5.3 15c0-5.9 4.8-10.7 10.72-10.7S26.74 9.1 26.74 15 21.94 24.7 16.02 24.7Zm5.86-8.02c-.32-.16-1.9-.94-2.2-1.04-.29-.1-.5-.16-.72.16-.21.32-.82 1.04-1.01 1.25-.19.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.6-.95-.85-1.59-1.9-1.78-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.72-1.75-.99-2.4-.26-.62-.53-.54-.72-.55h-.62c-.21 0-.56.08-.85.4-.29.32-1.12 1.1-1.12 2.68 0 1.58 1.15 3.1 1.31 3.32.16.21 2.26 3.5 5.5 4.9.77.33 1.37.53 1.84.68.77.24 1.47.21 2.03.13.62-.09 1.9-.78 2.17-1.53.27-.75.27-1.4.19-1.53-.08-.14-.29-.21-.61-.37Z" />
     </svg>
   );
 }
 
-function HomeIcon({ className }: { className?: string }) {
+function HomeIcon({
+  className,
+}: {
+  className?: string;
+}) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M3 12l9-9 9 9M5 10v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-6h2v6a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V10" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
+      <path
+        d="M3 12l9-9 9 9M5 10v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-6h2v6a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
-function AlertIcon({ className }: { className?: string }) {
+function AlertIcon({
+  className,
+}: {
+  className?: string;
+}) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M12 9v4M12 17h.01M10.29 3.86l-8.4 14.55A1 1 0 0 0 2.7 20h18.6a1 1 0 0 0 .86-1.59l-8.4-14.55a1 1 0 0 0-1.72 0Z" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 9v4M12 17h.01M10.29 3.86l-8.4 14.55A1 1 0 0 0 2.7 20h18.6a1 1 0 0 0 .86-1.59l-8.4-14.55a1 1 0 0 0-1.72 0Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
-function isWhatsAppUrl(url?: string) {
-  return !!url && url.includes('wa.me');
+/* ============================================================
+ * Helpers
+ * ========================================================== */
+
+function isWhatsAppUrl(
+  url?: string
+) {
+  return (
+    !!url &&
+    url.includes('wa.me')
+  );
 }
+
+function formatLocalDateISO(
+  date: Date
+) {
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(
+      date.getMonth() + 1
+    ).padStart(
+      2,
+      '0'
+    );
+
+  const day =
+    String(
+      date.getDate()
+    ).padStart(
+      2,
+      '0'
+    );
+
+  return `${year}-${month}-${day}`;
+}
+
+function getTodayISO() {
+  return formatLocalDateISO(
+    new Date()
+  );
+}
+
+function getMaxBookingDateISO() {
+  const date =
+    new Date();
+
+  /**
+   * Today + 6 days =
+   * 7 calendar days total.
+   */
+  date.setDate(
+    date.getDate() + 6
+  );
+
+  return formatLocalDateISO(
+    date
+  );
+}
+
+/* ============================================================
+ * Component
+ * ========================================================== */
 
 export default function ReservationChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [screens, setScreens] = useState<Screen[]>([]);
-  const [screenIndex, setScreenIndex] = useState(0);
-  const [inputValue, setInputValue] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [direction, setDirection] = useState(1);
+  const [
+    isOpen,
+    setIsOpen,
+  ] =
+    useState(
+      false
+    );
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const [
+    screens,
+    setScreens,
+  ] =
+    useState<
+      Screen[]
+    >(
+      []
+    );
 
-  const currentScreen = screens[screenIndex];
-  const isAtMainMenu = currentScreen?.session.step === 'MAIN_MENU';
-  const isFirstLoad = isSending && screens.length === 0;
-  const isAwaitingReply = isSending && screens.length > 0;
+  const [
+    screenIndex,
+    setScreenIndex,
+  ] =
+    useState(
+      0
+    );
 
-  useEffect(() => {
-    function handleOpenChat() {
-      setIsOpen(true);
-    }
-    window.addEventListener('kk:open-chat', handleOpenChat);
-    return () => window.removeEventListener('kk:open-chat', handleOpenChat);
-  }, []);
+  const [
+    inputValue,
+    setInputValue,
+  ] =
+    useState(
+      ''
+    );
 
-  useEffect(() => {
-    if (isOpen && !hasLoaded) {
-      setHasLoaded(true);
-      loadGreeting();
-    }
-  }, [isOpen, hasLoaded]);
+  const [
+    isSending,
+    setIsSending,
+  ] =
+    useState(
+      false
+    );
 
-  useEffect(() => {
-    if (isOpen) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      // Move focus into the dialog for keyboard and screen-reader users.
+  const [
+    error,
+    setError,
+  ] =
+    useState<
+      string | null
+    >(
+      null
+    );
+
+  const [
+    hasLoaded,
+    setHasLoaded,
+  ] =
+    useState(
+      false
+    );
+
+  const [
+    direction,
+    setDirection,
+  ] =
+    useState(
+      1
+    );
+
+  const inputRef =
+    useRef<HTMLInputElement>(
+      null
+    );
+
+  const dialogRef =
+    useRef<HTMLDivElement>(
+      null
+    );
+
+  const currentScreen =
+    screens[
+      screenIndex
+    ];
+
+  const isAtMainMenu =
+    currentScreen
+      ?.session
+      .step ===
+    'MAIN_MENU';
+
+  const isFirstLoad =
+    isSending &&
+    screens.length ===
+      0;
+
+  const isAwaitingReply =
+    isSending &&
+    screens.length >
+      0;
+
+  /**
+   * Split normal flow choices from URL actions.
+   *
+   * This allows the date picker and WhatsApp CTA
+   * to render at the same time.
+   */
+  const actionButtons =
+    currentScreen
+      ?.buttons ??
+    [];
+
+  const urlButtons =
+    actionButtons.filter(
+      (
+        button
+      ) =>
+        Boolean(
+          button.url
+        )
+    );
+
+  const choiceButtons =
+    actionButtons.filter(
+      (
+        button
+      ) =>
+        !button.url
+    );
+
+  const shouldShowDateInput =
+    currentScreen
+      ?.inputType ===
+    'date';
+
+  const shouldShowTextInput =
+    Boolean(
+      currentScreen
+    ) &&
+    !shouldShowDateInput &&
+    choiceButtons
+      .length ===
+      0;
+
+  /* ============================================================
+   * External open event
+   * ========================================================== */
+
+  useEffect(
+    () => {
+      function handleOpenChat() {
+        setIsOpen(
+          true
+        );
+      }
+
+      window.addEventListener(
+        'kk:open-chat',
+        handleOpenChat
+      );
+
+      return () =>
+        window.removeEventListener(
+          'kk:open-chat',
+          handleOpenChat
+        );
+    },
+    []
+  );
+
+  /* ============================================================
+   * Load greeting
+   * ========================================================== */
+
+  useEffect(
+    () => {
+      if (
+        isOpen &&
+        !hasLoaded
+      ) {
+        setHasLoaded(
+          true
+        );
+
+        loadGreeting();
+      }
+    },
+    [
+      isOpen,
+      hasLoaded,
+    ]
+  );
+
+  /* ============================================================
+   * Lock document scrolling
+   * ========================================================== */
+
+  useEffect(
+    () => {
+      if (
+        !isOpen
+      ) {
+        return;
+      }
+
+      const original =
+        document.body
+          .style
+          .overflow;
+
+      document.body.style.overflow =
+        'hidden';
+
       dialogRef.current?.focus();
+
       return () => {
-        document.body.style.overflow = original;
+        document.body.style.overflow =
+          original;
       };
-    }
-  }, [isOpen]);
+    },
+    [
+      isOpen,
+    ]
+  );
 
-  useEffect(() => {
-    if (!isOpen) return;
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') handleClose();
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  /* ============================================================
+   * Escape key
+   * ========================================================== */
 
-  useEffect(() => {
-    if (!currentScreen?.buttons) {
-      inputRef.current?.focus();
-    }
-  }, [screenIndex]);
+  useEffect(
+    () => {
+      if (
+        !isOpen
+      ) {
+        return;
+      }
+
+      function handleKeyDown(
+        e: KeyboardEvent
+      ) {
+        if (
+          e.key ===
+          'Escape'
+        ) {
+          handleClose();
+        }
+      }
+
+      window.addEventListener(
+        'keydown',
+        handleKeyDown
+      );
+
+      return () =>
+        window.removeEventListener(
+          'keydown',
+          handleKeyDown
+        );
+    },
+    [
+      isOpen,
+    ]
+  );
+
+  /* ============================================================
+   * Text-input focus
+   * ========================================================== */
+
+  useEffect(
+    () => {
+      if (
+        shouldShowTextInput
+      ) {
+        inputRef.current?.focus();
+      }
+    },
+    [
+      screenIndex,
+      shouldShowTextInput,
+    ]
+  );
+
+  /* ============================================================
+   * Initial API load
+   * ========================================================== */
 
   async function loadGreeting() {
-    setIsSending(true);
+    setIsSending(
+      true
+    );
+
     try {
-      const res = await fetch('/api/ai/reservation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: '', session: INITIAL_SESSION }),
-      });
-      const data = await res.json();
+      const res =
+        await fetch(
+          '/api/ai/reservation',
+          {
+            method:
+              'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify(
+                {
+                  message:
+                    '',
+
+                  session:
+                    INITIAL_SESSION,
+                }
+              ),
+          }
+        );
+
+      const data =
+        await res.json();
 
       setScreens([
         {
-          reply: data.message,
-          buttons: data.buttons,
-          inputType: data.inputType,
-          summary: data.summary,
-          session: data.session ?? INITIAL_SESSION,
+          reply:
+            data.message,
+
+          buttons:
+            data.buttons,
+
+          inputType:
+            data.inputType,
+
+          summary:
+            data.summary,
+
+          session:
+            data.session ??
+            INITIAL_SESSION,
         },
       ]);
-      setScreenIndex(0);
-    } catch (err) {
-      console.error('Greeting fetch error:', err);
+
+      setScreenIndex(
+        0
+      );
+    } catch (
+      err
+    ) {
+      console.error(
+        'Greeting fetch error:',
+        err
+      );
+
       setScreens([
         {
-          reply: "Hi! Welcome to K's Kitchen. How can I help?",
-          session: INITIAL_SESSION,
+          reply:
+            "Hi! Welcome to K's Kitchen. How can I help?",
+
+          session:
+            INITIAL_SESSION,
         },
       ]);
     } finally {
-      setIsSending(false);
+      setIsSending(
+        false
+      );
     }
   }
 
-  async function advance(rawValue: string, buttonId?: string) {
-    if (isSending) return;
-    if (!buttonId && !rawValue.trim()) return;
+  /* ============================================================
+   * Advance flow
+   * ========================================================== */
 
-    setError(null);
-    setIsSending(true);
-    setDirection(1);
+  async function advance(
+    rawValue: string,
+    buttonId?: string
+  ) {
+    if (
+      isSending
+    ) {
+      return;
+    }
+
+    if (
+      !buttonId &&
+      !rawValue.trim()
+    ) {
+      return;
+    }
+
+    setError(
+      null
+    );
+
+    setIsSending(
+      true
+    );
+
+    setDirection(
+      1
+    );
 
     try {
-      const res = await fetch('/api/ai/reservation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: buttonId ?? rawValue.trim(),
-          session: currentScreen.session,
-        }),
-      });
+      const res =
+        await fetch(
+          '/api/ai/reservation',
+          {
+            method:
+              'POST',
 
-      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
 
-      const data = await res.json();
+            body:
+              JSON.stringify(
+                {
+                  message:
+                    buttonId ??
+                    rawValue.trim(),
 
-      const nextScreen: Screen = {
-        reply: data.message,
-        buttons: data.buttons,
-        inputType: data.inputType,
-        summary: data.summary,
-        session: data.session ?? currentScreen.session,
-      };
+                  session:
+                    currentScreen
+                      .session,
+                }
+              ),
+          }
+        );
 
-      setScreens((prev) => [...prev.slice(0, screenIndex + 1), nextScreen]);
-      setScreenIndex((i) => i + 1);
-      setInputValue('');
-    } catch (err) {
-      console.error('Chat widget error:', err);
-      setError('Something went wrong. Please try again, or call us directly.');
+      if (
+        !res.ok
+      ) {
+        throw new Error(
+          `Request failed with status ${res.status}`
+        );
+      }
+
+      const data =
+        await res.json();
+
+      const nextScreen: Screen =
+        {
+          reply:
+            data.message,
+
+          buttons:
+            data.buttons,
+
+          inputType:
+            data.inputType,
+
+          summary:
+            data.summary,
+
+          session:
+            data.session ??
+            currentScreen
+              .session,
+        };
+
+      setScreens(
+        (
+          prev
+        ) => [
+          ...prev.slice(
+            0,
+            screenIndex +
+              1
+          ),
+
+          nextScreen,
+        ]
+      );
+
+      setScreenIndex(
+        (
+          index
+        ) =>
+          index +
+          1
+      );
+
+      setInputValue(
+        ''
+      );
+    } catch (
+      err
+    ) {
+      console.error(
+        'Chat widget error:',
+        err
+      );
+
+      setError(
+        'Something went wrong. Please try again, or call us directly.'
+      );
     } finally {
-      setIsSending(false);
+      setIsSending(
+        false
+      );
     }
   }
+
+  /* ============================================================
+   * Navigation
+   * ========================================================== */
 
   function goBack() {
-    if (screenIndex === 0) return;
-    setDirection(-1);
-    setInputValue('');
-    setScreenIndex((i) => i - 1);
+    if (
+      screenIndex ===
+      0
+    ) {
+      return;
+    }
+
+    setDirection(
+      -1
+    );
+
+    setInputValue(
+      ''
+    );
+
+    setScreenIndex(
+      (
+        index
+      ) =>
+        index -
+        1
+    );
   }
 
   function goToMainMenu() {
-    advance('0');
+    advance(
+      '0'
+    );
   }
 
-  function handleButtonClick(button: FlowButton) {
-    if (button.url) {
-      window.open(button.url, '_blank', 'noopener,noreferrer');
+  function handleButtonClick(
+    button: FlowButton
+  ) {
+    if (
+      button.url
+    ) {
+      window.open(
+        button.url,
+        '_blank',
+        'noopener,noreferrer'
+      );
+
       return;
     }
-    advance('', button.id);
+
+    advance(
+      '',
+      button.id
+    );
   }
 
-  function handleTextSubmit(e: React.FormEvent) {
+  function handleTextSubmit(
+    e: React.FormEvent
+  ) {
     e.preventDefault();
-    advance(inputValue);
+
+    advance(
+      inputValue
+    );
   }
 
   function handleClose() {
-    setIsOpen(false);
-    setScreens([]);
-    setScreenIndex(0);
-    setHasLoaded(false);
+    setIsOpen(
+      false
+    );
+
+    setScreens(
+      []
+    );
+
+    setScreenIndex(
+      0
+    );
+
+    setInputValue(
+      ''
+    );
+
+    setError(
+      null
+    );
+
+    setHasLoaded(
+      false
+    );
   }
+
+  /* ============================================================
+   * Render
+   * ========================================================== */
 
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() =>
+          setIsOpen(
+            true
+          )
+        }
         aria-label="Open chat"
         className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-terracotta text-coconut-cream shadow-[0_4px_14px_rgba(75,58,46,0.35)] transition-all duration-200 hover:bg-tamarind-bark active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path
             d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"
             strokeLinecap="round"
@@ -234,197 +792,561 @@ export default function ReservationChatWidget() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            ref={dialogRef}
+            ref={
+              dialogRef
+            }
             role="dialog"
             aria-modal="true"
             aria-label="K's Kitchen reservations chat"
-            tabIndex={-1}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-coconut-cream outline-none"
-            style={{ height: '100dvh' }}
+            tabIndex={
+              -1
+            }
+            initial={{
+              opacity:
+                0,
+            }}
+            animate={{
+              opacity:
+                1,
+            }}
+            exit={{
+              opacity:
+                0,
+            }}
+            transition={{
+              duration:
+                0.25,
+            }}
+            className="fixed inset-0 z-50 flex min-w-0 max-w-full flex-col overflow-hidden bg-coconut-cream outline-none"
+            style={{
+              height:
+                '100dvh',
+
+              width:
+                '100%',
+
+              maxWidth:
+                '100vw',
+            }}
           >
-            {/* Header */}
+            {/* ==================================================
+             * Header
+             * ================================================= */}
+
             <header className="flex shrink-0 items-center justify-between bg-terracotta px-5 py-4">
-              <div className="flex items-center gap-3">
-                {screenIndex > 0 && (
+              <div className="flex min-w-0 items-center gap-3">
+                {screenIndex >
+                  0 && (
                   <button
-                    onClick={goBack}
+                    onClick={
+                      goBack
+                    }
                     aria-label="Back"
-                    className="rounded-full p-1 text-coconut-cream/80 transition-all duration-200 hover:bg-tamarind-bark hover:text-coconut-cream active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+                    className="shrink-0 rounded-full p-1 text-coconut-cream/80 transition-all duration-200 hover:bg-tamarind-bark hover:text-coconut-cream active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        d="M15 19l-7-7 7-7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   </button>
                 )}
-                <div>
-                  <p className="font-display text-base tracking-tight text-coconut-cream">K's Kitchen Gourmet</p>
-                  <p className="font-hand text-sm text-coconut-cream/80">Reservations &amp; questions</p>
+
+                <div className="min-w-0">
+                  <p className="truncate font-display text-base tracking-tight text-coconut-cream">
+                    K&apos;s
+                    Kitchen
+                    Gourmet
+                  </p>
+
+                  <p className="truncate font-hand text-sm text-coconut-cream/80">
+                    Reservations
+                    &amp;
+                    questions
+                  </p>
                 </div>
               </div>
 
               <button
-                onClick={handleClose}
+                onClick={
+                  handleClose
+                }
                 aria-label="Close chat"
-                className="rounded-full p-1 text-coconut-cream/80 transition-all duration-200 hover:bg-tamarind-bark hover:text-coconut-cream active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+                className="shrink-0 rounded-full p-1 text-coconut-cream/80 transition-all duration-200 hover:bg-tamarind-bark hover:text-coconut-cream active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    d="M18 6 6 18M6 6l12 12"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </button>
             </header>
 
-            {/* Screen content */}
-            <main className="relative min-h-0 flex-1 overflow-hidden">
-              <AnimatePresence mode="wait" custom={direction}>
+            {/* ==================================================
+             * Screen content
+             * ================================================= */}
+
+            <main className="relative min-h-0 min-w-0 max-w-full flex-1 overflow-hidden">
+              <AnimatePresence
+                mode="wait"
+                custom={
+                  direction
+                }
+              >
                 {currentScreen && (
                   <motion.div
-                    key={screenIndex}
-                    custom={direction}
-                    initial={{ opacity: 0, x: direction > 0 ? 40 : -40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: direction > 0 ? -40 : 40 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className="absolute inset-0 flex flex-col overflow-y-auto px-6 py-8"
+                    key={
+                      screenIndex
+                    }
+                    custom={
+                      direction
+                    }
+                    initial={{
+                      opacity:
+                        0,
+
+                      x:
+                        direction >
+                        0
+                          ? 40
+                          : -40,
+                    }}
+                    animate={{
+                      opacity:
+                        1,
+
+                      x:
+                        0,
+                    }}
+                    exit={{
+                      opacity:
+                        0,
+
+                      x:
+                        direction >
+                        0
+                          ? -40
+                          : 40,
+                    }}
+                    transition={{
+                      duration:
+                        0.25,
+
+                      ease:
+                        'easeOut',
+                    }}
+                    className="absolute inset-0 flex min-w-0 max-w-full flex-col overflow-x-hidden overflow-y-auto px-6 py-8"
+                    style={{
+                      width:
+                        '100%',
+
+                      maxWidth:
+                        '100%',
+                    }}
                   >
                     <p
-                      className="whitespace-pre-line text-lg leading-relaxed text-roasted-coffee"
+                      className="max-w-full whitespace-pre-line break-words text-lg leading-relaxed text-roasted-coffee"
                       aria-live="polite"
                     >
-                      {currentScreen.reply}
+                      {
+                        currentScreen.reply
+                      }
                     </p>
 
+                    {/* ==========================================
+                     * Summary
+                     * ======================================== */}
+
                     {currentScreen.summary && (
-                      <div className="mt-6 overflow-hidden rounded-2xl border border-clay-pot/20 bg-surface shadow-[0_1px_4px_rgba(75,58,46,0.12)]">
-                        {currentScreen.summary.map((row, i) => (
-                          <div
-                            key={row.label}
-                            className={`flex items-center justify-between px-5 py-3.5 ${
-                              i !== currentScreen.summary!.length - 1 ? 'border-b border-clay-pot/10' : ''
-                            }`}
-                          >
-                            <span className="text-xs font-medium uppercase tracking-wide text-roasted-coffee/50">
-                              {row.label}
-                            </span>
-                            <span className="text-sm font-semibold text-roasted-coffee">{row.value}</span>
-                          </div>
-                        ))}
+                      <div className="mt-6 min-w-0 max-w-full overflow-hidden rounded-2xl border border-clay-pot/20 bg-surface shadow-[0_1px_4px_rgba(75,58,46,0.12)]">
+                        {currentScreen.summary.map(
+                          (
+                            row,
+                            i
+                          ) => (
+                            <div
+                              key={
+                                row.label
+                              }
+                              className={`flex min-w-0 items-center justify-between gap-4 px-5 py-3.5 ${
+                                i !==
+                                currentScreen
+                                  .summary!
+                                  .length -
+                                  1
+                                  ? 'border-b border-clay-pot/10'
+                                  : ''
+                              }`}
+                            >
+                              <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-roasted-coffee/50">
+                                {
+                                  row.label
+                                }
+                              </span>
+
+                              <span className="min-w-0 break-words text-right text-sm font-semibold text-roasted-coffee">
+                                {
+                                  row.value
+                                }
+                              </span>
+                            </div>
+                          )
+                        )}
                       </div>
                     )}
 
-                    <div className="mt-8 flex-1">
-                      {currentScreen.buttons && currentScreen.buttons.length > 0 ? (
-                        <div className="space-y-3">
-                          {currentScreen.buttons.map((button) => (
-                            <button
-                              key={button.id}
-                              onClick={() => handleButtonClick(button)}
-                              disabled={isSending}
-                              className="flex w-full items-center gap-3 rounded-xl border border-clay-pot/30 bg-surface px-5 py-4 text-left text-base font-medium text-roasted-coffee shadow-[0_1px_3px_rgba(75,58,46,0.12)] transition-all duration-200 hover:border-clay-pot hover:bg-clay-pot/10 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+                    <div className="mt-8 min-w-0 max-w-full flex-1 space-y-4">
+                      {/* ========================================
+                       * Date input
+                       * ====================================== */}
+
+                      {shouldShowDateInput && (
+                        <form
+                          onSubmit={
+                            handleTextSubmit
+                          }
+                          className="w-full min-w-0 max-w-full space-y-4 overflow-hidden"
+                          style={{
+                            width:
+                              '100%',
+
+                            maxWidth:
+                              '100%',
+                          }}
+                        >
+                          <div className="w-full min-w-0 max-w-full space-y-2 overflow-hidden">
+                            <label
+                              htmlFor="reservation-date"
+                              className="block max-w-full text-sm font-medium text-roasted-coffee/70"
                             >
-                              {isWhatsAppUrl(button.url) && (
-                                <WhatsAppIcon className="h-5 w-5 shrink-0 text-[#25D366]" />
-                              )}
-                              {button.title}
-                            </button>
-                          ))}
-                        </div>
-                      ) : currentScreen.inputType === 'date' ? (
-                        <form onSubmit={handleTextSubmit} className="space-y-4">
-                          <input
-                            type="date"
-                            value={inputValue}
-                            min={new Date().toISOString().slice(0, 10)}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50"
-                            style={{
-                              WebkitAppearance: 'none',
-                              appearance: 'none',
-                              boxSizing: 'border-box',
-                            }}
-                          />
+                              Select
+                              a
+                              date
+                            </label>
+
+                            <div className="w-full min-w-0 max-w-full overflow-hidden">
+                              <input
+                                id="reservation-date"
+                                type="date"
+                                value={
+                                  inputValue
+                                }
+                                min={
+                                  getTodayISO()
+                                }
+                                max={
+                                  getMaxBookingDateISO()
+                                }
+                                onChange={(
+                                  e
+                                ) =>
+                                  setInputValue(
+                                    e
+                                      .target
+                                      .value
+                                  )
+                                }
+                                disabled={
+                                  isSending
+                                }
+                                className="block w-full min-w-0 max-w-full rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
+                                style={{
+                                  width:
+                                    '100%',
+
+                                  minWidth:
+                                    0,
+
+                                  maxWidth:
+                                    '100%',
+
+                                  boxSizing:
+                                    'border-box',
+
+                                  WebkitAppearance:
+                                    'none',
+
+                                  appearance:
+                                    'none',
+
+                                  overflow:
+                                    'hidden',
+                                }}
+                              />
+                            </div>
+
+                            <p className="max-w-full break-words text-xs text-roasted-coffee/50">
+                              Reservations
+                              can
+                              currently
+                              be
+                              made
+                              up
+                              to
+                              7
+                              days
+                              ahead.
+                            </p>
+                          </div>
+
                           <button
                             type="submit"
-                            disabled={isSending || !inputValue}
-                            className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
+                            disabled={
+                              isSending ||
+                              !inputValue
+                            }
+                            className="block w-full min-w-0 max-w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
                           >
                             Continue
                           </button>
                         </form>
-                      ) : (
-                        <form onSubmit={handleTextSubmit} className="space-y-4">
+                      )}
+
+                      {/* ========================================
+                       * Normal flow buttons
+                       * ====================================== */}
+
+                      {!shouldShowDateInput &&
+                        choiceButtons.length >
+                          0 && (
+                          <div className="w-full min-w-0 max-w-full space-y-3">
+                            {choiceButtons.map(
+                              (
+                                button
+                              ) => (
+                                <button
+                                  key={
+                                    button.id
+                                  }
+                                  onClick={() =>
+                                    handleButtonClick(
+                                      button
+                                    )
+                                  }
+                                  disabled={
+                                    isSending
+                                  }
+                                  className="flex w-full min-w-0 max-w-full items-center gap-3 rounded-xl border border-clay-pot/30 bg-surface px-5 py-4 text-left text-base font-medium text-roasted-coffee shadow-[0_1px_3px_rgba(75,58,46,0.12)] transition-all duration-200 hover:border-clay-pot hover:bg-clay-pot/10 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+                                >
+                                  <span className="min-w-0 break-words">
+                                    {
+                                      button.title
+                                    }
+                                  </span>
+                                </button>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                      {/* ========================================
+                       * Free-text input
+                       * ====================================== */}
+
+                      {shouldShowTextInput && (
+                        <form
+                          onSubmit={
+                            handleTextSubmit
+                          }
+                          className="w-full min-w-0 max-w-full space-y-4 overflow-hidden"
+                        >
                           <input
-                            ref={inputRef}
+                            ref={
+                              inputRef
+                            }
                             type="text"
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
+                            value={
+                              inputValue
+                            }
+                            onChange={(
+                              e
+                            ) =>
+                              setInputValue(
+                                e
+                                  .target
+                                  .value
+                              )
+                            }
                             placeholder="Type your answer..."
-                            disabled={isSending}
-                            className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
-                            style={{ boxSizing: 'border-box' }}
+                            disabled={
+                              isSending
+                            }
+                            className="block w-full min-w-0 max-w-full rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
+                            style={{
+                              width:
+                                '100%',
+
+                              minWidth:
+                                0,
+
+                              maxWidth:
+                                '100%',
+
+                              boxSizing:
+                                'border-box',
+                            }}
                           />
+
                           <button
                             type="submit"
-                            disabled={isSending || !inputValue.trim()}
-                            className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
+                            disabled={
+                              isSending ||
+                              !inputValue.trim()
+                            }
+                            className="block w-full min-w-0 max-w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
                           >
                             Send
                           </button>
                         </form>
                       )}
 
+                      {/* ========================================
+                       * External URL buttons
+                       * ====================================== */}
+
+                      {urlButtons.length >
+                        0 && (
+                        <div className="w-full min-w-0 max-w-full space-y-3 pt-2">
+                          {urlButtons.map(
+                            (
+                              button
+                            ) => (
+                              <button
+                                key={
+                                  button.id
+                                }
+                                onClick={() =>
+                                  handleButtonClick(
+                                    button
+                                  )
+                                }
+                                disabled={
+                                  isSending
+                                }
+                                className="flex w-full min-w-0 max-w-full items-center gap-3 rounded-xl border border-clay-pot/30 bg-surface px-5 py-4 text-left text-base font-medium text-roasted-coffee shadow-[0_1px_3px_rgba(75,58,46,0.12)] transition-all duration-200 hover:border-clay-pot hover:bg-clay-pot/10 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+                              >
+                                {isWhatsAppUrl(
+                                  button.url
+                                ) && (
+                                  <WhatsAppIcon className="h-5 w-5 shrink-0 text-[#25D366]" />
+                                )}
+
+                                <span className="min-w-0 break-words">
+                                  {
+                                    button.title
+                                  }
+                                </span>
+                              </button>
+                            )
+                          )}
+                        </div>
+                      )}
+
+                      {/* ========================================
+                       * Loading state
+                       * ====================================== */}
+
                       {isAwaitingReply && (
-                        <div className="mt-4 flex items-center gap-2 text-sm text-roasted-coffee/50" aria-live="polite">
-                          <span className="flex items-center gap-1">
+                        <div
+                          className="mt-4 flex max-w-full items-center gap-2 text-sm text-roasted-coffee/50"
+                          aria-live="polite"
+                        >
+                          <span className="flex shrink-0 items-center gap-1">
                             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.3s]" />
+
                             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.15s]" />
+
                             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-tamarind-bark/50" />
                           </span>
-                          Thinking...
+
+                          <span>
+                            Thinking...
+                          </span>
                         </div>
                       )}
                     </div>
 
+                    {/* ==========================================
+                     * Error
+                     * ======================================== */}
+
                     {error && (
                       <div
                         role="alert"
-                        className="mt-4 flex items-start gap-2 rounded-xl border border-alert/20 bg-alert/10 px-4 py-3 text-sm text-alert"
+                        className="mt-4 flex min-w-0 max-w-full items-start gap-2 rounded-xl border border-alert/20 bg-alert/10 px-4 py-3 text-sm text-alert"
                       >
                         <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                        <span>{error}</span>
+
+                        <span className="min-w-0 break-words">
+                          {
+                            error
+                          }
+                        </span>
                       </div>
                     )}
                   </motion.div>
                 )}
               </AnimatePresence>
 
+              {/* ================================================
+               * Initial loading
+               * ============================================== */}
+
               {isFirstLoad && (
-                <div className="flex h-full items-center justify-center">
+                <div className="flex h-full min-w-0 max-w-full items-center justify-center">
                   <div className="flex items-center gap-1">
                     <span className="h-2 w-2 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.3s]" />
+
                     <span className="h-2 w-2 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.15s]" />
+
                     <span className="h-2 w-2 animate-bounce rounded-full bg-tamarind-bark/50" />
                   </div>
                 </div>
               )}
             </main>
 
-            {/* Persistent bottom nav — only shown once away from the main menu */}
-            {!isAtMainMenu && currentScreen && (
-              <nav className="shrink-0 border-t border-roasted-coffee/10 bg-surface px-5 py-3">
-                <button
-                  onClick={goToMainMenu}
-                  disabled={isSending}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-roasted-coffee/5 px-5 py-3.5 text-base font-medium text-roasted-coffee transition-all duration-200 hover:bg-roasted-coffee/10 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
-                >
-                  <HomeIcon className="h-5 w-5" />
-                  Main menu
-                </button>
-              </nav>
-            )}
+            {/* ==================================================
+             * Persistent bottom navigation
+             * ================================================= */}
+
+            {!isAtMainMenu &&
+              currentScreen && (
+                <nav className="w-full min-w-0 max-w-full shrink-0 overflow-hidden border-t border-roasted-coffee/10 bg-surface px-5 py-3">
+                  <button
+                    onClick={
+                      goToMainMenu
+                    }
+                    disabled={
+                      isSending
+                    }
+                    className="flex w-full min-w-0 max-w-full items-center justify-center gap-2 rounded-xl bg-roasted-coffee/5 px-5 py-3.5 text-base font-medium text-roasted-coffee transition-all duration-200 hover:bg-roasted-coffee/10 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+                  >
+                    <HomeIcon className="h-5 w-5 shrink-0" />
+
+                    <span className="min-w-0">
+                      Main
+                      menu
+                    </span>
+                  </button>
+                </nav>
+              )}
           </motion.div>
         )}
       </AnimatePresence>
