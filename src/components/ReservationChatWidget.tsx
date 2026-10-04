@@ -626,20 +626,6 @@ export default function ReservationChatWidget() {
                           onSubmit={handleTextSubmit}
                           className="min-w-0 space-y-4"
                         >
-                          <div className="rounded-xl border border-clay-pot/20 bg-surface px-4 py-3 shadow-[0_1px_3px_rgba(75,58,46,0.08)]">
-                            <span className="block text-xs font-medium uppercase tracking-wide text-roasted-coffee/50">
-                              Selected date
-                            </span>
-                            <span className="mt-1 block text-base font-semibold text-roasted-coffee">
-                              {formatBookingDateLabel(
-                                inputValue || todayISO,
-                                (inputValue || todayISO) === todayISO
-                                  ? "Today"
-                                  : undefined,
-                              )}
-                            </span>
-                          </div>
-
                           <input
                             type="date"
 
@@ -666,7 +652,7 @@ export default function ReservationChatWidget() {
                             }}
                           />
 
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div className="grid grid-cols-2 gap-3">
                             <button
                               type="button"
                               onClick={() => setInputValue(tomorrowISO)}
@@ -696,7 +682,7 @@ export default function ReservationChatWidget() {
                               }`}
                             >
                               <span className="block text-xs uppercase tracking-wide opacity-75">
-                                Day after tomorrow
+                                Day after
                               </span>
                               <span className="mt-1 block font-semibold">
                                 {formatBookingDateLabel(dayAfterISO)}
