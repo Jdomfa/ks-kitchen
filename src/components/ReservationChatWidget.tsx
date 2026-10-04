@@ -452,7 +452,7 @@ export default function ReservationChatWidget() {
         className="fixed bottom-5 right-5 z-40 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-coconut-cream bg-coconut-cream shadow-[0_10px_28px_rgba(75,58,46,0.42),0_3px_10px_rgba(75,58,46,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:shadow-[0_14px_34px_rgba(75,58,46,0.48),0_4px_12px_rgba(75,58,46,0.30)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
       >
         <img
-          src="/images/ks-kitchen-pepper-widget.png"
+          src="/images/ks-kitchen-pepper.jpg"
 
           alt=""
 
