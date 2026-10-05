@@ -1,47 +1,67 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { siteConfig } from "@/lib/site-config";
+
+import { useEffect, useRef, useState } from 'react';
+
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  getCountries,
+  getCountryCallingCode,
+  parsePhoneNumberFromString,
+  type CountryCode,
+} from 'libphonenumber-js';
+import { siteConfig } from '@/lib/site-config';
+
+
 
 type FlowButton = { id: string; title: string; url?: string };
 
 type SummaryRow = { label: string; value: string };
 
+
+
 type FlowState = {
+
   step: string;
 
   draft: Record<string, unknown>;
 
   alternatives?: string[];
+
 };
 
+
+
 type Screen = {
+
   reply: string;
 
   buttons?: FlowButton[];
 
-  inputType?: "date";
+  inputType?: 'date';
 
   summary?: SummaryRow[];
 
   session: FlowState;
+
 };
 
-const INITIAL_SESSION: FlowState = { step: "MAIN_MENU", draft: {} };
+
+
+const INITIAL_SESSION: FlowState = { step: 'MAIN_MENU', draft: {} };
 
 function getLagosTodayISO(): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Africa/Lagos",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Lagos',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   }).formatToParts(new Date());
 
-  const year = parts.find((part) => part.type === "year")?.value ?? "";
-  const month = parts.find((part) => part.type === "month")?.value ?? "";
-  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  const year = parts.find((part) => part.type === 'year')?.value ?? '';
+  const month = parts.find((part) => part.type === 'month')?.value ?? '';
+  const day = parts.find((part) => part.type === 'day')?.value ?? '';
 
   return `${year}-${month}-${day}`;
 }
@@ -53,79 +73,83 @@ function addDaysToISO(dateISO: string, days: number): string {
 }
 
 function formatQuickDate(dateISO: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "UTC",
-    weekday: "short",
-    day: "numeric",
-    month: "short",
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'UTC',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
   }).format(new Date(`${dateISO}T00:00:00Z`));
 }
 
+
+
 function WhatsAppIcon({ className }: { className?: string }) {
+
   return (
-    <svg
-      viewBox="0 0 32 32"
-      className={className}
-      fill="currentColor"
-      aria-hidden="true"
-    >
+
+    <svg viewBox="0 0 32 32" className={className} fill="currentColor" aria-hidden="true">
+
       <path d="M16.02 3C9.4 3 4 8.37 4 15c0 2.36.68 4.56 1.86 6.42L4 29l7.77-1.83A11.9 11.9 0 0 0 16.02 27C22.63 27 28 21.63 28 15S22.63 3 16.02 3Zm0 21.7c-1.98 0-3.83-.55-5.4-1.5l-.39-.23-4.61 1.09 1.13-4.5-.25-.4A9.63 9.63 0 0 1 5.3 15c0-5.9 4.8-10.7 10.72-10.7S26.74 9.1 26.74 15 21.94 24.7 16.02 24.7Zm5.86-8.02c-.32-.16-1.9-.94-2.2-1.04-.29-.1-.5-.16-.72.16-.21.32-.82 1.04-1.01 1.25-.19.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.6-.95-.85-1.59-1.9-1.78-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.72-1.75-.99-2.4-.26-.62-.53-.54-.72-.55h-.62c-.21 0-.56.08-.85.4-.29.32-1.12 1.1-1.12 2.68 0 1.58 1.15 3.1 1.31 3.32.16.21 2.26 3.5 5.5 4.9.77.33 1.37.53 1.84.68.77.24 1.47.21 2.03.13.62-.09 1.9-.78 2.17-1.53.27-.75.27-1.4.19-1.53-.08-.14-.29-.21-.61-.37Z" />
+
     </svg>
+
   );
+
 }
+
+
 
 function HomeIcon({ className }: { className?: string }) {
+
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden="true"
-    >
-      <path
-        d="M3 12l9-9 9 9M5 10v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-6h2v6a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+
+      <path d="M3 12l9-9 9 9M5 10v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-6h2v6a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V10" strokeLinecap="round" strokeLinejoin="round" />
+
     </svg>
+
   );
+
 }
+
+
 
 function AlertIcon({ className }: { className?: string }) {
+
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden="true"
-    >
-      <path
-        d="M12 9v4M12 17h.01M10.29 3.86l-8.4 14.55A1 1 0 0 0 2.7 20h18.6a1 1 0 0 0 .86-1.59l-8.4-14.55a1 1 0 0 0-1.72 0Z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+
+      <path d="M12 9v4M12 17h.01M10.29 3.86l-8.4 14.55A1 1 0 0 0 2.7 20h18.6a1 1 0 0 0 .86-1.59l-8.4-14.55a1 1 0 0 0-1.72 0Z" strokeLinecap="round" strokeLinejoin="round" />
+
     </svg>
+
   );
+
 }
+
+
 
 function isWhatsAppUrl(url?: string) {
-  return !!url && url.includes("wa.me");
+
+  return !!url && url.includes('wa.me');
+
 }
 
+
+
+
 function getLagosDateISO(offsetDays = 0): string {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Africa/Lagos",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Lagos',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   });
 
   const today = formatter.format(new Date());
-  const [year, month, day] = today.split("-").map(Number);
+  const [year, month, day] = today.split('-').map(Number);
 
   const date = new Date(Date.UTC(year, month - 1, day + offsetDays));
 
@@ -133,26 +157,42 @@ function getLagosDateISO(offsetDays = 0): string {
 }
 
 function formatBookingDateLabel(dateISO: string, suffix?: string): string {
-  const [year, month, day] = dateISO.split("-").map(Number);
+  const [year, month, day] = dateISO.split('-').map(Number);
 
-  const label = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "UTC",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  const label = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'UTC',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   }).format(new Date(Date.UTC(year, month - 1, day)));
 
   return suffix ? `${label} (${suffix})` : label;
 }
 
+
+const COUNTRY_CODES = getCountries();
+
+function getCountryName(country: CountryCode): string {
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(country) ?? country;
+  } catch {
+    return country;
+  }
+}
+
+function formatCountryOption(country: CountryCode): string {
+  return `${getCountryName(country)} (+${getCountryCallingCode(country)})`;
+}
+
 export default function ReservationChatWidget() {
+
   const [isOpen, setIsOpen] = useState(false);
 
   const [screens, setScreens] = useState<Screen[]>([]);
 
   const [screenIndex, setScreenIndex] = useState(0);
 
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState('');
 
   const [isSending, setIsSending] = useState(false);
 
@@ -161,14 +201,21 @@ export default function ReservationChatWidget() {
   const [hasLoaded, setHasLoaded] = useState(false);
 
   const [direction, setDirection] = useState(1);
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>('NG');
+  const [phoneNational, setPhoneNational] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+
 
   const inputRef = useRef<HTMLInputElement>(null);
 
   const dialogRef = useRef<HTMLDivElement>(null);
 
+
+
   const currentScreen = screens[screenIndex];
 
-  const isAtMainMenu = currentScreen?.session.step === "MAIN_MENU";
+  const isAtMainMenu = currentScreen?.session.step === 'MAIN_MENU';
 
   const isFirstLoad = isSending && screens.length === 0;
 
@@ -176,101 +223,147 @@ export default function ReservationChatWidget() {
   const todayISO = getLagosTodayISO();
   const tomorrowISO = addDaysToISO(todayISO, 1);
   const dayAfterISO = addDaysToISO(todayISO, 2);
-  const lastBookableISO = addDaysToISO(todayISO, 6);
-  const whatsappNumber = siteConfig.whatsappNumber.replace(/\D/g, "");
-  const whatsappMessage = encodeURIComponent(
-    "Hi, I need help with a reservation.",
-  );
+  const whatsappNumber = siteConfig.whatsappNumber.replace(/\D/g, '');
+  const whatsappMessage = encodeURIComponent('Hi, I need help with a reservation.');
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
+
+
   useEffect(() => {
+
     function handleOpenChat() {
+
       setIsOpen(true);
+
     }
 
     function handleOpenReservation() {
+
       setIsOpen(true);
       setHasLoaded(true);
       void loadReservationMenu();
+
     }
 
-    window.addEventListener("kk:open-chat", handleOpenChat);
-    window.addEventListener("kk:open-reservation", handleOpenReservation);
+    window.addEventListener('kk:open-chat', handleOpenChat);
+    window.addEventListener('kk:open-reservation', handleOpenReservation);
 
     const params = new URLSearchParams(window.location.search);
 
-    if (params.get("reservation") === "1") {
+    if (params.get('reservation') === '1') {
+
       handleOpenReservation();
+
     }
 
     return () => {
-      window.removeEventListener("kk:open-chat", handleOpenChat);
-      window.removeEventListener("kk:open-reservation", handleOpenReservation);
+      window.removeEventListener('kk:open-chat', handleOpenChat);
+      window.removeEventListener('kk:open-reservation', handleOpenReservation);
     };
+
   }, []);
 
+
+
   useEffect(() => {
+
     if (isOpen && !hasLoaded) {
+
       setHasLoaded(true);
 
       loadGreeting();
+
     }
+
   }, [isOpen, hasLoaded]);
 
+
+
   useEffect(() => {
+
     if (isOpen) {
+
       const original = document.body.style.overflow;
 
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
 
       // Move focus into the dialog for keyboard and screen-reader users.
 
       dialogRef.current?.focus();
 
       return () => {
+
         document.body.style.overflow = original;
+
       };
+
     }
+
   }, [isOpen]);
 
+
+
   useEffect(() => {
+
     if (!isOpen) return;
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") handleClose();
+
+      if (e.key === 'Escape') handleClose();
+
     }
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+
   }, [isOpen]);
 
+
+
   useEffect(() => {
-    if (currentScreen?.inputType === "date") {
+
+    if (currentScreen?.inputType === 'date') {
       setInputValue((current) => current || getLagosDateISO());
       return;
     }
 
-    if (!currentScreen?.buttons) {
-      inputRef.current?.focus();
+    if (currentScreen?.session.step === 'RESERVATION_PHONE') {
+      setPhoneNational('');
+      setPhoneError(null);
+      return;
     }
-  }, [screenIndex, currentScreen?.inputType]);
+
+    if (!currentScreen?.buttons) {
+
+      inputRef.current?.focus();
+
+    }
+
+  }, [screenIndex, currentScreen?.inputType, currentScreen?.session.step]);
+
+
+
 
   async function loadReservationMenu() {
+
     setError(null);
     setIsSending(true);
     setDirection(1);
 
     try {
-      const res = await fetch("/api/ai/reservation", {
-        method: "POST",
 
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/ai/reservation', {
+
+        method: 'POST',
+
+        headers: { 'Content-Type': 'application/json' },
 
         body: JSON.stringify({
-          message: "menu_reservation",
+          message: 'menu_reservation',
           session: INITIAL_SESSION,
         }),
+
       });
 
       if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
@@ -288,10 +381,12 @@ export default function ReservationChatWidget() {
       ]);
 
       setScreenIndex(0);
-      setInputValue("");
+      setInputValue('');
+
     } catch (err) {
-      console.error("Reservation deep-link error:", err);
-      setError("Unable to open reservations right now. Please try again.");
+
+      console.error('Reservation deep-link error:', err);
+      setError('Unable to open reservations right now. Please try again.');
       setScreens([
         {
           reply: "Hi! Welcome to K's Kitchen. How can I help?",
@@ -299,27 +394,41 @@ export default function ReservationChatWidget() {
         },
       ]);
       setScreenIndex(0);
+
     } finally {
+
       setIsSending(false);
+
     }
+
   }
 
+
+
   async function loadGreeting() {
+
     setIsSending(true);
 
     try {
-      const res = await fetch("/api/ai/reservation", {
-        method: "POST",
 
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/ai/reservation', {
 
-        body: JSON.stringify({ message: "", session: INITIAL_SESSION }),
+        method: 'POST',
+
+        headers: { 'Content-Type': 'application/json' },
+
+        body: JSON.stringify({ message: '', session: INITIAL_SESSION }),
+
       });
 
       const data = await res.json();
 
+
+
       setScreens([
+
         {
+
           reply: data.message,
 
           buttons: data.buttons,
@@ -329,54 +438,85 @@ export default function ReservationChatWidget() {
           summary: data.summary,
 
           session: data.session ?? INITIAL_SESSION,
+
         },
+
       ]);
 
       setScreenIndex(0);
+
     } catch (err) {
-      console.error("Greeting fetch error:", err);
+
+      console.error('Greeting fetch error:', err);
 
       setScreens([
+
         {
+
           reply: "Hi! Welcome to K's Kitchen. How can I help?",
 
           session: INITIAL_SESSION,
+
         },
+
       ]);
+
     } finally {
+
       setIsSending(false);
+
     }
+
   }
 
+
+
   async function advance(rawValue: string, buttonId?: string) {
+
     if (isSending) return;
 
     if (!buttonId && !rawValue.trim()) return;
 
+
+
     setError(null);
 
     setIsSending(true);
 
     setDirection(1);
 
-    try {
-      const res = await fetch("/api/ai/reservation", {
-        method: "POST",
 
-        headers: { "Content-Type": "application/json" },
+
+    try {
+
+      const res = await fetch('/api/ai/reservation', {
+
+        method: 'POST',
+
+        headers: { 'Content-Type': 'application/json' },
 
         body: JSON.stringify({
+
           message: buttonId ?? rawValue.trim(),
 
           session: currentScreen.session,
+
         }),
+
       });
+
+
 
       if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
 
+
+
       const data = await res.json();
 
+
+
       const nextScreen: Screen = {
+
         reply: data.message,
 
         buttons: data.buttons,
@@ -386,53 +526,107 @@ export default function ReservationChatWidget() {
         summary: data.summary,
 
         session: data.session ?? currentScreen.session,
+
       };
+
+
 
       setScreens((prev) => [...prev.slice(0, screenIndex + 1), nextScreen]);
 
       setScreenIndex((i) => i + 1);
 
-      setInputValue("");
-    } catch (err) {
-      console.error("Chat widget error:", err);
+      setInputValue('');
 
-      setError("Something went wrong. Please try again, or call us directly.");
+    } catch (err) {
+
+      console.error('Chat widget error:', err);
+
+      setError('Something went wrong. Please try again, or call us directly.');
+
     } finally {
+
       setIsSending(false);
+
     }
+
   }
 
+
+
   function goBack() {
+
     if (screenIndex === 0) return;
 
     setDirection(-1);
 
-    setInputValue("");
+    setInputValue('');
 
     setScreenIndex((i) => i - 1);
+
   }
+
+
 
   function goToMainMenu() {
-    advance("0");
+
+    advance('0');
+
   }
+
+
 
   function handleButtonClick(button: FlowButton) {
+
     if (button.url) {
-      window.open(button.url, "\_blank", "noopener,noreferrer");
+
+      window.open(button.url, '\_blank', 'noopener,noreferrer');
 
       return;
+
     }
 
-    advance("", button.id);
+    advance('', button.id);
+
   }
 
+
+
   function handleTextSubmit(e: React.FormEvent) {
+
     e.preventDefault();
 
     advance(inputValue);
+
   }
 
+  function handlePhoneSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    const raw = phoneNational.trim();
+
+    if (!raw) {
+      setPhoneError('Enter your phone number.');
+      return;
+    }
+
+    const parsed = parsePhoneNumberFromString(raw, phoneCountry);
+
+    if (!parsed || !parsed.isValid()) {
+      setPhoneError(`Enter a valid phone number for ${getCountryName(phoneCountry)}.`);
+      return;
+    }
+
+    setPhoneError(null);
+
+    // Send the canonical E.164 number to the reservation flow.
+    // Example: +2348012345678
+    void advance(parsed.number);
+  }
+
+
+
   function handleClose() {
+
     setIsOpen(false);
 
     setScreens([]);
@@ -440,18 +634,27 @@ export default function ReservationChatWidget() {
     setScreenIndex(0);
 
     setHasLoaded(false);
+
   }
 
+
+
   return (
+
     <>
+
       <button
+
         onClick={() => setIsOpen(true)}
 
         aria-label="Open K's Kitchen reservations"
 
         className="fixed bottom-5 right-5 z-40 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-coconut-cream bg-coconut-cream shadow-[0_10px_28px_rgba(75,58,46,0.42),0_3px_10px_rgba(75,58,46,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:shadow-[0_14px_34px_rgba(75,58,46,0.48),0_4px_12px_rgba(75,58,46,0.30)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
+
       >
+
         <img
+
           src="/images/ks-kitchen-pepper.jpg"
 
           alt=""
@@ -459,12 +662,19 @@ export default function ReservationChatWidget() {
           aria-hidden="true"
 
           className="h-full w-full object-cover"
+
         />
+
       </button>
 
+
+
       <AnimatePresence>
+
         {isOpen && (
+
           <motion.div
+
             ref={dialogRef}
 
             role="dialog"
@@ -485,74 +695,82 @@ export default function ReservationChatWidget() {
 
             className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-coconut-cream outline-none"
 
-            style={{ height: "100dvh" }}
+            style={{ height: '100dvh' }}
+
           >
+
             {/* Header */}
 
             <header className="flex shrink-0 items-center justify-between bg-terracotta px-5 py-4">
+
               <div className="flex items-center gap-3">
+
                 {screenIndex > 0 && (
+
                   <button
+
                     onClick={goBack}
 
                     aria-label="Back"
 
                     className="rounded-full p-1 text-coconut-cream/80 transition-all duration-200 hover:bg-tamarind-bark hover:text-coconut-cream active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+
                   >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path
-                        d="M15 19l-7-7 7-7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+
+                      <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+
                     </svg>
+
                   </button>
+
                 )}
 
                 <div>
-                  <p className="font-display text-base tracking-tight text-coconut-cream">
-                    K's Kitchen Gourmet
-                  </p>
 
-                  <p className="font-hand text-sm text-coconut-cream/80">
-                    Reservations &amp; questions
-                  </p>
+                  <p className="font-display text-base tracking-tight text-coconut-cream">K's Kitchen Gourmet</p>
+
+                  <p className="font-hand text-sm text-coconut-cream/80">Reservations &amp; questions</p>
+
                 </div>
+
               </div>
 
+
+
               <button
+
                 onClick={handleClose}
 
                 aria-label="Close chat"
 
                 className="rounded-full p-1 text-coconut-cream/80 transition-all duration-200 hover:bg-tamarind-bark hover:text-coconut-cream active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
+
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+
                   <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
+
                 </svg>
+
               </button>
+
             </header>
+
+
 
             {/* Screen content */}
 
             <main className="relative min-h-0 flex-1 overflow-hidden">
+
               <AnimatePresence mode="wait" custom={direction}>
+
                 {currentScreen && (
+
                   <motion.div
+
                     key={screenIndex}
 
                     custom={direction}
@@ -563,48 +781,72 @@ export default function ReservationChatWidget() {
 
                     exit={{ opacity: 0, x: direction > 0 ? -40 : 40 }}
 
-                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
 
                     className="absolute inset-0 flex flex-col overflow-y-auto px-6 py-8"
+
                   >
+
                     <p
+
                       className="whitespace-pre-line text-lg leading-relaxed text-roasted-coffee"
 
                       aria-live="polite"
+
                     >
+
                       {currentScreen.reply}
+
                     </p>
 
+
+
                     {currentScreen.summary && (
+
                       <div className="mt-6 overflow-hidden rounded-2xl border border-clay-pot/20 bg-surface shadow-[0_1px_4px_rgba(75,58,46,0.12)]">
+
                         {currentScreen.summary.map((row, i) => (
+
                           <div
+
                             key={row.label}
 
                             className={`flex items-center justify-between px-5 py-3.5 ${
-                              i !== currentScreen.summary!.length - 1
-                                ? "border-b border-clay-pot/10"
-                                : ""
+
+                              i !== currentScreen.summary!.length - 1 ? 'border-b border-clay-pot/10' : ''
+
                             }`}
+
                           >
+
                             <span className="text-xs font-medium uppercase tracking-wide text-roasted-coffee/50">
+
                               {row.label}
+
                             </span>
 
-                            <span className="text-sm font-semibold text-roasted-coffee">
-                              {row.value}
-                            </span>
+                            <span className="text-sm font-semibold text-roasted-coffee">{row.value}</span>
+
                           </div>
+
                         ))}
+
                       </div>
+
                     )}
 
+
+
                     <div className="mt-8 flex-1">
-                      {currentScreen.buttons &&
-                      currentScreen.buttons.length > 0 ? (
+
+                      {currentScreen.buttons && currentScreen.buttons.length > 0 ? (
+
                         <div className="space-y-3">
+
                           {currentScreen.buttons.map((button) => (
+
                             <button
+
                               key={button.id}
 
                               onClick={() => handleButtonClick(button)}
@@ -612,64 +854,73 @@ export default function ReservationChatWidget() {
                               disabled={isSending}
 
                               className="flex w-full items-center gap-3 rounded-xl border border-clay-pot/30 bg-surface px-5 py-4 text-left text-base font-medium text-roasted-coffee shadow-[0_1px_3px_rgba(75,58,46,0.12)] transition-all duration-200 hover:border-clay-pot hover:bg-clay-pot/10 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+
                             >
+
                               {isWhatsAppUrl(button.url) && (
+
                                 <WhatsAppIcon className="h-5 w-5 shrink-0 text-[#25D366]" />
+
                               )}
 
                               {button.title}
+
                             </button>
+
                           ))}
+
                         </div>
-                      ) : currentScreen.inputType === "date" ? (
-                        <form
-                          onSubmit={handleTextSubmit}
-                          className="min-w-0 space-y-4"
-                        >
+
+                      ) : currentScreen.inputType === 'date' ? (
+
+                        <form onSubmit={handleTextSubmit} className="min-w-0 space-y-4">
+
                           <div className="text-sm font-medium text-roasted-coffee">
                             {formatBookingDateLabel(
                               inputValue || todayISO,
-                              (inputValue || todayISO) === todayISO
-                                ? "Today"
-                                : undefined,
+                              (inputValue || todayISO) === todayISO ? 'Today' : undefined
                             )}
                           </div>
 
                           <input
+
                             type="date"
 
                             value={inputValue || todayISO}
 
                             min={todayISO}
 
-                            max={lastBookableISO}
 
                             onChange={(e) => setInputValue(e.target.value)}
 
                             className="block w-full min-w-0 max-w-full rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50"
 
                             style={{
-                              WebkitAppearance: "none",
 
-                              appearance: "none",
+                              WebkitAppearance: 'none',
 
-                              boxSizing: "border-box",
+                              appearance: 'none',
 
-                              width: "100%",
+                              boxSizing: 'border-box',
 
-                              maxWidth: "100%",
+                              width: '100%',
+
+                              maxWidth: '100%',
+
                             }}
+
                           />
 
                           <div className="grid grid-cols-2 gap-3">
+
                             <button
                               type="button"
                               onClick={() => setInputValue(tomorrowISO)}
                               disabled={isSending}
                               className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass ${
                                 inputValue === tomorrowISO
-                                  ? "border-banana-leaf bg-banana-leaf text-white"
-                                  : "border-banana-leaf/25 bg-surface text-banana-leaf hover:bg-banana-leaf/10"
+                                  ? 'border-banana-leaf bg-banana-leaf text-white'
+                                  : 'border-banana-leaf/25 bg-surface text-banana-leaf hover:bg-banana-leaf/10'
                               }`}
                             >
                               <span className="block text-xs uppercase tracking-wide opacity-75">
@@ -686,8 +937,8 @@ export default function ReservationChatWidget() {
                               disabled={isSending}
                               className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass ${
                                 inputValue === dayAfterISO
-                                  ? "border-banana-leaf bg-banana-leaf text-white"
-                                  : "border-banana-leaf/25 bg-surface text-banana-leaf hover:bg-banana-leaf/10"
+                                  ? 'border-banana-leaf bg-banana-leaf text-white'
+                                  : 'border-banana-leaf/25 bg-surface text-banana-leaf hover:bg-banana-leaf/10'
                               }`}
                             >
                               <span className="block text-xs uppercase tracking-wide opacity-75">
@@ -697,26 +948,93 @@ export default function ReservationChatWidget() {
                                 {formatBookingDateLabel(dayAfterISO)}
                               </span>
                             </button>
+
                           </div>
 
-                          <p className="text-xs leading-relaxed text-roasted-coffee/55">
-                            You can book from today through{" "}
-                            {formatBookingDateLabel(lastBookableISO)}.
-                          </p>
-
                           <button
+
                             type="submit"
 
                             disabled={isSending || !(inputValue || todayISO)}
 
                             className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
+
+                          >
+
+                            Continue
+
+                          </button>
+
+                        </form>
+
+
+                      ) : currentScreen.session.step === 'RESERVATION_PHONE' ? (
+
+                        <form onSubmit={handlePhoneSubmit} className="space-y-4">
+
+                          <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1.85fr)] gap-3">
+
+                            <select
+                              value={phoneCountry}
+                              onChange={(e) => {
+                                setPhoneCountry(e.target.value as CountryCode);
+                                setPhoneError(null);
+                              }}
+                              disabled={isSending}
+                              aria-label="Country code"
+                              className="min-w-0 rounded-xl border border-tamarind-bark/20 bg-surface px-3 py-3 text-sm text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
+                            >
+                              {COUNTRY_CODES.map((country) => (
+                                <option key={country} value={country}>
+                                  {formatCountryOption(country)}
+                                </option>
+                              ))}
+                            </select>
+
+                            <input
+                              ref={inputRef}
+                              type="tel"
+                              inputMode="tel"
+                              autoComplete="tel-national"
+                              value={phoneNational}
+                              onChange={(e) => {
+                                setPhoneNational(e.target.value);
+                                setPhoneError(null);
+                              }}
+                              placeholder="Phone number"
+                              disabled={isSending}
+                              className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
+                              style={{ boxSizing: 'border-box' }}
+                            />
+
+                          </div>
+
+                          {phoneError && (
+                            <p className="text-sm text-red-700" role="alert">
+                              {phoneError}
+                            </p>
+                          )}
+
+                          <p className="text-xs leading-relaxed text-roasted-coffee/55">
+                            Choose your country first. We’ll validate the number against that country before continuing.
+                          </p>
+
+                          <button
+                            type="submit"
+                            disabled={isSending || !phoneNational.trim()}
+                            className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
                           >
                             Continue
                           </button>
+
                         </form>
+
                       ) : (
+
                         <form onSubmit={handleTextSubmit} className="space-y-4">
+
                           <input
+
                             ref={inputRef}
 
                             type="text"
@@ -731,65 +1049,101 @@ export default function ReservationChatWidget() {
 
                             className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
 
-                            style={{ boxSizing: "border-box" }}
+                            style={{ boxSizing: 'border-box' }}
+
                           />
 
                           <button
+
                             type="submit"
 
                             disabled={isSending || !inputValue.trim()}
 
                             className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
+
                           >
+
                             Send
+
                           </button>
+
                         </form>
+
                       )}
 
+
+
                       {isAwaitingReply && (
-                        <div
-                          className="mt-4 flex items-center gap-2 text-sm text-roasted-coffee/50"
-                          aria-live="polite"
-                        >
+
+                        <div className="mt-4 flex items-center gap-2 text-sm text-roasted-coffee/50" aria-live="polite">
+
                           <span className="flex items-center gap-1">
+
                             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.3s]" />
 
                             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.15s]" />
 
                             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-tamarind-bark/50" />
+
                           </span>
+
                           Thinking...
+
                         </div>
+
                       )}
+
                     </div>
 
+
+
                     {error && (
+
                       <div
+
                         role="alert"
 
                         className="mt-4 flex items-start gap-2 rounded-xl border border-alert/20 bg-alert/10 px-4 py-3 text-sm text-alert"
+
                       >
+
                         <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
 
                         <span>{error}</span>
+
                       </div>
+
                     )}
+
                   </motion.div>
+
                 )}
+
               </AnimatePresence>
 
+
+
               {isFirstLoad && (
+
                 <div className="flex h-full items-center justify-center">
+
                   <div className="flex items-center gap-1">
+
                     <span className="h-2 w-2 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.3s]" />
 
                     <span className="h-2 w-2 animate-bounce rounded-full bg-tamarind-bark/50 [animation-delay:-0.15s]" />
 
                     <span className="h-2 w-2 animate-bounce rounded-full bg-tamarind-bark/50" />
+
                   </div>
+
                 </div>
+
               )}
+
             </main>
+
+
 
             {!isAtMainMenu && currentScreen && (
               <a
@@ -807,22 +1161,37 @@ export default function ReservationChatWidget() {
             {/* Persistent bottom nav — only shown once away from the main menu */}
 
             {!isAtMainMenu && currentScreen && (
+
               <nav className="shrink-0 border-t border-roasted-coffee/10 bg-surface px-5 py-3">
+
                 <button
+
                   onClick={goToMainMenu}
 
                   disabled={isSending}
 
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-roasted-coffee/5 px-5 py-3.5 text-base font-medium text-roasted-coffee transition-all duration-200 hover:bg-roasted-coffee/10 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass"
+
                 >
+
                   <HomeIcon className="h-5 w-5" />
+
                   Main menu
+
                 </button>
+
               </nav>
+
             )}
+
           </motion.div>
+
         )}
+
       </AnimatePresence>
+
     </>
+
   );
+
 }
