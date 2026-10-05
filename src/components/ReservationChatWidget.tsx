@@ -626,6 +626,15 @@ export default function ReservationChatWidget() {
                           onSubmit={handleTextSubmit}
                           className="min-w-0 space-y-4"
                         >
+                          <div className="text-sm font-medium text-roasted-coffee">
+                            {formatBookingDateLabel(
+                              inputValue || todayISO,
+                              (inputValue || todayISO) === todayISO
+                                ? "Today"
+                                : undefined,
+                            )}
+                          </div>
+
                           <input
                             type="date"
 
