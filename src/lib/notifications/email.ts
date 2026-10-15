@@ -1,8 +1,8 @@
-import { Resend } from 'resend';
-import { siteConfig } from '@/lib/site-config';
+import { Resend } from "resend";
+import { siteConfig } from "@/lib/site-config";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
 type ReservationEmailArgs = {
   to: string;
@@ -14,22 +14,23 @@ type ReservationEmailArgs = {
 
 function formatDisplayDate(dateISO: string): string {
   const d = new Date(`${dateISO}T12:00:00Z`);
-  return new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Africa/Lagos',
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Lagos",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   }).format(d);
 }
 
 function formatDisplayTime(time: string): string {
-  const [hoursStr, minutesStr] = time.split(':');
+  const [hoursStr, minutesStr] = time.split(":");
   const hours = Number(hoursStr);
   const minutes = Number(minutesStr);
-  const period = hours >= 12 ? 'PM' : 'AM';
+  const period = hours >= 12 ? "PM" : "AM";
   const displayHour = hours % 12 === 0 ? 12 : hours % 12;
-  const displayMinutes = minutes === 0 ? '' : `:${String(minutes).padStart(2, '0')}`;
+  const displayMinutes =
+    minutes === 0 ? "" : `:${String(minutes).padStart(2, "0")}`;
   return `${displayHour}${displayMinutes} ${period}`;
 }
 
@@ -81,7 +82,7 @@ function buildEmailHtml(args: ReservationEmailArgs): string {
                   <tr>
                     <td style="padding:16px 20px;">
                       <p style="margin:0; font-size:12px; color:#a08b6f; text-transform:uppercase; letter-spacing:0.5px;">Party Size</p>
-                      <p style="margin:4px 0 0; font-size:16px; color:#3b2a20; font-weight:bold;">${args.partySize} guest${args.partySize === 1 ? '' : 's'}</p>
+                      <p style="margin:4px 0 0; font-size:16px; color:#3b2a20; font-weight:bold;">${args.partySize} guest${args.partySize === 1 ? "" : "s"}</p>
                     </td>
                   </tr>
                 </table>
@@ -111,7 +112,7 @@ function buildEmailHtml(args: ReservationEmailArgs): string {
 }
 
 export async function sendReservationConfirmationEmail(
-  args: ReservationEmailArgs
+  args: ReservationEmailArgs,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const result = await resend.emails.send({
@@ -129,7 +130,7 @@ export async function sendReservationConfirmationEmail(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown email error.',
+      error: error instanceof Error ? error.message : "Unknown email error.",
     };
   }
 }

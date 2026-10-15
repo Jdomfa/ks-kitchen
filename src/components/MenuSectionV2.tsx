@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { menu, MenuItem } from '@/lib/menu-data-trial';
-import { DietaryTags } from './DietaryIcons';
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { menu, MenuItem } from "@/lib/menu-data-trial";
+import { DietaryTags } from "./DietaryIcons";
 
 function formatNaira(amount: number) {
-  return `NGN ${amount.toLocaleString('en-NG')}`;
+  return `NGN ${amount.toLocaleString("en-NG")}`;
 }
 
 export function MenuSectionV2() {
@@ -93,7 +93,7 @@ export function MenuSectionV2() {
                                   }}
                                   transition={{
                                     duration: 0.25,
-                                    ease: 'easeOut',
+                                    ease: "easeOut",
                                   }}
                                   className="text-xl font-light text-brushed-brass"
                                 >
@@ -128,7 +128,7 @@ export function MenuSectionV2() {
                                 opacity: 0,
                               }}
                               animate={{
-                                height: 'auto',
+                                height: "auto",
                                 opacity: 1,
                               }}
                               exit={{

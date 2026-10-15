@@ -1,6 +1,6 @@
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { AccordionMenuSection } from '@/components/AccordionMenuSection';
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { AccordionMenuSection } from "@/components/AccordionMenuSection";
 
 export default function MenuV2Page() {
   return (

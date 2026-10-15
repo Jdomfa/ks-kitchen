@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { submitFeedback } from './actions';
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { submitFeedback } from "./actions";
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
 const RATING_OPTIONS = [
-  { value: 1, label: 'Poor', emoji: '😞' },
-  { value: 2, label: 'Fair', emoji: '😕' },
-  { value: 3, label: 'Good', emoji: '🙂' },
-  { value: 4, label: 'Very Good', emoji: '😄' },
-  { value: 5, label: 'Excellent', emoji: '🤩' },
+  { value: 1, label: "Poor", emoji: "😞" },
+  { value: 2, label: "Fair", emoji: "😕" },
+  { value: 3, label: "Good", emoji: "🙂" },
+  { value: 4, label: "Very Good", emoji: "😄" },
+  { value: 5, label: "Excellent", emoji: "🤩" },
 ] as const;
 
 type RatingKey =
-  | 'foodQuality'
-  | 'menuVariety'
-  | 'serviceSpeed'
-  | 'staffFriendliness'
-  | 'cleanlinessAtmosphere'
-  | 'valueForMoney';
+  | "foodQuality"
+  | "menuVariety"
+  | "serviceSpeed"
+  | "staffFriendliness"
+  | "cleanlinessAtmosphere"
+  | "valueForMoney";
 
 const RATING_CATEGORIES: {
   key: RatingKey;
@@ -28,62 +28,58 @@ const RATING_CATEGORIES: {
   icon: string;
 }[] = [
   {
-    key: 'foodQuality',
-    label: 'Food Quality & Taste',
-    icon: '🍽️',
+    key: "foodQuality",
+    label: "Food Quality & Taste",
+    icon: "🍽️",
   },
   {
-    key: 'menuVariety',
-    label: 'Menu Variety & Options',
-    icon: '📖',
+    key: "menuVariety",
+    label: "Menu Variety & Options",
+    icon: "📖",
   },
   {
-    key: 'serviceSpeed',
-    label: 'Service Speed & Attentiveness',
-    icon: '⏱️',
+    key: "serviceSpeed",
+    label: "Service Speed & Attentiveness",
+    icon: "⏱️",
   },
   {
-    key: 'staffFriendliness',
-    label: 'Staff Friendliness & Knowledge',
-    icon: '🤝',
+    key: "staffFriendliness",
+    label: "Staff Friendliness & Knowledge",
+    icon: "🤝",
   },
   {
-    key: 'cleanlinessAtmosphere',
-    label: 'Cleanliness & Atmosphere',
-    icon: '✨',
+    key: "cleanlinessAtmosphere",
+    label: "Cleanliness & Atmosphere",
+    icon: "✨",
   },
   {
-    key: 'valueForMoney',
-    label: 'Value for Money',
-    icon: '💰',
+    key: "valueForMoney",
+    label: "Value for Money",
+    icon: "💰",
   },
 ];
 
-type Recommendation =
-  | 'definitely'
-  | 'probably'
-  | 'unlikely'
-  | 'no';
+type Recommendation = "definitely" | "probably" | "unlikely" | "no";
 
 const RECOMMENDATIONS: {
   value: Recommendation;
   label: string;
 }[] = [
   {
-    value: 'definitely',
-    label: 'Definitely',
+    value: "definitely",
+    label: "Definitely",
   },
   {
-    value: 'probably',
-    label: 'Probably',
+    value: "probably",
+    label: "Probably",
   },
   {
-    value: 'unlikely',
-    label: 'Unlikely',
+    value: "unlikely",
+    label: "Unlikely",
   },
   {
-    value: 'no',
-    label: 'No',
+    value: "no",
+    label: "No",
   },
 ];
 
@@ -103,15 +99,12 @@ function RatingRow({
       <div className="flex items-center gap-2.5">
         <span className="text-xl">{icon}</span>
 
-        <p className="font-medium text-roasted-coffee">
-          {label}
-        </p>
+        <p className="font-medium text-roasted-coffee">{label}</p>
       </div>
 
       <div className="mt-4 grid grid-cols-5 gap-2">
         {RATING_OPTIONS.map((option) => {
-          const selected =
-            value === option.value;
+          const selected = value === option.value;
 
           return (
             <motion.button
@@ -120,9 +113,7 @@ function RatingRow({
               whileTap={{
                 scale: 0.96,
               }}
-              onClick={() =>
-                onChange(option.value)
-              }
+              onClick={() => onChange(option.value)}
               className={`
                 flex min-h-[68px] flex-col
                 items-center justify-center
@@ -130,18 +121,14 @@ function RatingRow({
                 text-center transition
                 ${
                   selected
-                    ? 'border-clay-pot bg-clay-pot text-coconut-cream'
-                    : 'border-brushed-brass/15 bg-[#FFFDF9] text-roasted-coffee hover:border-clay-pot/40'
+                    ? "border-clay-pot bg-clay-pot text-coconut-cream"
+                    : "border-brushed-brass/15 bg-[#FFFDF9] text-roasted-coffee hover:border-clay-pot/40"
                 }
               `}
             >
-              <span className="text-xl">
-                {option.emoji}
-              </span>
+              <span className="text-xl">{option.emoji}</span>
 
-              <span className="mt-1 text-xs font-semibold">
-                {option.value}
-              </span>
+              <span className="mt-1 text-xs font-semibold">{option.value}</span>
             </motion.button>
           );
         })}
@@ -156,9 +143,7 @@ function RatingRow({
 }
 
 export function FeedbackForm() {
-  const [ratings, setRatings] = useState<
-    Record<RatingKey, number | null>
-  >({
+  const [ratings, setRatings] = useState<Record<RatingKey, number | null>>({
     foodQuality: null,
     menuVariety: null,
     serviceSpeed: null,
@@ -167,63 +152,43 @@ export function FeedbackForm() {
     valueForMoney: null,
   });
 
-  const [dishesOrdered, setDishesOrdered] =
-    useState('');
+  const [dishesOrdered, setDishesOrdered] = useState("");
 
-  const [standoutFeedback, setStandoutFeedback] =
-    useState('');
+  const [standoutFeedback, setStandoutFeedback] = useState("");
 
-  const [recommendation, setRecommendation] =
-    useState<Recommendation | null>(null);
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(
+    null,
+  );
 
-  const [name, setName] =
-    useState('');
+  const [name, setName] = useState("");
 
-  const [email, setEmail] =
-    useState('');
+  const [email, setEmail] = useState("");
 
-  const [phone, setPhone] =
-    useState('');
+  const [phone, setPhone] = useState("");
 
-  const [mayContact, setMayContact] =
-    useState<boolean | null>(null);
+  const [mayContact, setMayContact] = useState<boolean | null>(null);
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [isSubmitted, setIsSubmitted] =
-    useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const allRated =
-    Object.values(ratings).every(
-      (rating) => rating !== null
-    );
+  const allRated = Object.values(ratings).every((rating) => rating !== null);
 
-  function setRating(
-    key: RatingKey,
-    value: number
-  ) {
+  function setRating(key: RatingKey, value: number) {
     setRatings((prev) => ({
       ...prev,
       [key]: value,
     }));
   }
 
-  async function handleSubmit(
-    event: React.FormEvent
-  ) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    if (
-      !allRated ||
-      !recommendation ||
-      isSubmitting
-    ) {
+    if (!allRated || !recommendation || isSubmitting) {
       setError(
-        'Please complete all ratings and select a recommendation option.'
+        "Please complete all ratings and select a recommendation option.",
       );
 
       return;
@@ -232,55 +197,40 @@ export function FeedbackForm() {
     setError(null);
     setIsSubmitting(true);
 
-    const result =
-      await submitFeedback({
-        foodQuality:
-          ratings.foodQuality!,
+    const result = await submitFeedback({
+      foodQuality: ratings.foodQuality!,
 
-        menuVariety:
-          ratings.menuVariety!,
+      menuVariety: ratings.menuVariety!,
 
-        serviceSpeed:
-          ratings.serviceSpeed!,
+      serviceSpeed: ratings.serviceSpeed!,
 
-        staffFriendliness:
-          ratings.staffFriendliness!,
+      staffFriendliness: ratings.staffFriendliness!,
 
-        cleanlinessAtmosphere:
-          ratings.cleanlinessAtmosphere!,
+      cleanlinessAtmosphere: ratings.cleanlinessAtmosphere!,
 
-        valueForMoney:
-          ratings.valueForMoney!,
+      valueForMoney: ratings.valueForMoney!,
 
-        dishesOrdered:
-          dishesOrdered.trim(),
+      dishesOrdered: dishesOrdered.trim(),
 
-        standoutFeedback:
-          standoutFeedback.trim(),
+      standoutFeedback: standoutFeedback.trim(),
 
-        recommendation,
+      recommendation,
 
-        name:
-          name.trim(),
+      name: name.trim(),
 
-        email:
-          email.trim(),
+      email: email.trim(),
 
-        phone:
-          phone.trim(),
+      phone: phone.trim(),
 
-        mayContact,
-      });
+      mayContact,
+    });
 
     setIsSubmitting(false);
 
     if (result.success) {
       setIsSubmitted(true);
     } else {
-      setError(
-        result.error ??
-          'Something went wrong — please try again.'
-      );
+      setError(result.error ?? "Something went wrong — please try again.");
     }
   }
 
@@ -324,16 +274,14 @@ export function FeedbackForm() {
         </h1>
 
         <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-roasted-coffee/60">
-          Your feedback helps us improve every
-          part of the K&apos;s Kitchen
+          Your feedback helps us improve every part of the K&apos;s Kitchen
           experience.
         </p>
 
         <div className="mx-auto mt-7 h-px w-20 bg-brushed-brass/40" />
 
         <p className="mt-6 text-sm text-roasted-coffee/55">
-          We look forward to welcoming you
-          again soon.
+          We look forward to welcoming you again soon.
         </p>
       </motion.div>
     );
@@ -364,8 +312,7 @@ export function FeedbackForm() {
         </h1>
 
         <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-roasted-coffee/60">
-          Tell us about your visit. Your
-          feedback helps us make every meal,
+          Tell us about your visit. Your feedback helps us make every meal,
           moment and experience even better.
         </p>
       </div>
@@ -384,32 +331,20 @@ export function FeedbackForm() {
             </h2>
 
             <p className="mt-2 text-sm text-roasted-coffee/55">
-              Rate each area from 1 = Poor to 5
-              = Excellent.
+              Rate each area from 1 = Poor to 5 = Excellent.
             </p>
           </div>
 
           <div className="space-y-3">
-            {RATING_CATEGORIES.map(
-              (category) => (
-                <RatingRow
-                  key={category.key}
-                  label={category.label}
-                  icon={category.icon}
-                  value={
-                    ratings[
-                      category.key
-                    ]
-                  }
-                  onChange={(value) =>
-                    setRating(
-                      category.key,
-                      value
-                    )
-                  }
-                />
-              )
-            )}
+            {RATING_CATEGORIES.map((category) => (
+              <RatingRow
+                key={category.key}
+                label={category.label}
+                icon={category.icon}
+                value={ratings[category.key]}
+                onChange={(value) => setRating(category.key, value)}
+              />
+            ))}
           </div>
         </section>
 
@@ -434,18 +369,13 @@ export function FeedbackForm() {
                 htmlFor="dishes"
                 className="text-sm font-medium text-roasted-coffee"
               >
-                Which dishes or drinks did you
-                order today?
+                Which dishes or drinks did you order today?
               </label>
 
               <textarea
                 id="dishes"
                 value={dishesOrdered}
-                onChange={(event) =>
-                  setDishesOrdered(
-                    event.target.value
-                  )
-                }
+                onChange={(event) => setDishesOrdered(event.target.value)}
                 rows={3}
                 placeholder="Tell us what you ordered..."
                 className="mt-2 w-full resize-none rounded-2xl border border-brushed-brass/20 bg-white/70 px-4 py-3 text-sm text-roasted-coffee outline-none transition placeholder:text-roasted-coffee/30 focus:border-clay-pot/50 focus:ring-2 focus:ring-clay-pot/10"
@@ -457,23 +387,17 @@ export function FeedbackForm() {
                 htmlFor="standout"
                 className="text-sm font-medium text-roasted-coffee"
               >
-                Did anything stand out during
-                your visit?
+                Did anything stand out during your visit?
               </label>
 
               <p className="mt-1 text-xs text-roasted-coffee/45">
-                Positive or negative — we value
-                both.
+                Positive or negative — we value both.
               </p>
 
               <textarea
                 id="standout"
                 value={standoutFeedback}
-                onChange={(event) =>
-                  setStandoutFeedback(
-                    event.target.value
-                  )
-                }
+                onChange={(event) => setStandoutFeedback(event.target.value)}
                 rows={5}
                 placeholder="Share your thoughts, highlights or suggestions..."
                 className="mt-2 w-full resize-none rounded-2xl border border-brushed-brass/20 bg-white/70 px-4 py-3 text-sm text-roasted-coffee outline-none transition placeholder:text-roasted-coffee/30 focus:border-clay-pot/50 focus:ring-2 focus:ring-clay-pot/10"
@@ -482,46 +406,35 @@ export function FeedbackForm() {
 
             <div>
               <p className="text-sm font-medium text-roasted-coffee">
-                Would you recommend us to a
-                friend or colleague?
+                Would you recommend us to a friend or colleague?
               </p>
 
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {RECOMMENDATIONS.map(
-                  (option) => {
-                    const selected =
-                      recommendation ===
-                      option.value;
+                {RECOMMENDATIONS.map((option) => {
+                  const selected = recommendation === option.value;
 
-                    return (
-                      <motion.button
-                        key={
-                          option.value
-                        }
-                        type="button"
-                        whileTap={{
-                          scale: 0.97,
-                        }}
-                        onClick={() =>
-                          setRecommendation(
-                            option.value
-                          )
-                        }
-                        className={`
+                  return (
+                    <motion.button
+                      key={option.value}
+                      type="button"
+                      whileTap={{
+                        scale: 0.97,
+                      }}
+                      onClick={() => setRecommendation(option.value)}
+                      className={`
                           rounded-xl border px-3 py-3
                           text-sm font-medium transition
                           ${
                             selected
-                              ? 'border-clay-pot bg-clay-pot text-coconut-cream'
-                              : 'border-brushed-brass/20 bg-white/70 text-roasted-coffee hover:border-clay-pot/40'
+                              ? "border-clay-pot bg-clay-pot text-coconut-cream"
+                              : "border-brushed-brass/20 bg-white/70 text-roasted-coffee hover:border-clay-pot/40"
                           }
                         `}
-                      >
-                        {option.label}
-                      </motion.button>
-                    );
-                  }
-                )}
+                    >
+                      {option.label}
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -550,10 +463,8 @@ export function FeedbackForm() {
             </div>
 
             <p className="mt-2 max-w-xl text-sm leading-6 text-roasted-coffee/55">
-              Leave your details if you&apos;d
-              like to join our VIP rewards
-              program or receive a response to
-              your feedback.
+              Leave your details if you&apos;d like to join our VIP rewards
+              program or receive a response to your feedback.
             </p>
           </div>
 
@@ -566,11 +477,7 @@ export function FeedbackForm() {
               <input
                 type="text"
                 value={name}
-                onChange={(event) =>
-                  setName(
-                    event.target.value
-                  )
-                }
+                onChange={(event) => setName(event.target.value)}
                 placeholder="Your name"
                 className="mt-1.5 w-full rounded-xl border border-brushed-brass/20 bg-white/70 px-4 py-3 text-sm text-roasted-coffee outline-none transition placeholder:text-roasted-coffee/30 focus:border-clay-pot/50 focus:ring-2 focus:ring-clay-pot/10"
               />
@@ -584,11 +491,7 @@ export function FeedbackForm() {
               <input
                 type="tel"
                 value={phone}
-                onChange={(event) =>
-                  setPhone(
-                    event.target.value
-                  )
-                }
+                onChange={(event) => setPhone(event.target.value)}
                 placeholder="080..."
                 className="mt-1.5 w-full rounded-xl border border-brushed-brass/20 bg-white/70 px-4 py-3 text-sm text-roasted-coffee outline-none transition placeholder:text-roasted-coffee/30 focus:border-clay-pot/50 focus:ring-2 focus:ring-clay-pot/10"
               />
@@ -602,11 +505,7 @@ export function FeedbackForm() {
               <input
                 type="email"
                 value={email}
-                onChange={(event) =>
-                  setEmail(
-                    event.target.value
-                  )
-                }
+                onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
                 className="mt-1.5 w-full rounded-xl border border-brushed-brass/20 bg-white/70 px-4 py-3 text-sm text-roasted-coffee outline-none transition placeholder:text-roasted-coffee/30 focus:border-clay-pot/50 focus:ring-2 focus:ring-clay-pot/10"
               />
@@ -615,48 +514,33 @@ export function FeedbackForm() {
 
           <div className="mt-5">
             <p className="text-sm font-medium text-roasted-coffee">
-              May we contact you regarding your
-              experience?
+              May we contact you regarding your experience?
             </p>
 
             <div className="mt-3 flex gap-2">
-              {[true, false].map(
-                (option) => {
-                  const selected =
-                    mayContact ===
-                    option;
+              {[true, false].map((option) => {
+                const selected = mayContact === option;
 
-                  return (
-                    <button
-                      key={
-                        option
-                          ? 'yes'
-                          : 'no'
-                      }
-                      type="button"
-                      onClick={() =>
-                        setMayContact(
-                          option
-                        )
-                      }
-                      className={`
+                return (
+                  <button
+                    key={option ? "yes" : "no"}
+                    type="button"
+                    onClick={() => setMayContact(option)}
+                    className={`
                         min-w-[100px] rounded-xl
                         border px-4 py-3 text-sm
                         font-medium transition
                         ${
                           selected
-                            ? 'border-clay-pot bg-clay-pot text-coconut-cream'
-                            : 'border-brushed-brass/20 bg-white/70 text-roasted-coffee'
+                            ? "border-clay-pot bg-clay-pot text-coconut-cream"
+                            : "border-brushed-brass/20 bg-white/70 text-roasted-coffee"
                         }
                       `}
-                    >
-                      {option
-                        ? 'Yes'
-                        : 'No'}
-                    </button>
-                  );
-                }
-              )}
+                  >
+                    {option ? "Yes" : "No"}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -684,21 +568,14 @@ export function FeedbackForm() {
 
         <button
           type="submit"
-          disabled={
-            !allRated ||
-            !recommendation ||
-            isSubmitting
-          }
+          disabled={!allRated || !recommendation || isSubmitting}
           className="w-full rounded-2xl bg-clay-pot px-6 py-4 text-sm font-semibold text-coconut-cream shadow-sm transition hover:bg-terracotta disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isSubmitting
-            ? 'Sending feedback...'
-            : 'Submit Feedback'}
+          {isSubmitting ? "Sending feedback..." : "Submit Feedback"}
         </button>
 
         <p className="text-center text-xs leading-5 text-roasted-coffee/40">
-          Thank you for helping us make
-          K&apos;s Kitchen Gourmet even better.
+          Thank you for helping us make K&apos;s Kitchen Gourmet even better.
         </p>
       </div>
     </motion.form>

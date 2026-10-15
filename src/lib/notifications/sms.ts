@@ -1,8 +1,8 @@
-import twilio from 'twilio';
+import twilio from "twilio";
 
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
+  process.env.TWILIO_AUTH_TOKEN,
 );
 
 const FROM_NUMBER = process.env.TWILIO_PHONE_NUMBER;
@@ -20,7 +20,7 @@ type ReservationSmsArgs = {
  * Falls back to null if the input can't be confidently normalized.
  */
 export function normalizePhoneNumber(raw: string): string | null {
-  const trimmed = raw.trim().replace(/[\s-()]/g, '');
+  const trimmed = raw.trim().replace(/[\s-()]/g, "");
 
   if (/^\+\d{8,15}$/.test(trimmed)) {
     return trimmed;
@@ -40,10 +40,10 @@ export function normalizePhoneNumber(raw: string): string | null {
 }
 
 export async function sendReservationConfirmationSms(
-  args: ReservationSmsArgs
+  args: ReservationSmsArgs,
 ): Promise<{ success: boolean; error?: string }> {
   if (!FROM_NUMBER) {
-    return { success: false, error: 'TWILIO_PHONE_NUMBER is not configured.' };
+    return { success: false, error: "TWILIO_PHONE_NUMBER is not configured." };
   }
 
   try {
@@ -57,7 +57,7 @@ export async function sendReservationConfirmationSms(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown SMS error.',
+      error: error instanceof Error ? error.message : "Unknown SMS error.",
     };
   }
 }

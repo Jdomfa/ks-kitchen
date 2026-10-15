@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { PlayCircle, ChevronRight, ArrowLeftRight } from 'lucide-react';
-import { menu, MenuItem } from '@/lib/menu-data-trial';
-import { DietaryTags } from './DietaryIcons';
-import { BrandPattern } from './BrandPattern';
-import { VideoModal } from './VideoModal';
-import { ItemModalTrial } from './ItemModal';
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { PlayCircle, ChevronRight, ArrowLeftRight } from "lucide-react";
+import { menu, MenuItem } from "@/lib/menu-data-trial";
+import { DietaryTags } from "./DietaryIcons";
+import { BrandPattern } from "./BrandPattern";
+import { VideoModal } from "./VideoModal";
+import { ItemModalTrial } from "./ItemModal";
 
 const containerVariants = {
   hidden: {},
@@ -21,16 +21,16 @@ const itemVariants = {
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: 'easeOut' as const },
+    transition: { duration: 0.5, ease: "easeOut" as const },
   },
 };
 
 function formatNaira(amount: number) {
-  return `NGN ${amount.toLocaleString('en-NG')}`;
+  return `NGN ${amount.toLocaleString("en-NG")}`;
 }
 
 const DOSA_VIDEO_SRC =
-  'https://player.cloudinary.com/embed/?cloud_name=ansp9yim&public_id=0_Masala_Dosa_Indian_Food_3840x2160';
+  "https://player.cloudinary.com/embed/?cloud_name=ansp9yim&public_id=0_Masala_Dosa_Indian_Food_3840x2160";
 
 /**
  * TRIAL VERSION — reads from menu-data-trial.tsx and renders ItemModalTrial.
@@ -60,7 +60,7 @@ export function MenuSectionTrial() {
 
     const observer = new IntersectionObserver(
       ([entry]) => setShowSwitcher(!entry.isIntersecting),
-      { rootMargin: '-80px 0px 0px 0px' } // small buffer so it doesn't flicker right at the edge
+      { rootMargin: "-80px 0px 0px 0px" }, // small buffer so it doesn't flicker right at the edge
     );
 
     observer.observe(target);
@@ -69,7 +69,7 @@ export function MenuSectionTrial() {
 
   function handleSwitchTab() {
     setActiveTab(otherTab.id);
-    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -83,8 +83,8 @@ export function MenuSectionTrial() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative text-center"
         >
           <h1 className="font-display text-4xl md:text-5xl text-roasted-coffee">
@@ -97,15 +97,18 @@ export function MenuSectionTrial() {
           </p>
         </motion.div>
 
-        <div ref={selectorRef} className="relative flex justify-center gap-3 mt-12">
+        <div
+          ref={selectorRef}
+          className="relative flex justify-center gap-3 mt-12"
+        >
           {menu.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-8 py-2.5 rounded-full font-sans text-sm tracking-wide transition-colors border ${
                 activeTab === tab.id
-                  ? 'bg-clay-pot text-coconut-cream border-clay-pot'
-                  : 'border-roasted-coffee/20 text-roasted-coffee hover:border-clay-pot'
+                  ? "bg-clay-pot text-coconut-cream border-clay-pot"
+                  : "border-roasted-coffee/20 text-roasted-coffee hover:border-clay-pot"
               }`}
             >
               {tab.label}
@@ -133,7 +136,7 @@ export function MenuSectionTrial() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.28, ease: 'easeOut' }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
             className="relative"
           >
             {active.categories.map((cat) => (
@@ -144,7 +147,7 @@ export function MenuSectionTrial() {
                     variants={containerVariants}
                     initial="hidden"
                     whileInView="show"
-                    viewport={{ once: true, margin: '-60px' }}
+                    viewport={{ once: true, margin: "-60px" }}
                   >
                     <motion.div
                       variants={itemVariants}
@@ -170,7 +173,7 @@ export function MenuSectionTrial() {
                         {cat.description}
                       </motion.p>
                     )}
-                    {cat.id === 'dosa-collective' && (
+                    {cat.id === "dosa-collective" && (
                       <motion.div
                         variants={itemVariants}
                         className="flex justify-center"
@@ -196,8 +199,8 @@ export function MenuSectionTrial() {
                     <motion.div
                       initial={{ opacity: 0, scale: 1.08, y: 30 }}
                       whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                      viewport={{ once: true, margin: '-100px' }}
-                      transition={{ duration: 0.9, ease: 'easeOut' }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.9, ease: "easeOut" }}
                       className="relative h-64 md:h-96 w-full bg-cover bg-center"
                       style={{ backgroundImage: `url(${cat.image})` }}
                     >
@@ -215,7 +218,7 @@ export function MenuSectionTrial() {
                     variants={containerVariants}
                     initial="hidden"
                     whileInView="show"
-                    viewport={{ once: true, margin: '-60px' }}
+                    viewport={{ once: true, margin: "-60px" }}
                     className="space-y-8"
                   >
                     {cat.items.map((item) => (
@@ -265,7 +268,7 @@ export function MenuSectionTrial() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.92 }}
             whileTap={{ scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22 }}
             className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full bg-clay-pot px-5 py-3 text-sm font-sans tracking-wide text-coconut-cream shadow-lg transition-colors hover:bg-terracotta"
           >
             <ArrowLeftRight className="h-4 w-4" strokeWidth={1.8} />

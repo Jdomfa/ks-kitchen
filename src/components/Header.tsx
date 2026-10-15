@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ShoppingBag } from 'lucide-react';
-import { useCart } from '@/lib/cart-context';
+import Link from "next/link";
+import Image from "next/image";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
+import { ShoppingBag } from "lucide-react";
+import { useCart } from "@/lib/cart-context";
 
 const NAV = [
-  { href: '/', label: 'Home' },
-  { href: '/menu', label: 'Menu' },
-  { href: '/store', label: 'Store' },
-  { href: '/reservation', label: 'Reservation' },
-  { href: '/gallery', label: 'Gallery' },
+  { href: "/", label: "Home" },
+  { href: "/menu", label: "Menu" },
+  { href: "/store", label: "Store" },
+  { href: "/reservation", label: "Reservation" },
+  { href: "/gallery", label: "Gallery" },
 ];
 
 /** Hamburger that morphs into an X — three bars animated with shared variants. */
@@ -30,26 +30,26 @@ function MenuToggle({ open }: { open: boolean }) {
     closed: { rotate: 0, y: 0 },
     open: { rotate: -45, y: -7 },
   };
-  const state = open ? 'open' : 'closed';
+  const state = open ? "open" : "closed";
 
   return (
     <div className="flex flex-col justify-center gap-[5px] h-5 w-6">
       <motion.span
         variants={top}
         animate={state}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
         className="block h-[1.5px] w-full bg-roasted-coffee origin-center"
       />
       <motion.span
         variants={middle}
         animate={state}
-        transition={{ duration: 0.2, ease: 'easeInOut' }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
         className="block h-[1.5px] w-full bg-roasted-coffee"
       />
       <motion.span
         variants={bottom}
         animate={state}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
         className="block h-[1.5px] w-full bg-roasted-coffee origin-center"
       />
     </div>
@@ -63,9 +63,9 @@ export function Header() {
 
   // Lock body scroll while the overlay is open, and close it on route change.
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
+    document.body.style.overflow = open ? "hidden" : "";
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [open]);
 
@@ -92,13 +92,13 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 className={`relative pb-1 transition-colors hover:text-clay-pot ${
-                  isActive ? 'text-clay-pot' : 'text-roasted-coffee'
+                  isActive ? "text-clay-pot" : "text-roasted-coffee"
                 }`}
               >
                 {item.label}
                 <span
                   className={`absolute left-0 -bottom-0.5 h-px bg-brushed-brass transition-all ${
-                    isActive ? 'w-full' : 'w-0'
+                    isActive ? "w-full" : "w-0"
                   }`}
                 />
               </Link>
@@ -151,9 +151,9 @@ export function Header() {
             {/* Slide-in panel */}
             <motion.nav
               key="panel"
-              initial={{ x: '100%' }}
+              initial={{ x: "100%" }}
               animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              exit={{ x: "100%" }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="md:hidden fixed top-20 right-0 z-50 h-[70vh] w-full bg-coconut-cream shadow-2xl flex flex-col px-8 pt-24 pb-10 gap-2"
             >
@@ -165,7 +165,7 @@ export function Header() {
                   transition={{
                     delay: 0.2 + i * 0.07,
                     duration: 0.4,
-                    ease: 'easeOut',
+                    ease: "easeOut",
                   }}
                 >
                   <Link
@@ -173,8 +173,8 @@ export function Header() {
                     onClick={() => setOpen(false)}
                     className={`block py-4 font-display text-2xl uppercase tracking-wide border-b border-roasted-coffee/10 transition-colors ${
                       pathname === item.href
-                        ? 'text-clay-pot'
-                        : 'text-roasted-coffee'
+                        ? "text-clay-pot"
+                        : "text-roasted-coffee"
                     }`}
                   >
                     {item.label}

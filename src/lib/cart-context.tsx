@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createContext,
@@ -7,8 +7,8 @@ import {
   useMemo,
   useReducer,
   type ReactNode,
-} from 'react';
-import type { Product } from './store-data';
+} from "react";
+import type { Product } from "./store-data";
 
 export type CartLine = {
   productId: string;
@@ -22,15 +22,15 @@ export type CartLine = {
 type CartState = { lines: CartLine[] };
 
 type CartAction =
-  | { type: 'ADD'; product: Product; quantity: number }
-  | { type: 'REMOVE'; productId: string }
-  | { type: 'SET_QUANTITY'; productId: string; quantity: number }
-  | { type: 'CLEAR' }
-  | { type: 'HYDRATE'; lines: CartLine[] };
+  | { type: "ADD"; product: Product; quantity: number }
+  | { type: "REMOVE"; productId: string }
+  | { type: "SET_QUANTITY"; productId: string; quantity: number }
+  | { type: "CLEAR" }
+  | { type: "HYDRATE"; lines: CartLine[] };
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
-    case 'ADD': {
+    case "ADD": {
       const existing = state.lines.find(
         (l) => l.productId === action.product.id,
       );
@@ -57,11 +57,11 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ],
       };
     }
-    case 'REMOVE':
+    case "REMOVE":
       return {
         lines: state.lines.filter((l) => l.productId !== action.productId),
       };
-    case 'SET_QUANTITY':
+    case "SET_QUANTITY":
       if (action.quantity <= 0) {
         return {
           lines: state.lines.filter((l) => l.productId !== action.productId),
@@ -74,9 +74,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
             : l,
         ),
       };
-    case 'CLEAR':
+    case "CLEAR":
       return { lines: [] };
-    case 'HYDRATE':
+    case "HYDRATE":
       return { lines: action.lines };
     default:
       return state;
@@ -95,7 +95,7 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-const STORAGE_KEY = 'ks-kitchen-store-cart';
+const STORAGE_KEY = "ks-kitchen-store-cart";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { lines: [] });
@@ -107,7 +107,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const lines = JSON.parse(raw) as CartLine[];
-        dispatch({ type: 'HYDRATE', lines });
+        dispatch({ type: "HYDRATE", lines });
       }
     } catch {
       // Corrupt or inaccessible storage — start with an empty cart.
@@ -126,12 +126,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [state.lines]);
 
   const addToCart = (product: Product, quantity = 1) =>
-    dispatch({ type: 'ADD', product, quantity });
+    dispatch({ type: "ADD", product, quantity });
   const removeFromCart = (productId: string) =>
-    dispatch({ type: 'REMOVE', productId });
+    dispatch({ type: "REMOVE", productId });
   const setQuantity = (productId: string, quantity: number) =>
-    dispatch({ type: 'SET_QUANTITY', productId, quantity });
-  const clearCart = () => dispatch({ type: 'CLEAR' });
+    dispatch({ type: "SET_QUANTITY", productId, quantity });
+  const clearCart = () => dispatch({ type: "CLEAR" });
 
   const subtotal = useMemo(
     () => state.lines.reduce((sum, l) => sum + l.price * l.quantity, 0),
@@ -161,6 +161,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within a CartProvider');
+  if (!ctx) throw new Error("useCart must be used within a CartProvider");
   return ctx;
 }

@@ -1,5 +1,5 @@
 // lib/supabase/service.ts
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export function createServiceClient() {
   return createSupabaseClient(
@@ -10,6 +10,6 @@ export function createServiceClient() {
         autoRefreshToken: false,
         persistSession: false,
       },
-    }
+    },
   );
 }

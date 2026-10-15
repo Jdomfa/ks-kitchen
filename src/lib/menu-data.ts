@@ -30,7 +30,8 @@ export const menu: MenuTab[] = [
       {
         id: "comfort-meets-tradition",
         name: "Comfort Meets Tradition",
-        description: '"Almost left out of our menu, this beloved dish never quite fit into our dosa or uthappam collection. But perhapsthat\'s exactly what makes it so special. Prepared the traditional way our ancestors would have approved of, it is soft, wholesome, nourishing, andwonderfully delicate—a timeless classic that deserves a place of its own" ',
+        description:
+          '"Almost left out of our menu, this beloved dish never quite fit into our dosa or uthappam collection. But perhapsthat\'s exactly what makes it so special. Prepared the traditional way our ancestors would have approved of, it is soft, wholesome, nourishing, andwonderfully delicate—a timeless classic that deserves a place of its own" ',
         image:
           "https://res.cloudinary.com/ansp9yim/image/upload/v1786913007/menu-bg-2.jpg",
         items: [
@@ -47,7 +48,8 @@ export const menu: MenuTab[] = [
       {
         id: "dosa-collective",
         name: "The Dosa Collective",
-        description: "Dosa is a crisp savoury crepe from South India, made from naturally fermented rice and black lentils. A beloved staple enjoyed for breakfast, dinner or as street-side comfort food, now celebrated around the world.",
+        description:
+          "Dosa is a crisp savoury crepe from South India, made from naturally fermented rice and black lentils. A beloved staple enjoyed for breakfast, dinner or as street-side comfort food, now celebrated around the world.",
         image:
           "https://res.cloudinary.com/ansp9yim/image/upload/v1786954926/masala-dosa-is-south-indian-meal-served-with-sambhar-coconut-chutney-selective-focus_1.jpg_2.jpg",
         items: [
@@ -94,7 +96,8 @@ export const menu: MenuTab[] = [
           {
             id: "dosa-cheese",
             name: "Cheese",
-            description: "Fresh paneer, cheese and mild spices, filled with melted mozzarella.",
+            description:
+              "Fresh paneer, cheese and mild spices, filled with melted mozzarella.",
             price: 15000,
             tags: ["veggie"],
           },
@@ -103,7 +106,8 @@ export const menu: MenuTab[] = [
       {
         id: "uthappam-collective",
         name: "The Uthappam Collective",
-        description: '"A thicker, soft-centered version of Dosa, slow-cooked with fresh toppings."',
+        description:
+          '"A thicker, soft-centered version of Dosa, slow-cooked with fresh toppings."',
         image:
           "https://res.cloudinary.com/ansp9yim/image/upload/v1786913007/menu-bg-3.jpg",
         items: [
@@ -150,7 +154,8 @@ export const menu: MenuTab[] = [
           {
             id: "kesari",
             name: "Kesari",
-            description: "Saffron, ghee and cardamom in a rich South Indian semolina dessert.",
+            description:
+              "Saffron, ghee and cardamom in a rich South Indian semolina dessert.",
             price: 12000,
             tags: ["veggie", "nuts"],
           },
@@ -165,8 +170,7 @@ export const menu: MenuTab[] = [
       {
         id: "the-bar",
         name: "The Bar",
-        image:
-          "",
+        image: "",
         items: [
           {
             id: "house-still",
@@ -192,21 +196,24 @@ export const menu: MenuTab[] = [
           {
             id: "voss-still",
             name: "Voss Still",
-            description: "Premium Norwegian still water with exceptional purity.",
+            description:
+              "Premium Norwegian still water with exceptional purity.",
             price: 6000,
             tags: [],
           },
           {
             id: "perrier",
             name: "Sparkling Perrier",
-            description: "Naturally sparkling mineral water with a crisp finish.",
+            description:
+              "Naturally sparkling mineral water with a crisp finish.",
             price: 9000,
             tags: [],
           },
           {
             id: "lemonade-mint",
             name: "Lemonade – Mint",
-            description: "Fresh lemonade with cooling mint and vibrant citrus flavour.",
+            description:
+              "Fresh lemonade with cooling mint and vibrant citrus flavour.",
             price: 10000,
             tags: [],
           },
@@ -219,21 +226,24 @@ export const menu: MenuTab[] = [
           {
             id: "spiced-buttermilk",
             name: "Spiced Butter Milk",
-            description: "Refreshing South Indian spiced buttermilk blended with herbs.",
+            description:
+              "Refreshing South Indian spiced buttermilk blended with herbs.",
             price: 10000,
             tags: [],
           },
           {
             id: "iced-filter-coffee",
             name: "Signature Iced Filter Coffee",
-            description: "Rich South Indian filter coffee, slow brewed and served over ice.",
+            description:
+              "Rich South Indian filter coffee, slow brewed and served over ice.",
             price: 12000,
             tags: [],
           },
           {
             id: "lemongrass-iced-tea",
             name: "Cold Brew Lemongrass Iced Tea",
-            description: "Premium tea with fresh lemongrass and natural citrus notes.",
+            description:
+              "Premium tea with fresh lemongrass and natural citrus notes.",
             price: 10000,
             tags: ["veggie"],
           },

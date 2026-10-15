@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +29,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push('/dashboard');
+    router.push("/dashboard");
     router.refresh();
   };
 
@@ -84,7 +84,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-full bg-clay-pot px-6 py-2.5 font-sans text-sm text-coconut-cream disabled:opacity-60"
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
       </div>

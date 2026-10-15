@@ -22,9 +22,7 @@ export type ReservationAllocation =
 
       eventIds: [number];
 
-      resources: [
-        AllocationResource
-      ];
+      resources: [AllocationResource];
     }
   | {
       type: "merged";
@@ -36,39 +34,26 @@ export type ReservationAllocation =
 
       capacity: number;
 
-      eventIds: [
-        number,
-        number
-      ];
+      eventIds: [number, number];
 
-      resources: [
-        AllocationResource,
-        AllocationResource
-      ];
+      resources: [AllocationResource, AllocationResource];
     };
 
 /* ============================================================
  * Helpers
  * ========================================================== */
 
-function toResource(
-  option: PlaceholderOption
-): AllocationResource {
+function toResource(option: PlaceholderOption): AllocationResource {
   return {
     id: option.resourceId,
 
-    name:
-      option.resourceName,
+    name: option.resourceName,
 
-    capacity:
-      option.capacity,
+    capacity: option.capacity,
   };
 }
 
-function areLinked(
-  left: PlaceholderOption,
-  right: PlaceholderOption
-): boolean {
+function areLinked(left: PlaceholderOption, right: PlaceholderOption): boolean {
   /**
    * Treat either direction as sufficient.
    *
@@ -81,12 +66,8 @@ function areLinked(
    * Table 2 -> linked to Table 1
    */
   return (
-    left.linkedResourceIds.includes(
-      right.resourceId
-    ) ||
-    right.linkedResourceIds.includes(
-      left.resourceId
-    )
+    left.linkedResourceIds.includes(right.resourceId) ||
+    right.linkedResourceIds.includes(left.resourceId)
   );
 }
 
@@ -96,14 +77,10 @@ function areLinked(
 
 function findSingleAllocations(
   placeholders: PlaceholderOption[],
-  partySize: number
+  partySize: number,
 ): ReservationAllocation[] {
   return placeholders
-    .filter(
-      (option) =>
-        option.capacity >=
-        partySize
-    )
+    .filter((option) => option.capacity >= partySize)
     .sort((a, b) => {
       /**
        * Prefer smallest suitable table.
@@ -114,51 +91,27 @@ function findSingleAllocations(
        * Party 2:
        * capacity 2 beats capacity 4.
        */
-      if (
-        a.capacity !==
-        b.capacity
-      ) {
-        return (
-          a.capacity -
-          b.capacity
-        );
+      if (a.capacity !== b.capacity) {
+        return a.capacity - b.capacity;
       }
 
-      return (
-        a.resourceId -
-        b.resourceId
-      );
+      return a.resourceId - b.resourceId;
     })
-    .map(
-      (
-        option
-      ): ReservationAllocation => ({
-        type:
-          "single",
+    .map((option): ReservationAllocation => ({
+      type: "single",
 
-        time:
-          option.time,
+      time: option.time,
 
-        start:
-          option.start,
+      start: option.start,
 
-        stop:
-          option.stop,
+      stop: option.stop,
 
-        capacity:
-          option.capacity,
+      capacity: option.capacity,
 
-        eventIds: [
-          option.eventId,
-        ],
+      eventIds: [option.eventId],
 
-        resources: [
-          toResource(
-            option
-          ),
-        ],
-      })
-    );
+      resources: [toResource(option)],
+    }));
 }
 
 /* ============================================================
@@ -167,15 +120,12 @@ function findSingleAllocations(
 
 function findMergedAllocations(
   placeholders: PlaceholderOption[],
-  partySize: number
+  partySize: number,
 ): ReservationAllocation[] {
   /**
    * We only merge for parties of 3 or 4.
    */
-  if (
-    partySize < 3 ||
-    partySize > 4
-  ) {
+  if (partySize < 3 || partySize > 4) {
     return [];
   }
 
@@ -184,63 +134,30 @@ function findMergedAllocations(
    *
    * 2-seat + 2-seat only.
    */
-  const twoSeatTables =
-    placeholders
-      .filter(
-        (option) =>
-          option.capacity === 2
-      )
-      .sort(
-        (a, b) =>
-          a.resourceId -
-          b.resourceId
-      );
+  const twoSeatTables = placeholders
+    .filter((option) => option.capacity === 2)
+    .sort((a, b) => a.resourceId - b.resourceId);
 
-  const allocations:
-    ReservationAllocation[] =
-    [];
+  const allocations: ReservationAllocation[] = [];
 
-  const seen =
-    new Set<string>();
+  const seen = new Set<string>();
 
-  for (
-    let i = 0;
-    i <
-    twoSeatTables.length;
-    i++
-  ) {
-    for (
-      let j = i + 1;
-      j <
-      twoSeatTables.length;
-      j++
-    ) {
-      const left =
-        twoSeatTables[i];
+  for (let i = 0; i < twoSeatTables.length; i++) {
+    for (let j = i + 1; j < twoSeatTables.length; j++) {
+      const left = twoSeatTables[i];
 
-      const right =
-        twoSeatTables[j];
+      const right = twoSeatTables[j];
 
       /**
        * Must be linked in Odoo.
        */
-      if (
-        !areLinked(
-          left,
-          right
-        )
-      ) {
+      if (!areLinked(left, right)) {
         continue;
       }
 
-      const combinedCapacity =
-        left.capacity +
-        right.capacity;
+      const combinedCapacity = left.capacity + right.capacity;
 
-      if (
-        combinedCapacity <
-        partySize
-      ) {
+      if (combinedCapacity < partySize) {
         continue;
       }
 
@@ -253,54 +170,30 @@ function findMergedAllocations(
        *
        * Table 2 + Table 1
        */
-      const key = [
-        left.resourceId,
-        right.resourceId,
-      ]
-        .sort(
-          (a, b) =>
-            a - b
-        )
+      const key = [left.resourceId, right.resourceId]
+        .sort((a, b) => a - b)
         .join(":");
 
-      if (
-        seen.has(key)
-      ) {
+      if (seen.has(key)) {
         continue;
       }
 
       seen.add(key);
 
       allocations.push({
-        type:
-          "merged",
+        type: "merged",
 
-        time:
-          left.time,
+        time: left.time,
 
-        start:
-          left.start,
+        start: left.start,
 
-        stop:
-          left.stop,
+        stop: left.stop,
 
-        capacity:
-          combinedCapacity,
+        capacity: combinedCapacity,
 
-        eventIds: [
-          left.eventId,
-          right.eventId,
-        ],
+        eventIds: [left.eventId, right.eventId],
 
-        resources: [
-          toResource(
-            left
-          ),
-
-          toResource(
-            right
-          ),
-        ],
+        resources: [toResource(left), toResource(right)],
       });
     }
   }
@@ -314,52 +207,32 @@ function findMergedAllocations(
 
 function compareAllocations(
   left: ReservationAllocation,
-  right: ReservationAllocation
+  right: ReservationAllocation,
 ): number {
-  const timeComparison =
-    left.start.localeCompare(
-      right.start
-    );
+  const timeComparison = left.start.localeCompare(right.start);
 
-  if (
-    timeComparison !== 0
-  ) {
+  if (timeComparison !== 0) {
     return timeComparison;
   }
 
   /**
    * Single table always beats merged table.
    */
-  if (
-    left.resources.length !==
-    right.resources.length
-  ) {
-    return (
-      left.resources.length -
-      right.resources.length
-    );
+  if (left.resources.length !== right.resources.length) {
+    return left.resources.length - right.resources.length;
   }
 
   /**
    * Then prefer smaller capacity.
    */
-  if (
-    left.capacity !==
-    right.capacity
-  ) {
-    return (
-      left.capacity -
-      right.capacity
-    );
+  if (left.capacity !== right.capacity) {
+    return left.capacity - right.capacity;
   }
 
   /**
    * Stable fallback.
    */
-  return (
-    left.resources[0].id -
-    right.resources[0].id
-  );
+  return left.resources[0].id - right.resources[0].id;
 }
 
 /* ============================================================
@@ -368,17 +241,9 @@ function compareAllocations(
 
 export async function getReservationAllocations(
   date: string,
-  partySize: number
-): Promise<
-  ReservationAllocation[]
-> {
-  if (
-    !Number.isInteger(
-      partySize
-    ) ||
-    partySize < 1 ||
-    partySize > 4
-  ) {
+  partySize: number,
+): Promise<ReservationAllocation[]> {
+  if (!Number.isInteger(partySize) || partySize < 1 || partySize > 4) {
     return [];
   }
 
@@ -395,10 +260,7 @@ export async function getReservationAllocations(
    * +
    * Table 2 capacity 2
    */
-  const inventory =
-    await getPlaceholderInventoryForDate(
-      date
-    );
+  const inventory = await getPlaceholderInventoryForDate(date);
 
   /**
    * Group by exact start + stop.
@@ -406,45 +268,22 @@ export async function getReservationAllocations(
    * Two tables can only be merged if their placeholder windows
    * are identical.
    */
-  const byPeriod =
-    new Map<
-      string,
-      PlaceholderOption[]
-    >();
+  const byPeriod = new Map<string, PlaceholderOption[]>();
 
-  for (
-    const placeholder of inventory
-  ) {
-    const key =
-      `${placeholder.start}::${placeholder.stop}`;
+  for (const placeholder of inventory) {
+    const key = `${placeholder.start}::${placeholder.stop}`;
 
-    const group =
-      byPeriod.get(key) ??
-      [];
+    const group = byPeriod.get(key) ?? [];
 
-    group.push(
-      placeholder
-    );
+    group.push(placeholder);
 
-    byPeriod.set(
-      key,
-      group
-    );
+    byPeriod.set(key, group);
   }
 
-  const allocations:
-    ReservationAllocation[] =
-    [];
+  const allocations: ReservationAllocation[] = [];
 
-  for (
-    const group of
-      byPeriod.values()
-  ) {
-    const singles =
-      findSingleAllocations(
-        group,
-        partySize
-      );
+  for (const group of byPeriod.values()) {
+    const singles = findSingleAllocations(group, partySize);
 
     /**
      * This is deliberate.
@@ -452,12 +291,8 @@ export async function getReservationAllocations(
      * If a suitable single table exists at this time,
      * don't waste two tables by returning merged alternatives.
      */
-    if (
-      singles.length > 0
-    ) {
-      allocations.push(
-        ...singles
-      );
+    if (singles.length > 0) {
+      allocations.push(...singles);
 
       continue;
     }
@@ -465,17 +300,10 @@ export async function getReservationAllocations(
     /**
      * Only try merging if no suitable single table exists.
      */
-    allocations.push(
-      ...findMergedAllocations(
-        group,
-        partySize
-      )
-    );
+    allocations.push(...findMergedAllocations(group, partySize));
   }
 
-  return allocations.sort(
-    compareAllocations
-  );
+  return allocations.sort(compareAllocations);
 }
 
 /* ============================================================
@@ -484,29 +312,16 @@ export async function getReservationAllocations(
 
 export async function getBookableReservationTimes(
   date: string,
-  partySize: number
+  partySize: number,
 ): Promise<string[]> {
-  const allocations =
-    await getReservationAllocations(
-      date,
-      partySize
-    );
+  const allocations = await getReservationAllocations(date, partySize);
 
   /**
    * Multiple table choices may exist for one time.
    *
    * Customer sees the time once.
    */
-  return Array.from(
-    new Set(
-      allocations.map(
-        (
-          allocation
-        ) =>
-          allocation.time
-      )
-    )
-  );
+  return Array.from(new Set(allocations.map((allocation) => allocation.time)));
 }
 
 /* ============================================================
@@ -516,30 +331,15 @@ export async function getBookableReservationTimes(
 export async function findBestAllocation(
   date: string,
   time: string,
-  partySize: number
-): Promise<
-  ReservationAllocation | null
-> {
+  partySize: number,
+): Promise<ReservationAllocation | null> {
   /**
    * Fresh query.
    *
    * We deliberately do NOT remember the table picked when the
    * customer first saw the available time.
    */
-  const allocations =
-    await getReservationAllocations(
-      date,
-      partySize
-    );
+  const allocations = await getReservationAllocations(date, partySize);
 
-  return (
-    allocations.find(
-      (
-        allocation
-      ) =>
-        allocation.time ===
-        time
-    ) ??
-    null
-  );
+  return allocations.find((allocation) => allocation.time === time) ?? null;
 }

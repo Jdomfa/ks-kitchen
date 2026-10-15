@@ -1,15 +1,15 @@
-import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
-import { MenuManager } from './MenuManager';
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { MenuManager } from "./MenuManager";
 
 export default async function DashboardMenuPage() {
   const supabase = await createClient();
 
   const [{ data: tabs }, { data: categories }, { data: items }] =
     await Promise.all([
-      supabase.from('menu_tabs').select('*').order('sort_order'),
-      supabase.from('menu_categories').select('*').order('sort_order'),
-      supabase.from('menu_items').select('*').order('sort_order'),
+      supabase.from("menu_tabs").select("*").order("sort_order"),
+      supabase.from("menu_categories").select("*").order("sort_order"),
+      supabase.from("menu_items").select("*").order("sort_order"),
     ]);
 
   return (

@@ -1,4 +1,4 @@
-import localFont from 'next/font/local';
+import localFont from "next/font/local";
 
 /**
  * K's Kitchen brand fonts (replacing the Quicksand/Caveat stand-ins
@@ -16,24 +16,24 @@ import localFont from 'next/font/local';
 
 // Studio MN — brand display font. Headings, hero copy, item names.
 export const display = localFont({
-    src: '../../public/fonts/Studio_MN_Regular.woff2',
-    variable: '--font-display',
-    display: 'swap',
+  src: "../../public/fonts/Studio_MN_Regular.woff2",
+  variable: "--font-display",
+  display: "swap",
 });
 
 // Homemade Apple — everyday accent script. Used often: taglines,
 // chef's notes, the marquee band, subheads.
 export const hand = localFont({
-    src: '../../public/fonts/HomemadeApple-Regular.ttf',
-    variable: '--font-hand',
-    display: 'swap',
+  src: "../../public/fonts/HomemadeApple-Regular.ttf",
+  variable: "--font-hand",
+  display: "swap",
 });
 
 // AndyHand — reserved for rare, big flourish moments only (e.g. a hero
 // headline, a signature-style callout). Not for routine accent text —
 // that's font-hand above.
 export const flourish = localFont({
-    src: '../../public/fonts/AndyHand.ttf',
-    variable: '--font-flourish',
-    display: 'swap',
+  src: "../../public/fonts/AndyHand.ttf",
+  variable: "--font-flourish",
+  display: "swap",
 });

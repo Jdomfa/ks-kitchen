@@ -1,14 +1,14 @@
-import { createServiceClient } from '@/lib/supabase/service';
-import { getWeekdayInRestaurantTimezone } from './timezone';
+import { createServiceClient } from "@/lib/supabase/service";
+import { getWeekdayInRestaurantTimezone } from "./timezone";
 
 const WEEKDAY_NAMES = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
 ];
 
 type OperatingHoursSuccess = {
@@ -33,13 +33,14 @@ type OperatingHoursResponse = OperatingHoursSuccess | OperatingHoursFailure;
 function formatTimeForCustomer(time: string | null): string | null {
   if (!time) return null;
 
-  const [hoursStr, minutesStr] = time.split(':');
+  const [hoursStr, minutesStr] = time.split(":");
   const hours = Number(hoursStr);
   const minutes = Number(minutesStr);
 
-  const period = hours >= 12 ? 'PM' : 'AM';
+  const period = hours >= 12 ? "PM" : "AM";
   const displayHour = hours % 12 === 0 ? 12 : hours % 12;
-  const displayMinutes = minutes === 0 ? '' : `:${String(minutes).padStart(2, '0')}`;
+  const displayMinutes =
+    minutes === 0 ? "" : `:${String(minutes).padStart(2, "0")}`;
 
   return `${displayHour}${displayMinutes} ${period}`;
 }
@@ -56,16 +57,16 @@ export async function getOperatingHours(args: {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Invalid date format.',
+      error: error instanceof Error ? error.message : "Invalid date format.",
     };
   }
 
   const supabase = createServiceClient();
 
   const { data, error } = await supabase
-    .from('reservation_hours')
-    .select('weekday, is_closed, open_time, close_time')
-    .eq('weekday', weekday)
+    .from("reservation_hours")
+    .select("weekday, is_closed, open_time, close_time")
+    .eq("weekday", weekday)
     .maybeSingle();
 
   if (error) {
@@ -75,7 +76,7 @@ export async function getOperatingHours(args: {
   if (!data) {
     return {
       success: false,
-      error: 'Operating hours are not configured for this day.',
+      error: "Operating hours are not configured for this day.",
     };
   }
 

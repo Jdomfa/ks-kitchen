@@ -1,14 +1,8 @@
-'use server';
+"use server";
 
-import {
-  createServiceClient,
-} from '@/lib/supabase/service';
+import { createServiceClient } from "@/lib/supabase/service";
 
-type Recommendation =
-  | 'definitely'
-  | 'probably'
-  | 'unlikely'
-  | 'no';
+type Recommendation = "definitely" | "probably" | "unlikely" | "no";
 
 type SubmitFeedbackArgs = {
   foodQuality: number;
@@ -38,19 +32,11 @@ type SubmitFeedbackArgs = {
   mayContact?: boolean | null;
 };
 
-function isValidRating(
-  value: number
-) {
-  return (
-    Number.isInteger(value) &&
-    value >= 1 &&
-    value <= 5
-  );
+function isValidRating(value: number) {
+  return Number.isInteger(value) && value >= 1 && value <= 5;
 }
 
-export async function submitFeedback(
-  args: SubmitFeedbackArgs
-): Promise<{
+export async function submitFeedback(args: SubmitFeedbackArgs): Promise<{
   success: boolean;
   error?: string;
 }> {
@@ -63,99 +49,58 @@ export async function submitFeedback(
     args.valueForMoney,
   ];
 
-  if (
-    !ratings.every(
-      isValidRating
-    )
-  ) {
+  if (!ratings.every(isValidRating)) {
     return {
       success: false,
-      error:
-        'Please rate all dining experience categories.',
+      error: "Please rate all dining experience categories.",
     };
   }
 
   if (
-    ![
-      'definitely',
-      'probably',
-      'unlikely',
-      'no',
-    ].includes(
-      args.recommendation
-    )
+    !["definitely", "probably", "unlikely", "no"].includes(args.recommendation)
   ) {
     return {
       success: false,
-      error:
-        'Please select whether you would recommend us.',
+      error: "Please select whether you would recommend us.",
     };
   }
 
-  const supabase =
-    createServiceClient();
+  const supabase = createServiceClient();
 
-  const {
-    error,
-  } =
-    await supabase
-      .from('feedback')
-      .insert({
-        food_quality_rating:
-          args.foodQuality,
+  const { error } = await supabase.from("feedback").insert({
+    food_quality_rating: args.foodQuality,
 
-        menu_variety_rating:
-          args.menuVariety,
+    menu_variety_rating: args.menuVariety,
 
-        service_speed_rating:
-          args.serviceSpeed,
+    service_speed_rating: args.serviceSpeed,
 
-        staff_friendliness_rating:
-          args.staffFriendliness,
+    staff_friendliness_rating: args.staffFriendliness,
 
-        cleanliness_atmosphere_rating:
-          args.cleanlinessAtmosphere,
+    cleanliness_atmosphere_rating: args.cleanlinessAtmosphere,
 
-        value_for_money_rating:
-          args.valueForMoney,
+    value_for_money_rating: args.valueForMoney,
 
-        dishes_ordered:
-          args.dishesOrdered ||
-          null,
+    dishes_ordered: args.dishesOrdered || null,
 
-        standout_feedback:
-          args.standoutFeedback ||
-          null,
+    standout_feedback: args.standoutFeedback || null,
 
-        recommendation:
-          args.recommendation,
+    recommendation: args.recommendation,
 
-        customer_name:
-          args.name ||
-          null,
+    customer_name: args.name || null,
 
-        customer_email:
-          args.email ||
-          null,
+    customer_email: args.email || null,
 
-        customer_phone:
-          args.phone ||
-          null,
+    customer_phone: args.phone || null,
 
-        may_contact:
-          args.mayContact,
-      });
+    may_contact: args.mayContact,
+  });
 
   if (error) {
-    console.error(
-      'Feedback insert failed:',
-      error
-    );
+    console.error("Feedback insert failed:", error);
 
     return {
       success: false,
-      error:
-        'Something went wrong — please try again.',
+      error: "Something went wrong — please try again.",
     };
   }
 

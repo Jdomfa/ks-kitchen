@@ -1,33 +1,18 @@
-import OdooSlotsBoard
-  from "./OdooSlotsBoard";
+import OdooSlotsBoard from "./OdooSlotsBoard";
 
-import {
-  getAllPlaceholders,
-} from "@/lib/odoo/placeholder";
+import { getAllPlaceholders } from "@/lib/odoo/placeholder";
 
-export const dynamic =
-  "force-dynamic";
+export const dynamic = "force-dynamic";
 
 export default async function OdooSlotsPage() {
-  let slots:
-    Awaited<
-      ReturnType<
-        typeof getAllPlaceholders
-      >
-    > = [];
+  let slots: Awaited<ReturnType<typeof getAllPlaceholders>> = [];
 
-  let error:
-    | string
-    | null = null;
+  let error: string | null = null;
 
   try {
-    slots =
-      await getAllPlaceholders();
+    slots = await getAllPlaceholders();
   } catch (err) {
-    console.error(
-      "Failed to load Odoo reservation slots:",
-      err
-    );
+    console.error("Failed to load Odoo reservation slots:", err);
 
     error =
       err instanceof Error
@@ -39,10 +24,7 @@ export default async function OdooSlotsPage() {
     <OdooSlotsBoard
       initialSlots={slots}
       error={error}
-      odooBaseUrl={
-        process.env
-          .ODOO_URL ?? ""
-      }
+      odooBaseUrl={process.env.ODOO_URL ?? ""}
     />
   );
 }

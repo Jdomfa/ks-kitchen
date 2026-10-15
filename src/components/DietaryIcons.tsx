@@ -1,14 +1,14 @@
-import type { DietTag } from '@/lib/menu-data';
+import type { DietTag } from "@/lib/menu-data";
 
 const common = {
   width: 16,
   height: 16,
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
   strokeWidth: 1.6,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
 };
 
 function VeggieIcon() {
@@ -68,10 +68,10 @@ const ICONS: Record<
   DietTag,
   { Icon: () => React.ReactElement; label: string }
 > = {
-  veggie: { Icon: VeggieIcon, label: 'Veggie' },
-  vegan: { Icon: VeganIcon, label: 'Vegan' },
-  nuts: { Icon: NutsIcon, label: 'Nuts' },
-  sesame: { Icon: SesameIcon, label: 'Sesame' },
+  veggie: { Icon: VeggieIcon, label: "Veggie" },
+  vegan: { Icon: VeganIcon, label: "Vegan" },
+  nuts: { Icon: NutsIcon, label: "Nuts" },
+  sesame: { Icon: SesameIcon, label: "Sesame" },
 };
 
 export function DietaryTags({ tags }: { tags: DietTag[] }) {

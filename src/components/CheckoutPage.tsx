@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, CheckCircle2 } from 'lucide-react';
-import { useCart } from '@/lib/cart-context';
-import { formatNaira } from '@/lib/format';
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, CheckCircle2 } from "lucide-react";
+import { useCart } from "@/lib/cart-context";
+import { formatNaira } from "@/lib/format";
 
-type Status = 'idle' | 'placing' | 'placed';
+type Status = "idle" | "placing" | "placed";
 
 export function CheckoutPage() {
   const { lines, subtotal, clearCart } = useCart();
-  const [status, setStatus] = useState<Status>('idle');
+  const [status, setStatus] = useState<Status>("idle");
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
   });
 
   const canSubmit = useMemo(
@@ -28,23 +28,23 @@ export function CheckoutPage() {
       form.phone.trim() &&
       form.address.trim() &&
       lines.length > 0 &&
-      status === 'idle',
+      status === "idle",
     [form, lines, status],
   );
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
-    setStatus('placing');
+    setStatus("placing");
     // TODO: replace with a real payment/order flow (Stripe, Paystack, etc.)
     // This is intentionally mocked — UI/flow first, payments wired later.
     window.setTimeout(() => {
-      setStatus('placed');
+      setStatus("placed");
       clearCart();
     }, 1400);
   }
 
-  if (status === 'placed') {
+  if (status === "placed") {
     return (
       <section className="bg-coconut-cream min-h-[60vh] flex items-center justify-center px-6">
         <motion.div
@@ -61,7 +61,7 @@ export function CheckoutPage() {
             Order Placed
           </h1>
           <p className="mt-2 font-sans text-sm text-roasted-coffee/60">
-            Thanks, {form.name.split(' ')[0] || 'friend'} — this is a demo
+            Thanks, {form.name.split(" ")[0] || "friend"} — this is a demo
             checkout, so nothing was actually charged. A real confirmation flow
             (and payment) will go here once it's wired up.
           </p>
@@ -194,7 +194,7 @@ export function CheckoutPage() {
               className="flex w-full items-center justify-center gap-2 rounded-full bg-clay-pot py-3 font-sans text-sm uppercase tracking-wide text-coconut-cream transition-colors hover:bg-terracotta disabled:cursor-not-allowed disabled:opacity-50"
             >
               <AnimatePresence mode="wait">
-                {status === 'placing' ? (
+                {status === "placing" ? (
                   <motion.span
                     key="placing"
                     initial={{ opacity: 0 }}
@@ -231,7 +231,7 @@ function Field({
   label,
   value,
   onChange,
-  type = 'text',
+  type = "text",
   required = false,
 }: {
   label: string;
@@ -244,7 +244,7 @@ function Field({
     <label className="block text-left">
       <span className="font-sans text-[11px] uppercase tracking-[0.2em] text-brushed-brass/80">
         {label}
-        {required && ' *'}
+        {required && " *"}
       </span>
       <input
         type={type}

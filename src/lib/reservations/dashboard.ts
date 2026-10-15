@@ -1,6 +1,11 @@
-import { createServiceClient } from '@/lib/supabase/service';
-import { getSlotAvailability } from './slots';
-import { getTablesConfig, getAssignmentsForDate, type TableConfig, type TableAssignment } from './tables';
+import { createServiceClient } from "@/lib/supabase/service";
+import { getSlotAvailability } from "./slots";
+import {
+  getTablesConfig,
+  getAssignmentsForDate,
+  type TableConfig,
+  type TableAssignment,
+} from "./tables";
 
 type ReservationRow = {
   id: string;
@@ -25,15 +30,15 @@ async function getSlotSettings(): Promise<SlotSettings> {
   const supabase = createServiceClient();
 
   const { data, error } = await supabase
-    .from('reservation_slot_settings')
-    .select('slot_interval_minutes, booking_window_start, booking_window_end')
+    .from("reservation_slot_settings")
+    .select("slot_interval_minutes, booking_window_start, booking_window_end")
     .single();
 
   if (error) throw new Error(error.message);
 
   const { data: durationRow, error: durationError } = await supabase
-    .from('reservation_settings')
-    .select('reservation_duration_minutes')
+    .from("reservation_settings")
+    .select("reservation_duration_minutes")
     .single();
 
   if (durationError) throw new Error(durationError.message);
@@ -46,29 +51,33 @@ async function getSlotSettings(): Promise<SlotSettings> {
   };
 }
 
-async function getActiveReservationsForDate(date: string): Promise<ReservationRow[]> {
+async function getActiveReservationsForDate(
+  date: string,
+): Promise<ReservationRow[]> {
   const supabase = createServiceClient();
 
   const { data, error } = await supabase
-    .from('reservations')
-    .select('id, name, phone, party_size, reservation_date, reservation_time, status, checked_in_at, reservation_code')
-    .eq('reservation_date', date)
-    .in('status', ['pending', 'confirmed'])
-    .order('reservation_time');
+    .from("reservations")
+    .select(
+      "id, name, phone, party_size, reservation_date, reservation_time, status, checked_in_at, reservation_code",
+    )
+    .eq("reservation_date", date)
+    .in("status", ["pending", "confirmed"])
+    .order("reservation_time");
 
   if (error) throw new Error(error.message);
   return (data ?? []) as ReservationRow[];
 }
 
 function timeToMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number);
+  const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
 }
 
 function minutesToTime(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 function buildTimeSlots(settings: SlotSettings): string[] {
@@ -99,21 +108,30 @@ export type DashboardSummary = {
 
 const OVERDUE_THRESHOLD_MINUTES = 20;
 
-export async function getDashboardSummary(date: string, nowMinutes?: number): Promise<DashboardSummary> {
+export async function getDashboardSummary(
+  date: string,
+  nowMinutes?: number,
+): Promise<DashboardSummary> {
   const [reservations, slots] = await Promise.all([
     getActiveReservationsForDate(date),
     getSlotAvailability(date),
   ]);
 
-  const confirmed = reservations.filter((r) => r.status === 'confirmed');
+  const confirmed = reservations.filter((r) => r.status === "confirmed");
 
   const expectedGuests = confirmed.reduce((sum, r) => sum + r.party_size, 0);
   const openSlotsToday = slots.filter((s) => s.available_covers > 0).length;
 
-  const now = nowMinutes ?? timeToMinutes(
-    new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Lagos', hour: '2-digit', minute: '2-digit', hour12: false })
-      .format(new Date())
-  );
+  const now =
+    nowMinutes ??
+    timeToMinutes(
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Africa/Lagos",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(new Date()),
+    );
 
   const notCheckedIn: CheckInEntry[] = confirmed
     .filter((r) => !r.checked_in_at)
@@ -135,11 +153,11 @@ export async function getDashboardSummary(date: string, nowMinutes?: number): Pr
 }
 
 export type GridCell = {
-  status: 'open' | 'booked';
+  status: "open" | "booked";
   reservationId?: string;
   guestName?: string;
   partySize?: number;
-  half?: 'a' | 'b';
+  half?: "a" | "b";
   mergeGroup?: number[];
   isMergeStart?: boolean;
 };
@@ -165,7 +183,7 @@ export async function getDashboardGrid(date: string): Promise<DashboardGrid> {
   for (const table of tables) {
     cells[table.number] = {};
     for (const slot of timeSlots) {
-      cells[table.number][slot] = { status: 'open' };
+      cells[table.number][slot] = { status: "open" };
     }
   }
 
@@ -173,7 +191,9 @@ export async function getDashboardGrid(date: string): Promise<DashboardGrid> {
     const reservation = reservationById.get(assignment.reservation_id);
     if (!reservation) continue;
 
-    const occupiedStart = timeToMinutes(reservation.reservation_time.slice(0, 5));
+    const occupiedStart = timeToMinutes(
+      reservation.reservation_time.slice(0, 5),
+    );
     const occupiedEnd = occupiedStart + settings.reservation_duration_minutes;
     const sortedTables = [...assignment.table_numbers].sort((a, b) => a - b);
 
@@ -184,7 +204,7 @@ export async function getDashboardGrid(date: string): Promise<DashboardGrid> {
       for (const tableNumber of sortedTables) {
         if (!cells[tableNumber]) continue;
         cells[tableNumber][slot] = {
-          status: 'booked',
+          status: "booked",
           reservationId: reservation.id,
           guestName: reservation.name,
           partySize: reservation.party_size,

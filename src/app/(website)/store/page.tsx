@@ -1,5 +1,5 @@
-import type { Metadata } from 'next';
-import { StorePage } from '@/components/StorePage';
+import type { Metadata } from "next";
+import { StorePage } from "@/components/StorePage";
 
 export const metadata: Metadata = {
   title: "Store | K's Kitchen",

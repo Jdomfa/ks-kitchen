@@ -17,8 +17,8 @@ const sections = [
         </p>
 
         <p className="mt-4">
-          This Privacy Policy explains how we collect, use, store, disclose,
-          and protect personal information when you visit our website, make or
+          This Privacy Policy explains how we collect, use, store, disclose, and
+          protect personal information when you visit our website, make or
           manage a reservation, contact us, communicate with us through
           WhatsApp, or otherwise interact with our services.
         </p>
@@ -52,7 +52,9 @@ const sections = [
           <li>The date and time of your reservation.</li>
           <li>The number of guests included in your reservation.</li>
           <li>Your reservation or booking reference.</li>
-          <li>Messages, questions, requests, or other information you send us.</li>
+          <li>
+            Messages, questions, requests, or other information you send us.
+          </li>
           <li>
             Any additional information you voluntarily provide while using our
             services.
@@ -92,7 +94,9 @@ const sections = [
           <li>Contact us by telephone or email.</li>
           <li>Send us a message through WhatsApp.</li>
           <li>Submit an enquiry or customer-support request.</li>
-          <li>Otherwise voluntarily provide information to K&apos;s Kitchen.</li>
+          <li>
+            Otherwise voluntarily provide information to K&apos;s Kitchen.
+          </li>
         </ul>
       </>
     ),
@@ -115,15 +119,21 @@ const sections = [
           <li>To send reservation confirmations and relevant reminders.</li>
           <li>To respond to customer questions and enquiries.</li>
           <li>To provide customer service and support.</li>
-          <li>To communicate important information relating to a reservation.</li>
-          <li>To detect, prevent, and investigate misuse or fraudulent activity.</li>
+          <li>
+            To communicate important information relating to a reservation.
+          </li>
+          <li>
+            To detect, prevent, and investigate misuse or fraudulent activity.
+          </li>
           <li>To maintain the security of our systems and services.</li>
-          <li>To diagnose technical problems and improve website performance.</li>
+          <li>
+            To diagnose technical problems and improve website performance.
+          </li>
           <li>To improve our customer experience and restaurant services.</li>
           <li>To comply with applicable legal and regulatory obligations.</li>
           <li>
-            To protect the rights, property, safety, and security of
-            K&apos;s Kitchen, our customers, staff, and other persons.
+            To protect the rights, property, safety, and security of K&apos;s
+            Kitchen, our customers, staff, and other persons.
           </li>
         </ul>
 
@@ -147,8 +157,8 @@ const sections = [
 
         <p className="mt-4">
           When you contact K&apos;s Kitchen through WhatsApp, we may receive
-          information associated with your WhatsApp conversation, including
-          your WhatsApp phone number, message content, message identifiers,
+          information associated with your WhatsApp conversation, including your
+          WhatsApp phone number, message content, message identifiers,
           timestamps, and selections you make when interacting with automated
           menu or reservation options.
         </p>
@@ -169,8 +179,8 @@ const sections = [
         <p className="mt-4">
           Where automated WhatsApp functionality is used, interactions may
           include selectable options such as reservations, enquiries, menu
-          requests, reservation management, and requests to speak with a
-          member of our team.
+          requests, reservation management, and requests to speak with a member
+          of our team.
         </p>
       </>
     ),
@@ -210,15 +220,15 @@ const sections = [
       <>
         <p>
           Some customer enquiries may begin through an automated WhatsApp
-          interaction and may be transferred to a member of the K&apos;s
-          Kitchen team.
+          interaction and may be transferred to a member of the K&apos;s Kitchen
+          team.
         </p>
 
         <p className="mt-4">
-          Where a customer asks to speak with our team, information contained
-          in the customer&apos;s message may be made available to an
-          authorized staff member or service provider solely for the purpose
-          of responding to the enquiry and providing customer support.
+          Where a customer asks to speak with our team, information contained in
+          the customer&apos;s message may be made available to an authorized
+          staff member or service provider solely for the purpose of responding
+          to the enquiry and providing customer support.
         </p>
       </>
     ),
@@ -260,8 +270,8 @@ const sections = [
         </p>
 
         <p className="mt-4">
-          These providers may process personal information on our behalf only
-          to the extent reasonably necessary to provide their services to us,
+          These providers may process personal information on our behalf only to
+          the extent reasonably necessary to provide their services to us,
           maintain their platforms, protect their systems, or comply with
           applicable law.
         </p>
@@ -286,9 +296,7 @@ const sections = [
     title: "10. Sharing and Disclosure of Information",
     content: (
       <>
-        <p>
-          We do not sell your personal information.
-        </p>
+        <p>We do not sell your personal information.</p>
 
         <p className="mt-4">
           We may disclose personal information to trusted service providers,
@@ -303,9 +311,9 @@ const sections = [
         </p>
 
         <p className="mt-4">
-          Information may also be disclosed when necessary to investigate
-          fraud, abuse, security incidents, or threats to the rights, safety,
-          or property of K&apos;s Kitchen or another person.
+          Information may also be disclosed when necessary to investigate fraud,
+          abuse, security incidents, or threats to the rights, safety, or
+          property of K&apos;s Kitchen or another person.
         </p>
       </>
     ),
@@ -317,16 +325,15 @@ const sections = [
       <>
         <p>
           Some of our service providers may process or store information in
-          countries other than the country in which you live or where
-          K&apos;s Kitchen operates.
+          countries other than the country in which you live or where K&apos;s
+          Kitchen operates.
         </p>
 
         <p className="mt-4">
-          Where personal information is transferred to another jurisdiction,
-          we take reasonable steps to ensure that the information is handled
-          in accordance with applicable privacy and data-protection
-          requirements and appropriate contractual or organizational
-          safeguards.
+          Where personal information is transferred to another jurisdiction, we
+          take reasonable steps to ensure that the information is handled in
+          accordance with applicable privacy and data-protection requirements
+          and appropriate contractual or organizational safeguards.
         </p>
       </>
     ),
@@ -376,9 +383,9 @@ const sections = [
 
         <p className="mt-4">
           However, no internet transmission or electronic storage system can be
-          guaranteed to be completely secure. You should avoid sending
-          highly sensitive or unnecessary information through ordinary
-          messaging channels.
+          guaranteed to be completely secure. You should avoid sending highly
+          sensitive or unnecessary information through ordinary messaging
+          channels.
         </p>
       </>
     ),
@@ -397,11 +404,11 @@ const sections = [
         <ul className="mt-3 list-disc space-y-2 pl-6">
           <li>Request access to personal information we hold about you.</li>
           <li>Request correction of inaccurate or incomplete information.</li>
-          <li>Request deletion of personal information where legally permitted.</li>
-          <li>Object to or request restriction of certain processing.</li>
           <li>
-            Withdraw consent where processing is based on your consent.
+            Request deletion of personal information where legally permitted.
           </li>
+          <li>Object to or request restriction of certain processing.</li>
+          <li>Withdraw consent where processing is based on your consent.</li>
           <li>
             Ask questions about how your personal information is processed.
           </li>
@@ -422,13 +429,13 @@ const sections = [
       <>
         <p>
           You may contact K&apos;s Kitchen to request access to, correction of,
-          or deletion of personal information associated with your
-          interactions with us.
+          or deletion of personal information associated with your interactions
+          with us.
         </p>
 
         <p className="mt-4">
-          To help us locate the correct information and protect your account
-          or reservation, we may ask you to provide reasonable identifying
+          To help us locate the correct information and protect your account or
+          reservation, we may ask you to provide reasonable identifying
           information, such as your name, phone number, reservation reference,
           or email address.
         </p>
@@ -462,10 +469,9 @@ const sections = [
         </p>
 
         <p className="mt-4">
-          If you believe that a child has provided personal information to us
-          in circumstances where it should not have been collected, please
-          contact us so that we can review the matter and take appropriate
-          action.
+          If you believe that a child has provided personal information to us in
+          circumstances where it should not have been collected, please contact
+          us so that we can review the matter and take appropriate action.
         </p>
       </>
     ),
@@ -476,9 +482,8 @@ const sections = [
     content: (
       <>
         <p>
-          We may update this Privacy Policy from time to time to reflect
-          changes in our services, technology, legal requirements, or privacy
-          practices.
+          We may update this Privacy Policy from time to time to reflect changes
+          in our services, technology, legal requirements, or privacy practices.
         </p>
 
         <p className="mt-4">
@@ -495,9 +500,9 @@ const sections = [
     content: (
       <>
         <p>
-          K&apos;s Kitchen seeks to handle personal information responsibly
-          and in accordance with applicable privacy and data-protection laws
-          and regulations relevant to our business and customers.
+          K&apos;s Kitchen seeks to handle personal information responsibly and
+          in accordance with applicable privacy and data-protection laws and
+          regulations relevant to our business and customers.
         </p>
 
         <p className="mt-4">
@@ -572,9 +577,8 @@ export default function PrivacyPage() {
 
           <p className="mt-5 max-w-2xl text-lg leading-8 opacity-75">
             This Privacy Policy explains how K&apos;s Kitchen collects, uses,
-            stores, protects, and manages personal information when you use
-            our website, reservation services, and customer communication
-            channels.
+            stores, protects, and manages personal information when you use our
+            website, reservation services, and customer communication channels.
           </p>
 
           <div className="mt-6 text-sm opacity-60">
@@ -601,8 +605,7 @@ export default function PrivacyPage() {
 
         <footer className="mt-16 border-t border-black/10 pt-8 text-sm opacity-60">
           <p>
-            © {new Date().getFullYear()} K&apos;s Kitchen. All rights
-            reserved.
+            © {new Date().getFullYear()} K&apos;s Kitchen. All rights reserved.
           </p>
         </footer>
       </div>

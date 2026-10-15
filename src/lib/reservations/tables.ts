@@ -1,4 +1,4 @@
-import { createServiceClient } from '@/lib/supabase/service';
+import { createServiceClient } from "@/lib/supabase/service";
 
 export type TableConfig = {
   number: number;
@@ -13,7 +13,7 @@ export type TableAssignment = {
   reservation_id: string;
   reservation_date: string;
   table_numbers: number[];
-  half: 'a' | 'b' | null;
+  half: "a" | "b" | null;
 };
 
 // Config reads use the service client — this is restaurant configuration,
@@ -22,22 +22,24 @@ export async function getTablesConfig(): Promise<TableConfig[]> {
   const supabase = createServiceClient();
 
   const { data, error } = await supabase
-    .from('tables')
-    .select('*')
-    .eq('bookable', true)
-    .order('number');
+    .from("tables")
+    .select("*")
+    .eq("bookable", true)
+    .order("number");
 
   if (error) throw new Error(error.message);
   return (data ?? []) as TableConfig[];
 }
 
-export async function getAssignmentsForDate(date: string): Promise<TableAssignment[]> {
+export async function getAssignmentsForDate(
+  date: string,
+): Promise<TableAssignment[]> {
   const supabase = createServiceClient();
 
   const { data, error } = await supabase
-    .from('table_assignments')
-    .select('*')
-    .eq('reservation_date', date);
+    .from("table_assignments")
+    .select("*")
+    .eq("reservation_date", date);
 
   if (error) throw new Error(error.message);
   return (data ?? []) as TableAssignment[];
@@ -48,10 +50,10 @@ export async function getAssignmentsForDate(date: string): Promise<TableAssignme
 export function validateAssignment(
   tables: TableConfig[],
   tableNumbers: number[],
-  half: 'a' | 'b' | null
+  half: "a" | "b" | null,
 ) {
   if (tableNumbers.length === 0) {
-    throw new Error('Select at least one table.');
+    throw new Error("Select at least one table.");
   }
 
   const selected = tableNumbers.map((n) => {
@@ -62,7 +64,9 @@ export function validateAssignment(
   });
 
   if (half && (tableNumbers.length !== 1 || !selected[0].splittable)) {
-    throw new Error('A half assignment must target exactly one splittable table.');
+    throw new Error(
+      "A half assignment must target exactly one splittable table.",
+    );
   }
 
   if (tableNumbers.length > 1) {
@@ -70,7 +74,9 @@ export function validateAssignment(
       const others = tableNumbers.filter((n) => n !== table.number);
       const missing = others.filter((n) => !table.mergeable_with.includes(n));
       if (missing.length > 0) {
-        throw new Error(`Table ${table.number} can't be merged directly with ${missing.join(', ')}.`);
+        throw new Error(
+          `Table ${table.number} can't be merged directly with ${missing.join(", ")}.`,
+        );
       }
     }
   }

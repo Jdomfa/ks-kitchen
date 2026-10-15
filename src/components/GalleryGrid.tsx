@@ -1,44 +1,68 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, memo } from 'react';
-import Image from 'next/image';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { useState, useEffect, useCallback, memo } from "react";
+import Image from "next/image";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 
 export type GalleryImage = {
   id: string;
   src: string;
   alt: string;
-  category: 'food' | 'interior' | 'moments';
-  span?: 'tall' | 'wide' | 'normal';
+  category: "food" | "interior" | "moments";
+  span?: "tall" | "wide" | "normal";
 };
 
-const CATEGORIES: { id: GalleryImage['category'] | 'all'; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'food', label: 'Food' },
-  { id: 'interior', label: 'Interior' },
-  { id: 'moments', label: 'Moments' },
+const CATEGORIES: { id: GalleryImage["category"] | "all"; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "food", label: "Food" },
+  { id: "interior", label: "Interior" },
+  { id: "moments", label: "Moments" },
 ];
 
 function CloseIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
     </svg>
   );
 }
 
-function ChevronIcon({ className, direction = 'left' }: { className?: string; direction?: 'left' | 'right' }) {
+function ChevronIcon({
+  className,
+  direction = "left",
+}: {
+  className?: string;
+  direction?: "left" | "right";
+}) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d={direction === 'left' ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'} strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
+      <path
+        d={direction === "left" ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
-function spanClasses(span: GalleryImage['span']) {
-  if (span === 'tall') return 'row-span-2 aspect-[3/4]';
-  if (span === 'wide') return 'sm:col-span-2 aspect-[16/9]';
-  return 'aspect-square';
+function spanClasses(span: GalleryImage["span"]) {
+  if (span === "tall") return "row-span-2 aspect-[3/4]";
+  if (span === "wide") return "sm:col-span-2 aspect-[16/9]";
+  return "aspect-square";
 }
 
 const GalleryTile = memo(function GalleryTile({
@@ -56,8 +80,13 @@ const GalleryTile = memo(function GalleryTile({
       onClick={() => onOpen(image.id)}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ type: 'spring', stiffness: 100, damping: 20, delay: (index % 6) * 0.06 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{
+        type: "spring",
+        stiffness: 100,
+        damping: 20,
+        delay: (index % 6) * 0.06,
+      }}
       whileHover={{ scale: 0.98 }}
       whileTap={{ scale: 0.95 }}
       className={`group relative w-full overflow-hidden rounded-2xl bg-tamarind-bark/10 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass ${spanClasses(image.span)}`}
@@ -93,16 +122,16 @@ function Lightbox({
 
   useEffect(() => {
     const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') onNavigate(-1);
-      if (e.key === 'ArrowRight') onNavigate(1);
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") onNavigate(-1);
+      if (e.key === "ArrowRight") onNavigate(1);
     }
-    window.addEventListener('keydown', handleKey);
+    window.addEventListener("keydown", handleKey);
     return () => {
       document.body.style.overflow = original;
-      window.removeEventListener('keydown', handleKey);
+      window.removeEventListener("keydown", handleKey);
     };
   }, [onClose, onNavigate]);
 
@@ -141,11 +170,18 @@ function Lightbox({
 
       <motion.div
         layoutId={`gallery-${active.id}`}
-        transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+        transition={{ type: "spring", stiffness: 120, damping: 22 }}
         onClick={(e) => e.stopPropagation()}
         className="relative aspect-[4/5] w-full max-w-2xl overflow-hidden rounded-2xl sm:aspect-[3/2]"
       >
-        <Image src={active.src} alt={active.alt} fill sizes="90vw" className="object-cover" priority />
+        <Image
+          src={active.src}
+          alt={active.alt}
+          fill
+          sizes="90vw"
+          className="object-cover"
+          priority
+        />
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-roasted-coffee/80 to-transparent p-5">
           <p className="font-hand text-xl text-coconut-cream">{active.alt}</p>
         </div>
@@ -166,19 +202,25 @@ function Lightbox({
 }
 
 export default function GalleryGrid({ images }: { images: GalleryImage[] }) {
-  const [activeCategory, setActiveCategory] = useState<GalleryImage['category'] | 'all'>('all');
+  const [activeCategory, setActiveCategory] = useState<
+    GalleryImage["category"] | "all"
+  >("all");
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const filtered = activeCategory === 'all' ? images : images.filter((img) => img.category === activeCategory);
+  const filtered =
+    activeCategory === "all"
+      ? images
+      : images.filter((img) => img.category === activeCategory);
 
   const handleNavigate = useCallback(
     (direction: -1 | 1) => {
       const currentIndex = filtered.findIndex((img) => img.id === activeId);
       if (currentIndex === -1) return;
-      const nextIndex = (currentIndex + direction + filtered.length) % filtered.length;
+      const nextIndex =
+        (currentIndex + direction + filtered.length) % filtered.length;
       setActiveId(filtered[nextIndex].id);
     },
-    [activeId, filtered]
+    [activeId, filtered],
   );
 
   return (
@@ -192,13 +234,15 @@ export default function GalleryGrid({ images }: { images: GalleryImage[] }) {
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               className={`relative rounded-full px-4 py-2 text-sm font-medium transition-colors duration-200 ${
-                isActive ? 'text-coconut-cream' : 'text-roasted-coffee/60 hover:text-roasted-coffee'
+                isActive
+                  ? "text-coconut-cream"
+                  : "text-roasted-coffee/60 hover:text-roasted-coffee"
               }`}
             >
               {isActive && (
                 <motion.span
                   layoutId="gallery-filter-pill"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   className="absolute inset-0 rounded-full bg-terracotta"
                 />
               )}
@@ -210,14 +254,26 @@ export default function GalleryGrid({ images }: { images: GalleryImage[] }) {
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-roasted-coffee/15 py-20 text-center">
-          <p className="font-hand text-2xl text-roasted-coffee/70">Nothing here yet</p>
-          <p className="text-sm text-roasted-coffee/50">More photos from this category are on the way.</p>
+          <p className="font-hand text-2xl text-roasted-coffee/70">
+            Nothing here yet
+          </p>
+          <p className="text-sm text-roasted-coffee/50">
+            More photos from this category are on the way.
+          </p>
         </div>
       ) : (
-        <motion.div layout className="grid auto-rows-[minmax(0,1fr)] grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        <motion.div
+          layout
+          className="grid auto-rows-[minmax(0,1fr)] grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4"
+        >
           <AnimatePresence mode="popLayout">
             {filtered.map((image, index) => (
-              <GalleryTile key={image.id} image={image} index={index} onOpen={setActiveId} />
+              <GalleryTile
+                key={image.id}
+                image={image}
+                index={index}
+                onOpen={setActiveId}
+              />
             ))}
           </AnimatePresence>
         </motion.div>
@@ -225,7 +281,12 @@ export default function GalleryGrid({ images }: { images: GalleryImage[] }) {
 
       <AnimatePresence>
         {activeId && (
-          <Lightbox images={filtered} activeId={activeId} onClose={() => setActiveId(null)} onNavigate={handleNavigate} />
+          <Lightbox
+            images={filtered}
+            activeId={activeId}
+            onClose={() => setActiveId(null)}
+            onNavigate={handleNavigate}
+          />
         )}
       </AnimatePresence>
     </LayoutGroup>

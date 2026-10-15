@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -14,17 +14,17 @@ type Props = {
 
 /** Centered modal with a 16:9 embedded video iframe. Closes on backdrop
  * click or Escape, and locks body scroll while open. */
-export function VideoModal({ open, onClose, src, title = 'Video' }: Props) {
+export function VideoModal({ open, onClose, src, title = "Video" }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    document.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
     };
   }, [open, onClose]);
 
@@ -43,7 +43,7 @@ export function VideoModal({ open, onClose, src, title = 'Video' }: Props) {
             initial={{ opacity: 0, scale: 0.95, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-2xl rounded-lg overflow-hidden bg-roasted-coffee shadow-2xl"
           >
@@ -58,9 +58,9 @@ export function VideoModal({ open, onClose, src, title = 'Video' }: Props) {
               src={src}
               title={title}
               style={{
-                height: 'auto',
-                width: '100%',
-                aspectRatio: '640 / 360',
+                height: "auto",
+                width: "100%",
+                aspectRatio: "640 / 360",
               }}
               allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
               allowFullScreen

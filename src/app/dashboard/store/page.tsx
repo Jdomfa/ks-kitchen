@@ -1,8 +1,8 @@
-import Link from 'next/link';
+import Link from "next/link";
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from "@/lib/supabase/server";
 
-import { StoreManager } from './StoreManager';
+import { StoreManager } from "./StoreManager";
 
 type Product = {
   id: string;
@@ -19,9 +19,9 @@ export default async function DashboardStorePage() {
   const supabase = await createClient();
 
   const { data: products, error } = await supabase
-    .from('products')
-    .select('*')
-    .order('sort_order', {
+    .from("products")
+    .select("*")
+    .order("sort_order", {
       ascending: true,
     });
 

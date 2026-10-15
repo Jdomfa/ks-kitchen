@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Minus, Plus, X, ShoppingBag } from 'lucide-react';
-import { useCart } from '@/lib/cart-context';
-import { formatNaira } from '@/lib/format';
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { Minus, Plus, X, ShoppingBag } from "lucide-react";
+import { useCart } from "@/lib/cart-context";
+import { formatNaira } from "@/lib/format";
 
 export function CartPage() {
   const { lines, setQuantity, removeFromCart, subtotal } = useCart();
@@ -48,7 +48,7 @@ export function CartPage() {
               {lines.map((line) => (
                 <motion.div
                   key={line.productId}
-                  initial={{ opacity: 1, height: 'auto' }}
+                  initial={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.25 }}
                   className="flex items-center gap-4 py-5"

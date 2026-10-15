@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { sendWhatsAppMainMenu } from '@/lib/whatsapp/send-message';
+import { NextRequest, NextResponse } from "next/server";
+import { sendWhatsAppMainMenu } from "@/lib/whatsapp/send-message";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     if (!body.to) {
       return NextResponse.json(
         { error: 'Missing "to" phone number' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

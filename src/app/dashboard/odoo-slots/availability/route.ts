@@ -1,73 +1,43 @@
-import {
-  NextRequest,
-  NextResponse,
-} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import {
-  getBookableReservationTimes,
-} from "@/lib/odoo/reservation-allocation";
-export const dynamic =
-  "force-dynamic";
+import { getBookableReservationTimes } from "@/lib/odoo/reservation-allocation";
+export const dynamic = "force-dynamic";
 
-export async function GET(
-  request: NextRequest
-) {
+export async function GET(request: NextRequest) {
   try {
-    const {
-      searchParams,
-    } = request.nextUrl;
+    const { searchParams } = request.nextUrl;
 
-    const date =
-      searchParams.get(
-        "date"
-      );
+    const date = searchParams.get("date");
 
-    const partySizeRaw =
-      searchParams.get(
-        "partySize"
-      );
+    const partySizeRaw = searchParams.get("partySize");
 
     if (!date) {
       return NextResponse.json(
         {
-          error:
-            "date is required.",
+          error: "date is required.",
         },
 
         {
           status: 400,
-        }
+        },
       );
     }
 
-    const partySize =
-      Number(
-        partySizeRaw
-      );
+    const partySize = Number(partySizeRaw);
 
-    if (
-      !Number.isInteger(
-        partySize
-      ) ||
-      partySize <= 0
-    ) {
+    if (!Number.isInteger(partySize) || partySize <= 0) {
       return NextResponse.json(
         {
-          error:
-            "partySize must be a positive integer.",
+          error: "partySize must be a positive integer.",
         },
 
         {
           status: 400,
-        }
+        },
       );
     }
 
-    const times =
-      await getBookableReservationTimes(
-        date,
-        partySize
-      );
+    const times = await getBookableReservationTimes(date, partySize);
 
     return NextResponse.json({
       date,
@@ -77,10 +47,7 @@ export async function GET(
       times,
     });
   } catch (error) {
-    console.error(
-      "Failed to load Odoo availability:",
-      error
-    );
+    console.error("Failed to load Odoo availability:", error);
 
     return NextResponse.json(
       {
@@ -92,7 +59,7 @@ export async function GET(
 
       {
         status: 500,
-      }
+      },
     );
   }
 }

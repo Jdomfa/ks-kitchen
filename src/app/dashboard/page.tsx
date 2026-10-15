@@ -1,18 +1,18 @@
-import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
 const SECTIONS = [
-  { href: '/dashboard/menu', label: 'Menu', description: 'Categories & items' },
-  { href: '/dashboard/store', label: 'Store', description: 'Pantry products' },
+  { href: "/dashboard/menu", label: "Menu", description: "Categories & items" },
+  { href: "/dashboard/store", label: "Store", description: "Pantry products" },
   {
-    href: '/dashboard/reservations',
-    label: 'Reservations',
-    description: 'Incoming bookings',
+    href: "/dashboard/reservations",
+    label: "Reservations",
+    description: "Incoming bookings",
   },
   {
-    href: '/dashboard/contacts',
-    label: 'Contacts',
-    description: 'Messages from the site',
+    href: "/dashboard/contacts",
+    label: "Contacts",
+    description: "Messages from the site",
   },
 ];
 

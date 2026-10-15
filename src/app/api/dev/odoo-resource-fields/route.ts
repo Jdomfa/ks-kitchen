@@ -38,12 +38,7 @@ async function getUid(): Promise<number> {
       params: {
         service: "common",
         method: "authenticate",
-        args: [
-          ODOO_DB,
-          ODOO_USERNAME,
-          ODOO_API_KEY,
-          {},
-        ],
+        args: [ODOO_DB, ODOO_USERNAME, ODOO_API_KEY, {}],
       },
     }),
     cache: "no-store",
@@ -51,12 +46,11 @@ async function getUid(): Promise<number> {
 
   if (!res.ok) {
     throw new Error(
-      `Odoo authentication HTTP error: ${res.status} ${res.statusText}`
+      `Odoo authentication HTTP error: ${res.status} ${res.statusText}`,
     );
   }
 
-  const data =
-    (await res.json()) as JsonRpcResponse<number>;
+  const data = (await res.json()) as JsonRpcResponse<number>;
 
   if (data.error) {
     const detail =
@@ -70,7 +64,7 @@ async function getUid(): Promise<number> {
 
   if (typeof data.result !== "number") {
     throw new Error(
-      "Odoo authentication failed. No numeric user ID was returned."
+      "Odoo authentication failed. No numeric user ID was returned.",
     );
   }
 
@@ -83,7 +77,7 @@ async function odooCall<T>(
   model: string,
   method: string,
   args: unknown[],
-  kwargs: Record<string, unknown> = {}
+  kwargs: Record<string, unknown> = {},
 ): Promise<T> {
   const uid = await getUid();
 
@@ -98,28 +92,17 @@ async function odooCall<T>(
       params: {
         service: "object",
         method: "execute_kw",
-        args: [
-          ODOO_DB,
-          uid,
-          ODOO_API_KEY,
-          model,
-          method,
-          args,
-          kwargs,
-        ],
+        args: [ODOO_DB, uid, ODOO_API_KEY, model, method, args, kwargs],
       },
     }),
     cache: "no-store",
   });
 
   if (!res.ok) {
-    throw new Error(
-      `Odoo HTTP error: ${res.status} ${res.statusText}`
-    );
+    throw new Error(`Odoo HTTP error: ${res.status} ${res.statusText}`);
   }
 
-  const data =
-    (await res.json()) as JsonRpcResponse<T>;
+  const data = (await res.json()) as JsonRpcResponse<T>;
 
   if (data.error) {
     const detail =
@@ -132,9 +115,7 @@ async function odooCall<T>(
   }
 
   if (data.result === undefined) {
-    throw new Error(
-      `Odoo returned no result for ${model}.${method}`
-    );
+    throw new Error(`Odoo returned no result for ${model}.${method}`);
   }
 
   return data.result;
@@ -146,10 +127,7 @@ type OdooFieldDefinition = {
   relation?: string;
 };
 
-type OdooFields = Record<
-  string,
-  OdooFieldDefinition
->;
+type OdooFields = Record<string, OdooFieldDefinition>;
 
 export const dynamic = "force-dynamic";
 
@@ -160,12 +138,8 @@ export async function GET() {
       "fields_get",
       [],
       {
-        attributes: [
-          "string",
-          "type",
-          "relation",
-        ],
-      }
+        attributes: ["string", "type", "relation"],
+      },
     );
 
     const relevantFields = Object.entries(fields)
@@ -192,30 +166,22 @@ export async function GET() {
         type: definition.type ?? "unknown",
         relation: definition.relation,
       }))
-      .sort((a, b) =>
-        a.field.localeCompare(b.field)
-      );
+      .sort((a, b) => a.field.localeCompare(b.field));
 
     return NextResponse.json({
       count: relevantFields.length,
       fields: relevantFields,
     });
   } catch (error) {
-    console.error(
-      "Failed to inspect appointment.resource fields:",
-      error
-    );
+    console.error("Failed to inspect appointment.resource fields:", error);
 
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unknown error",
+        error: error instanceof Error ? error.message : "Unknown error",
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }

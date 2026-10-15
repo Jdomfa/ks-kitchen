@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { useState } from "react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 
-import { createProduct, updateProduct, deleteProduct } from './actions';
+import { createProduct, updateProduct, deleteProduct } from "./actions";
 
 type Product = {
   id: string;
@@ -16,14 +16,14 @@ type Product = {
   sort_order: number;
 };
 
-const ALL_TAGS = ['veggie', 'vegan', 'nuts', 'sesame'];
+const ALL_TAGS = ["veggie", "vegan", "nuts", "sesame"];
 
 function formatNaira(amount: number) {
-  return `NGN ${amount.toLocaleString('en-NG')}`;
+  return `NGN ${amount.toLocaleString("en-NG")}`;
 }
 
 export function StoreManager({ products }: { products: Product[] }) {
-  const [editingProduct, setEditingProduct] = useState<Product | 'new' | null>(
+  const [editingProduct, setEditingProduct] = useState<Product | "new" | null>(
     null,
   );
 
@@ -41,13 +41,13 @@ export function StoreManager({ products }: { products: Product[] }) {
           </p>
 
           <p className="mt-1 font-sans text-sm text-roasted-coffee/60">
-            {products.length} {products.length === 1 ? 'product' : 'products'}
+            {products.length} {products.length === 1 ? "product" : "products"}
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => setEditingProduct('new')}
+          onClick={() => setEditingProduct("new")}
           className="inline-flex items-center gap-1.5 rounded-full bg-clay-pot px-5 py-2.5 font-sans text-sm text-coconut-cream hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
@@ -64,7 +64,7 @@ export function StoreManager({ products }: { products: Product[] }) {
 
           <button
             type="button"
-            onClick={() => setEditingProduct('new')}
+            onClick={() => setEditingProduct("new")}
             className="mt-4 inline-flex items-center gap-1.5 font-sans text-sm text-clay-pot"
           >
             <Plus className="h-4 w-4" />
@@ -86,7 +86,7 @@ export function StoreManager({ products }: { products: Product[] }) {
       {/* PRODUCT MODAL */}
       {editingProduct && (
         <ProductModal
-          product={editingProduct === 'new' ? null : editingProduct}
+          product={editingProduct === "new" ? null : editingProduct}
           onClose={() => setEditingProduct(null)}
         />
       )}
@@ -232,11 +232,11 @@ function Modal({
 /* ─────────────────────────────────────────────────────────── */
 
 function field(label: string) {
-  return 'block font-sans text-xs uppercase tracking-wide text-roasted-coffee/60 mb-1';
+  return "block font-sans text-xs uppercase tracking-wide text-roasted-coffee/60 mb-1";
 }
 
 const inputClass =
-  'w-full rounded-lg border border-roasted-coffee/20 bg-white px-3 py-2 font-sans text-sm focus:outline-none focus:border-clay-pot';
+  "w-full rounded-lg border border-roasted-coffee/20 bg-white px-3 py-2 font-sans text-sm focus:outline-none focus:border-clay-pot";
 
 /* ─────────────────────────────────────────────────────────── */
 /* PRODUCT MODAL                                               */
@@ -250,11 +250,11 @@ function ProductModal({
   onClose: () => void;
 }) {
   return (
-    <Modal title={product ? 'Edit product' : 'New product'} onClose={onClose}>
+    <Modal title={product ? "Edit product" : "New product"} onClose={onClose}>
       <form
         action={async (formData) => {
           if (product) {
-            formData.set('id', product.id);
+            formData.set("id", product.id);
             await updateProduct(formData);
           } else {
             await createProduct(formData);
@@ -266,11 +266,11 @@ function ProductModal({
       >
         {/* NAME */}
         <div>
-          <label className={field('Name')}>Name</label>
+          <label className={field("Name")}>Name</label>
 
           <input
             name="name"
-            defaultValue={product?.name ?? ''}
+            defaultValue={product?.name ?? ""}
             required
             className={inputClass}
             placeholder="House Podi"
@@ -279,11 +279,11 @@ function ProductModal({
 
         {/* DESCRIPTION */}
         <div>
-          <label className={field('Description')}>Description</label>
+          <label className={field("Description")}>Description</label>
 
           <textarea
             name="description"
-            defaultValue={product?.description ?? ''}
+            defaultValue={product?.description ?? ""}
             rows={3}
             required
             className={inputClass}
@@ -293,11 +293,11 @@ function ProductModal({
 
         {/* SIZE */}
         <div>
-          <label className={field('Size')}>Size</label>
+          <label className={field("Size")}>Size</label>
 
           <input
             name="size"
-            defaultValue={product?.size ?? ''}
+            defaultValue={product?.size ?? ""}
             className={inputClass}
             placeholder="250g"
           />
@@ -305,14 +305,14 @@ function ProductModal({
 
         {/* PRICE */}
         <div>
-          <label className={field('Price (NGN)')}>Price (NGN)</label>
+          <label className={field("Price (NGN)")}>Price (NGN)</label>
 
           <input
             name="price"
             type="number"
             min="0"
             step="0.01"
-            defaultValue={product?.price ?? ''}
+            defaultValue={product?.price ?? ""}
             required
             className={inputClass}
             placeholder="5000"
@@ -321,7 +321,7 @@ function ProductModal({
 
         {/* TAGS */}
         <div>
-          <label className={field('Tags')}>Dietary tags</label>
+          <label className={field("Tags")}>Dietary tags</label>
 
           <div className="flex flex-wrap gap-3">
             {ALL_TAGS.map((tag) => (
@@ -344,11 +344,11 @@ function ProductModal({
 
         {/* IMAGE */}
         <div>
-          <label className={field('Image URL')}>Image URL</label>
+          <label className={field("Image URL")}>Image URL</label>
 
           <input
             name="image"
-            defaultValue={product?.image ?? ''}
+            defaultValue={product?.image ?? ""}
             className={inputClass}
             placeholder="https://..."
           />
@@ -367,7 +367,7 @@ function ProductModal({
 
         {/* SORT ORDER */}
         <div>
-          <label className={field('Sort order')}>Sort order</label>
+          <label className={field("Sort order")}>Sort order</label>
 
           <input
             name="sort_order"
@@ -382,7 +382,7 @@ function ProductModal({
           type="submit"
           className="w-full rounded-full bg-clay-pot px-6 py-2.5 font-sans text-sm text-coconut-cream hover:opacity-90"
         >
-          {product ? 'Save changes' : 'Create product'}
+          {product ? "Save changes" : "Create product"}
         </button>
       </form>
     </Modal>

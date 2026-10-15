@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 const SPLASH_DURATION_MS = 6000;
 const SPLASH_VIDEO_URL =
-  'https://res.cloudinary.com/ansp9yim/video/upload/v1786913518/0_Dosa_Indian_Food_1280x720.mp4';
+  "https://res.cloudinary.com/ansp9yim/video/upload/v1786913518/0_Dosa_Indian_Food_1280x720.mp4";
 
 /**
  * Guaranteed first-visit splash — shown for a fixed duration on the initial
@@ -26,9 +26,9 @@ export function SplashScreen() {
 
   // Prevent scrolling behind the splash while it's up.
   useEffect(() => {
-    document.body.style.overflow = visible ? 'hidden' : '';
+    document.body.style.overflow = visible ? "hidden" : "";
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [visible]);
 
@@ -50,7 +50,7 @@ export function SplashScreen() {
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: 'easeInOut' }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
           className="fixed inset-0 z-[200] overflow-hidden bg-white"
         >
           <video

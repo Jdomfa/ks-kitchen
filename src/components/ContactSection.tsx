@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
   Phone,
@@ -14,8 +14,8 @@ import {
   ChevronDown,
   Star,
   MessageCircle,
-} from 'lucide-react';
-import { BrandPattern } from './BrandPattern';
+} from "lucide-react";
+import { BrandPattern } from "./BrandPattern";
 
 /* lucide-react no longer ships trademarked brand icons, so these two
    are small local SVGs instead. */
@@ -54,65 +54,65 @@ function FacebookIcon(props: React.SVGProps<SVGSVGElement>) {
 /* ------------------------------------------------------------------ */
 
 const REASONS = [
-  { id: 'reservation', label: 'Reservation' },
-  { id: 'feedback', label: 'Feedback' },
-  { id: 'press', label: 'Press & Events' },
-  { id: 'other', label: 'Something else' },
+  { id: "reservation", label: "Reservation" },
+  { id: "feedback", label: "Feedback" },
+  { id: "press", label: "Press & Events" },
+  { id: "other", label: "Something else" },
 ] as const;
 
-type Reason = (typeof REASONS)[number]['id'];
+type Reason = (typeof REASONS)[number]["id"];
 
 const INFO_CARDS = [
   {
     icon: MapPin,
-    label: 'Visit Us',
-    lines: ['12 Palm Grove Close', 'Wuse II, Abuja'],
+    label: "Visit Us",
+    lines: ["12 Palm Grove Close", "Wuse II, Abuja"],
   },
   {
     icon: Phone,
-    label: 'Call Us',
-    lines: ['+234 700 000 0000'],
+    label: "Call Us",
+    lines: ["+234 700 000 0000"],
   },
   {
     icon: Mail,
-    label: 'Email Us',
-    lines: ['hello@kskitchen.ng'],
+    label: "Email Us",
+    lines: ["hello@kskitchen.ng"],
   },
   {
     icon: Clock,
-    label: 'Working Hours',
-    lines: ['Tue – Sun · 8am – 10pm', 'Closed Mondays'],
+    label: "Working Hours",
+    lines: ["Tue – Sun · 8am – 10pm", "Closed Mondays"],
   },
 ];
 
 const SOCIAL_CARDS = [
   {
     icon: InstagramIcon,
-    title: 'See The Kitchen',
-    description: 'Behind-the-scenes shots and daily specials.',
-    cta: 'Follow on Instagram',
-    href: '#',
+    title: "See The Kitchen",
+    description: "Behind-the-scenes shots and daily specials.",
+    cta: "Follow on Instagram",
+    href: "#",
   },
   {
     icon: FacebookIcon,
-    title: 'Join The Community',
-    description: 'Events, announcements, and regulars talking food.',
-    cta: 'Follow on Facebook',
-    href: '#',
+    title: "Join The Community",
+    description: "Events, announcements, and regulars talking food.",
+    cta: "Follow on Facebook",
+    href: "#",
   },
   {
     icon: Star,
-    title: 'Leave A Review',
-    description: 'Tell other diners what stood out on your visit.',
-    cta: 'Review Us',
-    href: '#',
+    title: "Leave A Review",
+    description: "Tell other diners what stood out on your visit.",
+    cta: "Review Us",
+    href: "#",
   },
   {
     icon: MessageCircle,
-    title: 'Chat With Us',
-    description: 'Quick questions? Message us directly.',
-    cta: 'Open WhatsApp',
-    href: '#',
+    title: "Chat With Us",
+    description: "Quick questions? Message us directly.",
+    cta: "Open WhatsApp",
+    href: "#",
   },
 ];
 
@@ -124,29 +124,29 @@ const SOCIAL_CARDS = [
 const TESTIMONIALS = [
   {
     quote:
-      '[Add a real customer quote here — what did they order, what stood out?]',
-    name: 'Customer Name',
+      "[Add a real customer quote here — what did they order, what stood out?]",
+    name: "Customer Name",
     role: 'Add context — e.g. "Regular", "First-time visitor"',
     featured: true,
   },
   {
-    quote: '[Add a real customer quote here.]',
-    name: 'Customer Name',
-    role: 'Add context',
+    quote: "[Add a real customer quote here.]",
+    name: "Customer Name",
+    role: "Add context",
   },
   {
-    quote: '[Add a real customer quote here.]',
-    name: 'Customer Name',
-    role: 'Add context',
+    quote: "[Add a real customer quote here.]",
+    name: "Customer Name",
+    role: "Add context",
   },
   {
-    quote: '[Add a real customer quote here.]',
-    name: 'Customer Name',
-    role: 'Add context',
+    quote: "[Add a real customer quote here.]",
+    name: "Customer Name",
+    role: "Add context",
   },
 ];
 
-const FAQ_TABS = ['General', 'Reservations', 'Catering'] as const;
+const FAQ_TABS = ["General", "Reservations", "Catering"] as const;
 type FaqTab = (typeof FAQ_TABS)[number];
 
 /**
@@ -156,43 +156,43 @@ type FaqTab = (typeof FAQ_TABS)[number];
 const FAQS: Record<FaqTab, { q: string; a: string }[]> = {
   General: [
     {
-      q: 'What are your opening hours?',
+      q: "What are your opening hours?",
       a: "We're open Tuesday through Sunday, 8am to 10pm. Closed on Mondays.",
     },
     {
-      q: 'Do you have vegetarian and vegan options?',
-      a: 'Most of our dosa, uthappam, and spice mix items are vegetarian, and many are vegan — look for the dietary tags on each menu item.',
+      q: "Do you have vegetarian and vegan options?",
+      a: "Most of our dosa, uthappam, and spice mix items are vegetarian, and many are vegan — look for the dietary tags on each menu item.",
     },
     {
-      q: 'Is there parking available?',
-      a: 'Yes, there is parking available directly outside the restaurant.',
+      q: "Is there parking available?",
+      a: "Yes, there is parking available directly outside the restaurant.",
     },
   ],
   Reservations: [
     {
-      q: 'Do I need a reservation?',
-      a: 'Walk-ins are welcome, but we recommend booking ahead for weekends and parties of five or more.',
+      q: "Do I need a reservation?",
+      a: "Walk-ins are welcome, but we recommend booking ahead for weekends and parties of five or more.",
     },
     {
-      q: 'Can I request a specific table?',
+      q: "Can I request a specific table?",
       a: "Let us know in the message field when you book, and we'll do our best to accommodate it.",
     },
     {
       q: "What's your cancellation policy?",
-      a: 'We ask for at least two hours notice for cancellations so we can offer the table to someone else.',
+      a: "We ask for at least two hours notice for cancellations so we can offer the table to someone else.",
     },
   ],
   Catering: [
     {
-      q: 'Do you cater events?',
-      a: 'Yes — reach out through the form with your event size and date, and our team will put together a menu.',
+      q: "Do you cater events?",
+      a: "Yes — reach out through the form with your event size and date, and our team will put together a menu.",
     },
     {
-      q: 'Is there a minimum order size for catering?',
-      a: 'Catering orders typically start at 15 guests. Smaller group orders may be possible — just ask.',
+      q: "Is there a minimum order size for catering?",
+      a: "Catering orders typically start at 15 guests. Smaller group orders may be possible — just ask.",
     },
     {
-      q: 'How far in advance should I book catering?',
+      q: "How far in advance should I book catering?",
       a: "We recommend at least one week's notice for catering orders, longer for larger events.",
     },
   ],
@@ -202,16 +202,16 @@ const FAQS: Record<FaqTab, { q: string; a: string }[]> = {
 /* Main section                                                       */
 /* ------------------------------------------------------------------ */
 
-type Status = 'idle' | 'sending' | 'sent';
+type Status = "idle" | "sending" | "sent";
 
 export function ContactSection() {
-  const [reason, setReason] = useState<Reason>('reservation');
-  const [status, setStatus] = useState<Status>('idle');
+  const [reason, setReason] = useState<Reason>("reservation");
+  const [status, setStatus] = useState<Status>("idle");
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    message: '',
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
   });
 
   const canSubmit = useMemo(
@@ -219,20 +219,20 @@ export function ContactSection() {
       form.name.trim() &&
       form.email.trim() &&
       form.message.trim() &&
-      status !== 'sending',
+      status !== "sending",
     [form, status],
   );
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
-    setStatus('sending');
+    setStatus("sending");
     // TODO: replace with a real submission (API route, Formspree, Resend, etc.)
     window.setTimeout(() => {
-      setStatus('sent');
+      setStatus("sent");
       window.setTimeout(() => {
-        setStatus('idle');
-        setForm({ name: '', email: '', phone: '', message: '' });
+        setStatus("idle");
+        setForm({ name: "", email: "", phone: "", message: "" });
       }, 3200);
     }, 1400);
   }
@@ -328,8 +328,8 @@ export function ContactSection() {
                       onClick={() => setReason(r.id)}
                       className={`px-3.5 py-1.5 rounded-full font-sans text-xs tracking-wide border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass ${
                         reason === r.id
-                          ? 'bg-clay-pot text-coconut-cream border-clay-pot'
-                          : 'border-roasted-coffee/20 text-roasted-coffee/70 hover:border-clay-pot'
+                          ? "bg-clay-pot text-coconut-cream border-clay-pot"
+                          : "border-roasted-coffee/20 text-roasted-coffee/70 hover:border-clay-pot"
                       }`}
                     >
                       {r.label}
@@ -403,12 +403,12 @@ export function ContactSection() {
               key={i}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
+              viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.4, delay: i * 0.05 }}
               className={`rounded-xl p-6 ${
                 t.featured
-                  ? 'bg-roasted-coffee text-coconut-cream md:row-span-2'
-                  : 'bg-coconut-cream text-roasted-coffee'
+                  ? "bg-roasted-coffee text-coconut-cream md:row-span-2"
+                  : "bg-coconut-cream text-roasted-coffee"
               }`}
             >
               <p className="font-sans text-sm leading-relaxed opacity-80">
@@ -418,8 +418,8 @@ export function ContactSection() {
               <p
                 className={`font-sans text-xs ${
                   t.featured
-                    ? 'text-coconut-cream/50'
-                    : 'text-roasted-coffee/50'
+                    ? "text-coconut-cream/50"
+                    : "text-roasted-coffee/50"
                 }`}
               >
                 {t.role}
@@ -439,7 +439,7 @@ export function ContactSection() {
               key={card.title}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
+              viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.4, delay: i * 0.05 }}
               className="text-center"
             >
@@ -510,7 +510,7 @@ export function ContactSection() {
 /* ------------------------------------------------------------------ */
 
 function FaqSection() {
-  const [activeTab, setActiveTab] = useState<FaqTab>('General');
+  const [activeTab, setActiveTab] = useState<FaqTab>("General");
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   function selectTab(tab: FaqTab) {
@@ -537,8 +537,8 @@ function FaqSection() {
                 onClick={() => selectTab(tab)}
                 className={`px-4 py-1.5 rounded-full font-sans text-xs tracking-wide border transition-colors ${
                   activeTab === tab
-                    ? 'bg-clay-pot text-coconut-cream border-clay-pot'
-                    : 'border-roasted-coffee/20 text-roasted-coffee/70 hover:border-clay-pot'
+                    ? "bg-clay-pot text-coconut-cream border-clay-pot"
+                    : "border-roasted-coffee/20 text-roasted-coffee/70 hover:border-clay-pot"
                 }`}
               >
                 {tab}
@@ -562,7 +562,7 @@ function FaqSection() {
                   {item.q}
                   <ChevronDown
                     className={`h-4 w-4 text-roasted-coffee/50 transition-transform ${
-                      open ? 'rotate-180' : ''
+                      open ? "rotate-180" : ""
                     }`}
                   />
                 </button>
@@ -570,9 +570,9 @@ function FaqSection() {
                   {open && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
+                      animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
                       className="overflow-hidden"
                     >
                       <p className="px-5 pb-4 font-sans text-sm text-roasted-coffee/60">
@@ -599,25 +599,25 @@ function Field({
   value,
   onChange,
   placeholder,
-  type = 'text',
-  as = 'input',
+  type = "text",
+  as = "input",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   type?: string;
-  as?: 'input' | 'textarea';
+  as?: "input" | "textarea";
 }) {
   const shared =
-    'w-full bg-white/70 border border-roasted-coffee/15 rounded-md px-3 py-2.5 font-sans text-sm text-roasted-coffee placeholder:text-roasted-coffee/35 focus:outline-none focus:border-clay-pot transition-colors';
+    "w-full bg-white/70 border border-roasted-coffee/15 rounded-md px-3 py-2.5 font-sans text-sm text-roasted-coffee placeholder:text-roasted-coffee/35 focus:outline-none focus:border-clay-pot transition-colors";
 
   return (
     <label className="block text-left">
       <span className="font-sans text-[11px] uppercase tracking-[0.2em] text-brushed-brass/80">
         {label}
       </span>
-      {as === 'textarea' ? (
+      {as === "textarea" ? (
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -656,7 +656,7 @@ function SubmitButton({
       className="flex w-full items-center justify-center gap-2 rounded-full bg-clay-pot py-3 font-sans text-sm uppercase tracking-wide text-coconut-cream transition-colors hover:bg-terracotta disabled:cursor-not-allowed disabled:opacity-50"
     >
       <AnimatePresence mode="wait">
-        {status === 'idle' && (
+        {status === "idle" && (
           <motion.span
             key="idle"
             initial={{ opacity: 0 }}
@@ -667,7 +667,7 @@ function SubmitButton({
             Send Message <Send className="h-4 w-4" strokeWidth={1.8} />
           </motion.span>
         )}
-        {status === 'sending' && (
+        {status === "sending" && (
           <motion.span
             key="sending"
             initial={{ opacity: 0 }}
@@ -675,11 +675,11 @@ function SubmitButton({
             exit={{ opacity: 0 }}
             className="flex items-center gap-2"
           >
-            Sending{' '}
+            Sending{" "}
             <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.8} />
           </motion.span>
         )}
-        {status === 'sent' && (
+        {status === "sent" && (
           <motion.span
             key="sent"
             initial={{ opacity: 0, y: 6 }}

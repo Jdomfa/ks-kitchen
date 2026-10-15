@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ShoppingBag, Check } from 'lucide-react';
-import { categories, type Product } from '@/lib/store-data';
-import { useCart } from '@/lib/cart-context';
-import { formatNaira } from '@/lib/format';
+import { useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ShoppingBag, Check } from "lucide-react";
+import { categories, type Product } from "@/lib/store-data";
+import { useCart } from "@/lib/cart-context";
+import { formatNaira } from "@/lib/format";
 
 export function ProductCard({ product }: { product: Product }) {
   const { addToCart } = useCart();
@@ -27,8 +27,8 @@ export function ProductCard({ product }: { product: Product }) {
     <motion.div
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className="group rounded-xl bg-coconut-cream p-3 shadow-[0_6px_20px_-8px_rgba(50,38,31,0.25)]"
     >
       <Link href={`/store/${product.slug}`} className="block">
@@ -84,7 +84,7 @@ export function ProductCard({ product }: { product: Product }) {
         ) : (
           <>
             <ShoppingBag className="h-3.5 w-3.5" strokeWidth={1.8} />
-            {product.inStock ? 'Add to cart' : 'Sold out'}
+            {product.inStock ? "Add to cart" : "Sold out"}
           </>
         )}
       </button>

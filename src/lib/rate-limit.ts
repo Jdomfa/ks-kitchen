@@ -1,4 +1,4 @@
-import { createServiceClient } from '@/lib/supabase/service';
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * Returns true if the request is allowed, false if the identifier
@@ -10,18 +10,18 @@ import { createServiceClient } from '@/lib/supabase/service';
 export async function checkRateLimit(
   key: string,
   maxCount: number,
-  windowSeconds: number
+  windowSeconds: number,
 ): Promise<boolean> {
   const supabase = createServiceClient();
 
-  const { data, error } = await supabase.rpc('check_rate_limit', {
+  const { data, error } = await supabase.rpc("check_rate_limit", {
     p_key: key,
     p_max_count: maxCount,
     p_window_seconds: windowSeconds,
   });
 
   if (error) {
-    console.error('Rate limit check failed:', error.message);
+    console.error("Rate limit check failed:", error.message);
     return true;
   }
 

@@ -1,4 +1,4 @@
-import { createServiceClient } from '@/lib/supabase/service';
+import { createServiceClient } from "@/lib/supabase/service";
 
 export type ReservationSettings = {
   id: boolean;
@@ -31,7 +31,7 @@ export type AvailabilityResult = {
 };
 
 function timeToMinutes(time: string) {
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
@@ -39,37 +39,27 @@ function minutesToTime(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
 
-  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(
+  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(
     2,
-    '0'
+    "0",
   )}:00`;
 }
 
-function overlaps(
-  startA: number,
-  endA: number,
-  startB: number,
-  endB: number
-) {
+function overlaps(startA: number, endA: number, startB: number, endB: number) {
   return startA < endB && endA > startB;
 }
 
 export async function getReservationConfig() {
   const supabase = createServiceClient();
 
-  const [{ data: settings, error: settingsError }, { data: hours, error: hoursError }] =
-    await Promise.all([
-      supabase
-        .from('reservation_settings')
-        .select('*')
-        .eq('id', true)
-        .single(),
+  const [
+    { data: settings, error: settingsError },
+    { data: hours, error: hoursError },
+  ] = await Promise.all([
+    supabase.from("reservation_settings").select("*").eq("id", true).single(),
 
-      supabase
-        .from('reservation_hours')
-        .select('*')
-        .order('weekday'),
-    ]);
+    supabase.from("reservation_hours").select("*").order("weekday"),
+  ]);
 
   if (settingsError) {
     throw new Error(settingsError.message);
@@ -101,18 +91,15 @@ export async function checkAvailability({
   const dateObject = new Date(`${date}T12:00:00`);
 
   if (Number.isNaN(dateObject.getTime())) {
-    throw new Error('Invalid reservation date.');
+    throw new Error("Invalid reservation date.");
   }
 
   const weekday = dateObject.getDay();
 
-  const dayHours = hours.find(
-    (item) => item.weekday === weekday
-  );
+  const dayHours = hours.find((item) => item.weekday === weekday);
 
   const maximumReservedCovers = Math.floor(
-    settings.total_capacity *
-      (settings.reservation_capacity_percent / 100)
+    settings.total_capacity * (settings.reservation_capacity_percent / 100),
   );
 
   if (!dayHours || dayHours.is_closed) {
@@ -125,7 +112,7 @@ export async function checkAvailability({
       maximumReservedCovers,
       remainingCovers: maximumReservedCovers,
       alternatives: [],
-      reason: 'Restaurant is closed on this day.',
+      reason: "Restaurant is closed on this day.",
     };
   }
 
@@ -145,15 +132,15 @@ export async function checkAvailability({
       maximumReservedCovers,
       remainingCovers: maximumReservedCovers,
       alternatives: [],
-      reason: 'Requested time is outside operating hours.',
+      reason: "Requested time is outside operating hours.",
     };
   }
 
   const { data: reservations, error } = await supabase
-    .from('reservations')
-    .select('party_size, reservation_time, status')
-    .eq('reservation_date', date)
-    .in('status', ['pending', 'confirmed']);
+    .from("reservations")
+    .select("party_size, reservation_time, status")
+    .eq("reservation_date", date)
+    .in("status", ["pending", "confirmed"]);
 
   if (error) {
     throw new Error(error.message);
@@ -177,14 +164,20 @@ export async function checkAvailability({
   const remainingCovers = maximumReservedCovers - reservedCovers;
   const available = reservedCovers + partySize <= maximumReservedCovers;
 
-  const alternativeCandidates: { time: string; minutesFromRequested: number }[] = [];
+  const alternativeCandidates: {
+    time: string;
+    minutesFromRequested: number;
+  }[] = [];
 
   if (!available) {
     const interval = settings.slot_interval_minutes;
     const windowMinutes = 4 * 60; // ±4 hours
 
     // Earlier times, back to the later of: opening time, or 4 hours before the request.
-    const earliestCandidate = Math.max(openingTime, requestedStart - windowMinutes);
+    const earliestCandidate = Math.max(
+      openingTime,
+      requestedStart - windowMinutes,
+    );
 
     for (
       let candidate = requestedStart - interval;
@@ -194,7 +187,10 @@ export async function checkAvailability({
       const candidateEnd = candidate + reservationDuration;
       if (candidateEnd > closingTime) continue;
 
-      if (coversAt(candidate, candidateEnd) + partySize <= maximumReservedCovers) {
+      if (
+        coversAt(candidate, candidateEnd) + partySize <=
+        maximumReservedCovers
+      ) {
         alternativeCandidates.push({
           time: minutesToTime(candidate),
           minutesFromRequested: requestedStart - candidate,
@@ -205,7 +201,7 @@ export async function checkAvailability({
     // Later times, up to the earlier of: 4 hours after the request, or closing time.
     const latestCandidateStart = Math.min(
       closingTime - reservationDuration,
-      requestedStart + windowMinutes
+      requestedStart + windowMinutes,
     );
 
     for (
@@ -215,7 +211,10 @@ export async function checkAvailability({
     ) {
       const candidateEnd = candidate + reservationDuration;
 
-      if (coversAt(candidate, candidateEnd) + partySize <= maximumReservedCovers) {
+      if (
+        coversAt(candidate, candidateEnd) + partySize <=
+        maximumReservedCovers
+      ) {
         alternativeCandidates.push({
           time: minutesToTime(candidate),
           minutesFromRequested: candidate - requestedStart,
@@ -226,7 +225,9 @@ export async function checkAvailability({
 
   // Closest to the originally requested time first, regardless of
   // whether it's earlier or later.
-  alternativeCandidates.sort((a, b) => a.minutesFromRequested - b.minutesFromRequested);
+  alternativeCandidates.sort(
+    (a, b) => a.minutesFromRequested - b.minutesFromRequested,
+  );
 
   const alternatives = [...new Set(alternativeCandidates.map((c) => c.time))];
 
@@ -241,6 +242,6 @@ export async function checkAvailability({
     alternatives,
     reason: available
       ? undefined
-      : 'Requested time does not have enough reservation capacity.',
+      : "Requested time does not have enough reservation capacity.",
   };
 }

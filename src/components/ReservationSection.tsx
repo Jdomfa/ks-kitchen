@@ -1,39 +1,42 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Clock, Users, MessageCircle, Phone } from 'lucide-react';
-import { BrandPattern } from './BrandPattern';
-import { siteConfig } from '@/lib/site-config';
+import { motion } from "framer-motion";
+import { Clock, Users, MessageCircle, Phone } from "lucide-react";
+import { BrandPattern } from "./BrandPattern";
+import { siteConfig } from "@/lib/site-config";
 
 // Flip to true once WhatsApp business verification clears and the
 // live production number (not the Meta test number) is in place.
 const WHATSAPP_LIVE = true;
 
 function toTelHref(phone: string) {
-  return `tel:${phone.replace(/[^\d+]/g, '')}`;
+  return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
 
 function toWhatsAppHref(phone: string) {
-  const digits = phone.replace(/\D/g, '');
+  const digits = phone.replace(/\D/g, "");
   return `https://wa.me/${digits}?text=${encodeURIComponent("Hi, I'd like to book a table")}`;
 }
 
 export function ReservationSection() {
   function openChat() {
-    window.dispatchEvent(new Event('kk:open-chat'));
+    window.dispatchEvent(new Event("kk:open-chat"));
   }
 
   return (
     <section className="relative overflow-hidden">
       {/* HERO */}
       <div className="relative mx-auto max-w-5xl px-6 pt-20 pb-14">
-        <BrandPattern className="text-clay-pot/[0.06]" position="bottom-right" />
+        <BrandPattern
+          className="text-clay-pot/[0.06]"
+          position="bottom-right"
+        />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative text-center"
         >
           <p className="mb-3 flex items-center justify-center gap-2 font-sans text-xs uppercase tracking-[0.25em] text-brushed-brass">
@@ -56,7 +59,9 @@ export function ReservationSection() {
       <div className="relative overflow-hidden bg-banana-leaf">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/brand/patterns/philosophy-pattern.svg')" }}
+          style={{
+            backgroundImage: "url('/brand/patterns/philosophy-pattern.svg')",
+          }}
         />
         <div className="absolute inset-0 bg-banana-leaf/55" />
 
@@ -70,20 +75,28 @@ export function ReservationSection() {
             <ul className="space-y-3">
               {siteConfig.hours.map((h) => (
                 <li key={h.days} className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 shrink-0 text-brushed-brass" strokeWidth={1.8} />
+                  <Clock
+                    className="h-4 w-4 shrink-0 text-brushed-brass"
+                    strokeWidth={1.8}
+                  />
                   {h.days}: {h.time}
                 </li>
               ))}
 
               <li className="flex items-center gap-2">
-                <Users className="h-4 w-4 shrink-0 text-brushed-brass" strokeWidth={1.8} />
-                Parties of 9+ — call us directly at {siteConfig.reservationPhone}
+                <Users
+                  className="h-4 w-4 shrink-0 text-brushed-brass"
+                  strokeWidth={1.8}
+                />
+                Parties of 9+ — call us directly at{" "}
+                {siteConfig.reservationPhone}
               </li>
             </ul>
 
             <p className="mt-6 italic text-coconut-cream/60">
-              We hold tables for 15 minutes past the reserved time. Running late? A quick call to{' '}
-              {siteConfig.reservationPhone} keeps your spot.
+              We hold tables for 15 minutes past the reserved time. Running
+              late? A quick call to {siteConfig.reservationPhone} keeps your
+              spot.
             </p>
           </div>
 
@@ -91,14 +104,17 @@ export function ReservationSection() {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className="relative rounded-lg bg-coconut-cream p-6 shadow-xl md:p-8"
           >
-            <h3 className="font-display text-2xl text-roasted-coffee">Book a table</h3>
+            <h3 className="font-display text-2xl text-roasted-coffee">
+              Book a table
+            </h3>
             <p className="mt-2 font-sans text-sm text-roasted-coffee/70">
-              Reservations are handled by our assistant, so availability is checked in
-              real time and confirmed right away — no form to submit and wait on.
+              Reservations are handled by our assistant, so availability is
+              checked in real time and confirmed right away — no form to submit
+              and wait on.
             </p>
 
             <div className="mt-8 space-y-4">
@@ -108,7 +124,9 @@ export function ReservationSection() {
                 className="flex w-full items-center justify-between rounded-md border border-clay-pot bg-clay-pot px-5 py-4 text-left text-coconut-cream transition-colors hover:bg-clay-pot/90"
               >
                 <span>
-                  <span className="block font-sans text-sm font-medium">Chat with us</span>
+                  <span className="block font-sans text-sm font-medium">
+                    Chat with us
+                  </span>
                   <span className="block font-sans text-xs text-coconut-cream/80">
                     Book instantly, right here on the site
                   </span>
@@ -120,7 +138,11 @@ export function ReservationSection() {
                 <button
                   type="button"
                   onClick={() =>
-                    window.open(toWhatsAppHref(siteConfig.reservationPhone), '_blank', 'noopener,noreferrer')
+                    window.open(
+                      toWhatsAppHref(siteConfig.reservationPhone),
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
                   }
                   className="flex w-full items-center justify-between rounded-md border border-curry-leaf/30 bg-white px-5 py-4 text-left transition-colors hover:border-curry-leaf"
                 >
@@ -132,7 +154,10 @@ export function ReservationSection() {
                       Same assistant, right inside WhatsApp
                     </span>
                   </span>
-                  <MessageCircle className="h-5 w-5 shrink-0 text-curry-leaf" strokeWidth={1.8} />
+                  <MessageCircle
+                    className="h-5 w-5 shrink-0 text-curry-leaf"
+                    strokeWidth={1.8}
+                  />
                 </button>
               )}
 
@@ -151,13 +176,16 @@ export function ReservationSection() {
                     Best for large parties (9+) or urgent changes
                   </span>
                 </span>
-                <Phone className="h-5 w-5 shrink-0 text-brushed-brass" strokeWidth={1.8} />
+                <Phone
+                  className="h-5 w-5 shrink-0 text-brushed-brass"
+                  strokeWidth={1.8}
+                />
               </button>
             </div>
 
             <p className="mt-6 font-sans text-xs text-roasted-coffee/50">
-              Allergies, special occasions, or seating preferences? Just mention them in
-              chat or on the call — no separate field needed.
+              Allergies, special occasions, or seating preferences? Just mention
+              them in chat or on the call — no separate field needed.
             </p>
           </motion.div>
         </div>

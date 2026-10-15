@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { PlayCircle } from 'lucide-react';
-import { menu } from '@/lib/menu-data-trial';
-import { DietaryTags } from './DietaryIcons';
-import { BrandPattern } from './BrandPattern';
-import { VideoModal } from './VideoModal';
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { PlayCircle } from "lucide-react";
+import { menu } from "@/lib/menu-data-trial";
+import { DietaryTags } from "./DietaryIcons";
+import { BrandPattern } from "./BrandPattern";
+import { VideoModal } from "./VideoModal";
 
 const containerVariants = {
   hidden: {},
@@ -20,16 +20,16 @@ const itemVariants = {
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: 'easeOut' as const },
+    transition: { duration: 0.5, ease: "easeOut" as const },
   },
 };
 
 function formatNaira(amount: number) {
-  return `NGN ${amount.toLocaleString('en-NG')}`;
+  return `NGN ${amount.toLocaleString("en-NG")}`;
 }
 
 const DOSA_VIDEO_SRC =
-  'https://player.cloudinary.com/embed/?cloud_name=ansp9yim&public_id=0_Masala_Dosa_Indian_Food_3840x2160';
+  "https://player.cloudinary.com/embed/?cloud_name=ansp9yim&public_id=0_Masala_Dosa_Indian_Food_3840x2160";
 
 export function AccordionMenuSection() {
   const [activeTab, setActiveTab] = useState(menu[0].id);
@@ -52,8 +52,8 @@ export function AccordionMenuSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative text-center"
         >
           <h1 className="font-display text-4xl md:text-5xl text-roasted-coffee">
@@ -76,8 +76,8 @@ export function AccordionMenuSection() {
               }}
               className={`px-8 py-2.5 rounded-full font-sans text-sm tracking-wide transition-colors border ${
                 activeTab === tab.id
-                  ? 'bg-clay-pot text-coconut-cream border-clay-pot'
-                  : 'border-roasted-coffee/20 text-roasted-coffee hover:border-clay-pot'
+                  ? "bg-clay-pot text-coconut-cream border-clay-pot"
+                  : "border-roasted-coffee/20 text-roasted-coffee hover:border-clay-pot"
               }`}
             >
               {tab.label}
@@ -107,7 +107,7 @@ export function AccordionMenuSection() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.28, ease: 'easeOut' }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
             className="relative"
           >
             {active.categories.map((cat) => (
@@ -118,7 +118,7 @@ export function AccordionMenuSection() {
                     variants={containerVariants}
                     initial="hidden"
                     whileInView="show"
-                    viewport={{ once: true, margin: '-60px' }}
+                    viewport={{ once: true, margin: "-60px" }}
                   >
                     <motion.div
                       variants={itemVariants}
@@ -144,7 +144,7 @@ export function AccordionMenuSection() {
                         {cat.description}
                       </motion.p>
                     )}
-                    {cat.id === 'dosa-collective' && (
+                    {cat.id === "dosa-collective" && (
                       <motion.div
                         variants={itemVariants}
                         className="flex justify-center"
@@ -167,8 +167,8 @@ export function AccordionMenuSection() {
                     <motion.div
                       initial={{ opacity: 0, scale: 1.08, y: 30 }}
                       whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                      viewport={{ once: true, margin: '-100px' }}
-                      transition={{ duration: 0.9, ease: 'easeOut' }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.9, ease: "easeOut" }}
                       className="relative h-64 md:h-96 w-full bg-cover bg-center"
                       style={{ backgroundImage: `url(${cat.image})` }}
                     >
@@ -185,7 +185,7 @@ export function AccordionMenuSection() {
                     variants={containerVariants}
                     initial="hidden"
                     whileInView="show"
-                    viewport={{ once: true, margin: '-60px' }}
+                    viewport={{ once: true, margin: "-60px" }}
                     className="space-y-8"
                   >
                     {cat.items.map((item) => {
@@ -198,7 +198,7 @@ export function AccordionMenuSection() {
                           variants={itemVariants}
                           onClick={() => image && toggleItem(item.id)}
                           className={`text-center pb-8 border-b border-coconut-cream/15 last:border-0 ${
-                            image ? 'cursor-pointer' : ''
+                            image ? "cursor-pointer" : ""
                           }`}
                         >
                           <h3 className="font-display text-lg text-coconut-cream">
@@ -218,11 +218,11 @@ export function AccordionMenuSection() {
                                 <motion.div
                                   key="image"
                                   initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
+                                  animate={{ height: "auto", opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
                                   transition={{
                                     duration: 0.4,
-                                    ease: 'easeInOut',
+                                    ease: "easeInOut",
                                   }}
                                   className="overflow-hidden"
                                 >

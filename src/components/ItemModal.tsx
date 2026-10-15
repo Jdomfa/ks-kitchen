@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { X } from 'lucide-react';
-import { MenuItem } from '@/lib/menu-data-trial';
-import { DietaryTags } from './DietaryIcons';
+import { useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
+import { MenuItem } from "@/lib/menu-data-trial";
+import { DietaryTags } from "./DietaryIcons";
 
 function formatNaira(amount: number) {
-  return `NGN ${amount.toLocaleString('en-NG')}`;
+  return `NGN ${amount.toLocaleString("en-NG")}`;
 }
 
 type Props = {
@@ -23,14 +23,14 @@ export function ItemModalTrial({ item, categoryImage, onClose }: Props) {
     const previousOverflow = document.body.style.overflow;
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
 
-    document.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
 
     return () => {
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
     };
   }, [item, onClose]);
@@ -89,8 +89,8 @@ export function ItemModalTrial({ item, categoryImage, onClose }: Props) {
                   alt={item.name}
                   className="h-full w-full object-cover object-center"
                   onError={(e) => {
-                    console.error('Failed to load menu image:', image);
-                    e.currentTarget.style.display = 'none';
+                    console.error("Failed to load menu image:", image);
+                    e.currentTarget.style.display = "none";
                   }}
                 />
 
@@ -105,10 +105,10 @@ export function ItemModalTrial({ item, categoryImage, onClose }: Props) {
               transition={{
                 delay: 0.15,
                 duration: 0.4,
-                ease: 'easeOut',
+                ease: "easeOut",
               }}
               className={`px-6 md:px-10 pb-10 ${
-                image ? '-mt-10 relative' : 'pt-14'
+                image ? "-mt-10 relative" : "pt-14"
               }`}
             >
               <h2

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { MapPin, Tag, Clock, ChevronUp, ArrowRight } from 'lucide-react';
-import { siteConfig } from '@/lib/site-config';
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { MapPin, Tag, Clock, ChevronUp, ArrowRight } from "lucide-react";
+import { siteConfig } from "@/lib/site-config";
 
 /* ---- Small brand icons (lucide dropped these; kept minimal/monoline) ---- */
 
@@ -84,15 +84,15 @@ function WhatsAppIcon() {
 }
 
 const SOCIALS = [
-  { href: siteConfig.social.facebook, Icon: FacebookIcon, label: 'Facebook' },
-  { href: siteConfig.social.twitter, Icon: XIcon, label: 'X' },
+  { href: siteConfig.social.facebook, Icon: FacebookIcon, label: "Facebook" },
+  { href: siteConfig.social.twitter, Icon: XIcon, label: "X" },
   {
     href: siteConfig.social.instagram,
     Icon: InstagramIcon,
-    label: 'Instagram',
+    label: "Instagram",
   },
-  { href: siteConfig.social.tiktok, Icon: TikTokIcon, label: 'TikTok' },
-  { href: siteConfig.social.whatsapp, Icon: WhatsAppIcon, label: 'WhatsApp' },
+  { href: siteConfig.social.tiktok, Icon: TikTokIcon, label: "TikTok" },
+  { href: siteConfig.social.whatsapp, Icon: WhatsAppIcon, label: "WhatsApp" },
 ];
 
 /**
@@ -101,7 +101,7 @@ const SOCIALS = [
  * right at the top of the footer so it reads as a paper edge rather
  * than a flat color-to-color seam.
  */
-function TornEdge({ color = 'fill-banana-leaf' }: { color?: string }) {
+function TornEdge({ color = "fill-banana-leaf" }: { color?: string }) {
   return (
     <svg
       viewBox="0 0 600 24"
@@ -121,8 +121,8 @@ function BackToTop() {
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 400);
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
@@ -132,8 +132,8 @@ function BackToTop() {
           initial={{ opacity: 0, y: 10, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.9 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label="Back to top"
           className="fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-roasted-coffee text-coconut-cream shadow-lg hover:bg-clay-pot transition-colors"
         >
@@ -190,8 +190,15 @@ export function Footer() {
                 <br />
                 {siteConfig.address.line2}
                 <br />
-                <Link href={siteConfig.address.map} target='_blank' rel='noopener noreferrer' className="underline decoration-dotted underline-offset-4 hover:text-coconut-cream hover:decoration-solid transition-colors">View on map</Link>
-              </p>  
+                <Link
+                  href={siteConfig.address.map}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-dotted underline-offset-4 hover:text-coconut-cream hover:decoration-solid transition-colors"
+                >
+                  View on map
+                </Link>
+              </p>
             </div>
 
             <div className="font-sans text-sm">

@@ -2,7 +2,7 @@ import {
   sendReservationConfirmationTemplate,
   sendReservationUpdatedTemplate,
   sendWhatsAppMessage,
-} from '@/lib/whatsapp/client';
+} from "@/lib/whatsapp/client";
 
 export type SendConfirmationsArgs = {
   name: string;
@@ -17,93 +17,41 @@ export type SendConfirmationsArgs = {
 
   reservationCode?: string;
 
-  originChannel:
-    | 'website'
-    | 'whatsapp';
+  originChannel: "website" | "whatsapp";
 };
 
-function formatDisplayTime(
-  time: string
-): string {
-  const [
-    hourRaw,
-    minuteRaw,
-  ] =
-    time
-      .slice(
-        0,
-        5
-      )
-      .split(':');
+function formatDisplayTime(time: string): string {
+  const [hourRaw, minuteRaw] = time.slice(0, 5).split(":");
 
-  const hour =
-    Number(
-      hourRaw
-    );
+  const hour = Number(hourRaw);
 
-  const minute =
-    minuteRaw ||
-    '00';
+  const minute = minuteRaw || "00";
 
-  const suffix =
-    hour >= 12
-      ? 'PM'
-      : 'AM';
+  const suffix = hour >= 12 ? "PM" : "AM";
 
-  const displayHour =
-    hour % 12 ||
-    12;
+  const displayHour = hour % 12 || 12;
 
-  return minute ===
-    '00'
+  return minute === "00"
     ? `${displayHour}:00 ${suffix}`
     : `${displayHour}:${minute} ${suffix}`;
 }
 
-function formatDisplayDate(
-  date: string
-): string {
-  const [
-    year,
-    month,
-    day,
-  ] =
-    date
-      .split('-')
-      .map(Number);
+function formatDisplayDate(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
 
-  if (
-    !year ||
-    !month ||
-    !day
-  ) {
+  if (!year || !month || !day) {
     return date;
   }
 
-  return new Intl.DateTimeFormat(
-    'en-GB',
-    {
-      day:
-        'numeric',
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
 
-      month:
-        'long',
+    month: "long",
 
-      year:
-        'numeric',
+    year: "numeric",
 
-      timeZone:
-        'Africa/Lagos',
-    }
-  ).format(
-    new Date(
-      Date.UTC(
-        year,
-        month - 1,
-        day
-      )
-    )
-  );
+    timeZone: "Africa/Lagos",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
 /* ============================================================
@@ -119,15 +67,9 @@ export async function sendReservationConfirmations({
   reservationCode,
   originChannel,
 }: SendConfirmationsArgs) {
-  const displayDate =
-    formatDisplayDate(
-      date
-    );
+  const displayDate = formatDisplayDate(date);
 
-  const displayTime =
-    formatDisplayTime(
-      time
-    );
+  const displayTime = formatDisplayTime(time);
 
   /**
    * Website booking:
@@ -136,31 +78,23 @@ export async function sendReservationConfirmations({
    * customer may not have an active WhatsApp
    * conversation window.
    */
-  if (
-    originChannel ===
-    'website'
-  ) {
-    if (
-      !reservationCode
-    ) {
+  if (originChannel === "website") {
+    if (!reservationCode) {
       throw new Error(
-        'Reservation code is required for the WhatsApp confirmation template.'
+        "Reservation code is required for the WhatsApp confirmation template.",
       );
     }
 
     return sendReservationConfirmationTemplate({
-      to:
-        phone,
+      to: phone,
 
       name,
 
       partySize,
 
-      date:
-        displayDate,
+      date: displayDate,
 
-      time:
-        displayTime,
+      time: displayTime,
 
       reservationCode,
     });
@@ -172,14 +106,12 @@ export async function sendReservationConfirmations({
    * The customer is already talking to us,
    * so a normal message can be used.
    */
-  const codeLine =
-    reservationCode
-      ? `\nReservation code: ${reservationCode}`
-      : '';
+  const codeLine = reservationCode
+    ? `\nReservation code: ${reservationCode}`
+    : "";
 
   return sendWhatsAppMessage({
-    to:
-      phone,
+    to: phone,
 
     text:
       `Reservation confirmed ✅\n\n` +
@@ -205,54 +137,38 @@ export async function sendReservationUpdateConfirmation({
   reservationCode,
   originChannel,
 }: SendConfirmationsArgs) {
-  const displayDate =
-    formatDisplayDate(
-      date
-    );
+  const displayDate = formatDisplayDate(date);
 
-  const displayTime =
-    formatDisplayTime(
-      time
-    );
+  const displayTime = formatDisplayTime(time);
 
-  if (
-    originChannel ===
-    'website'
-  ) {
-    if (
-      !reservationCode
-    ) {
+  if (originChannel === "website") {
+    if (!reservationCode) {
       throw new Error(
-        'Reservation code is required for the reservation update template.'
+        "Reservation code is required for the reservation update template.",
       );
     }
 
     return sendReservationUpdatedTemplate({
-      to:
-        phone,
+      to: phone,
 
       name,
 
       partySize,
 
-      date:
-        displayDate,
+      date: displayDate,
 
-      time:
-        displayTime,
+      time: displayTime,
 
       reservationCode,
     });
   }
 
-  const codeLine =
-    reservationCode
-      ? `\nReservation code: ${reservationCode}`
-      : '';
+  const codeLine = reservationCode
+    ? `\nReservation code: ${reservationCode}`
+    : "";
 
   return sendWhatsAppMessage({
-    to:
-      phone,
+    to: phone,
 
     text:
       `Reservation updated ✅\n\n` +

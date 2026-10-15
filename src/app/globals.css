@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 :root {
   /* K's Kitchen brand palette — from Brand Guidelines 2026 */
@@ -25,7 +25,6 @@
   --color-admin-ink: #29231f;
   --color-admin-muted: #6f645a;
   --color-admin-subtle: #9a8d80;
-
 }
 
 @theme inline {
@@ -46,7 +45,7 @@
   --font-flourish: var(--font-flourish);
   --font-sans: var(--font-sans);
 
-   --color-admin-bg: var(--color-admin-bg);
+  --color-admin-bg: var(--color-admin-bg);
   --color-admin-surface: var(--color-admin-surface);
   --color-admin-border: var(--color-admin-border);
   --color-admin-border-soft: var(--color-admin-border-soft);

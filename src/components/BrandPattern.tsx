@@ -1,7 +1,7 @@
 type Props = {
   /** Tailwind text-color class controlling the pattern's stroke/fill, e.g. "text-roasted-coffee/[0.06]" */
   className?: string;
-  position?: 'bottom-right' | 'bottom-left' | 'top-right';
+  position?: "bottom-right" | "bottom-left" | "top-right";
 };
 
 /**
@@ -11,13 +11,13 @@ type Props = {
  * text color so it reads as texture, not decoration.
  */
 export function BrandPattern({
-  className = 'text-roasted-coffee/[0.06]',
-  position = 'bottom-right',
+  className = "text-roasted-coffee/[0.06]",
+  position = "bottom-right",
 }: Props) {
   const posClasses = {
-    'bottom-right': 'bottom-0 right-0',
-    'bottom-left': 'bottom-0 left-0 -scale-x-100',
-    'top-right': 'top-0 right-0 rotate-180',
+    "bottom-right": "bottom-0 right-0",
+    "bottom-left": "bottom-0 left-0 -scale-x-100",
+    "top-right": "top-0 right-0 rotate-180",
   }[position];
 
   return (

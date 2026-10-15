@@ -1,42 +1,42 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
-import { categories, products, type ProductCategory } from '@/lib/store-data';
-import { ProductCard } from './ProductCard';
-import { BrandPattern } from './BrandPattern';
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronRight } from "lucide-react";
+import { categories, products, type ProductCategory } from "@/lib/store-data";
+import { ProductCard } from "./ProductCard";
+import { BrandPattern } from "./BrandPattern";
 
-type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'name';
+type SortOption = "featured" | "price-asc" | "price-desc" | "name";
 
 const SORT_LABELS: Record<SortOption, string> = {
-  featured: 'Featured',
-  'price-asc': 'Price: Low to High',
-  'price-desc': 'Price: High to Low',
-  name: 'Name: A–Z',
+  featured: "Featured",
+  "price-asc": "Price: Low to High",
+  "price-desc": "Price: High to Low",
+  name: "Name: A–Z",
 };
 
 export function StorePage() {
-  const [activeCategory, setActiveCategory] = useState<ProductCategory | 'all'>(
-    'all',
+  const [activeCategory, setActiveCategory] = useState<ProductCategory | "all">(
+    "all",
   );
-  const [sortBy, setSortBy] = useState<SortOption>('featured');
+  const [sortBy, setSortBy] = useState<SortOption>("featured");
 
   const visibleProducts = useMemo(() => {
     let list =
-      activeCategory === 'all'
+      activeCategory === "all"
         ? products
         : products.filter((p) => p.category === activeCategory);
 
     list = [...list];
     switch (sortBy) {
-      case 'price-asc':
+      case "price-asc":
         list.sort((a, b) => a.price - b.price);
         break;
-      case 'price-desc':
+      case "price-desc":
         list.sort((a, b) => b.price - a.price);
         break;
-      case 'name':
+      case "name":
         list.sort((a, b) => a.name.localeCompare(b.name));
         break;
       default:
@@ -57,8 +57,8 @@ export function StorePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative text-center"
         >
           <h1 className="font-display text-4xl md:text-5xl text-roasted-coffee">
@@ -92,19 +92,19 @@ export function StorePage() {
                 <ul className="space-y-1">
                   <li>
                     <button
-                      onClick={() => setActiveCategory('all')}
+                      onClick={() => setActiveCategory("all")}
                       className={`group flex w-full items-center justify-between rounded-md px-3 py-2 text-left font-sans text-sm transition-colors ${
-                        activeCategory === 'all'
-                          ? 'bg-clay-pot text-coconut-cream'
-                          : 'text-coconut-cream/70 hover:bg-coconut-cream/10 hover:text-coconut-cream'
+                        activeCategory === "all"
+                          ? "bg-clay-pot text-coconut-cream"
+                          : "text-coconut-cream/70 hover:bg-coconut-cream/10 hover:text-coconut-cream"
                       }`}
                     >
                       All Products
                       <ChevronRight
                         className={`h-3.5 w-3.5 transition-transform ${
-                          activeCategory === 'all'
-                            ? 'translate-x-0.5'
-                            : 'opacity-0 group-hover:opacity-100'
+                          activeCategory === "all"
+                            ? "translate-x-0.5"
+                            : "opacity-0 group-hover:opacity-100"
                         }`}
                       />
                     </button>
@@ -115,16 +115,16 @@ export function StorePage() {
                         onClick={() => setActiveCategory(cat.id)}
                         className={`group flex w-full items-center justify-between rounded-md px-3 py-2 text-left font-sans text-sm transition-colors ${
                           activeCategory === cat.id
-                            ? 'bg-clay-pot text-coconut-cream'
-                            : 'text-coconut-cream/70 hover:bg-coconut-cream/10 hover:text-coconut-cream'
+                            ? "bg-clay-pot text-coconut-cream"
+                            : "text-coconut-cream/70 hover:bg-coconut-cream/10 hover:text-coconut-cream"
                         }`}
                       >
                         {cat.label}
                         <ChevronRight
                           className={`h-3.5 w-3.5 transition-transform ${
                             activeCategory === cat.id
-                              ? 'translate-x-0.5'
-                              : 'opacity-0 group-hover:opacity-100'
+                              ? "translate-x-0.5"
+                              : "opacity-0 group-hover:opacity-100"
                           }`}
                         />
                       </button>

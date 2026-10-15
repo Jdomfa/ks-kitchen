@@ -1,5 +1,5 @@
-const RESTAURANT_TIMEZONE = 'Africa/Lagos';
-const SHORT_WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const RESTAURANT_TIMEZONE = "Africa/Lagos";
+const SHORT_WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /**
  * Resolves the day-of-week (0 = Sunday ... 6 = Saturday) for a
@@ -14,12 +14,12 @@ export function getWeekdayInRestaurantTimezone(date: string): number {
   const utcMidnight = new Date(`${date}T00:00:00Z`);
 
   if (Number.isNaN(utcMidnight.getTime())) {
-    throw new Error('Invalid date format. Expected YYYY-MM-DD.');
+    throw new Error("Invalid date format. Expected YYYY-MM-DD.");
   }
 
-  const weekdayName = new Intl.DateTimeFormat('en-US', {
+  const weekdayName = new Intl.DateTimeFormat("en-US", {
     timeZone: RESTAURANT_TIMEZONE,
-    weekday: 'short',
+    weekday: "short",
   }).format(utcMidnight);
 
   return SHORT_WEEKDAY_NAMES.indexOf(weekdayName);

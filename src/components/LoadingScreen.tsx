@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 /**
  * Steam wisp — a single looping curl that fades/rises/sways, restarting
@@ -29,7 +29,7 @@ function SteamWisp({
         duration: 2.6,
         delay,
         repeat: Infinity,
-        ease: 'easeInOut',
+        ease: "easeInOut",
       }}
     />
   );
@@ -37,7 +37,7 @@ function SteamWisp({
 
 /** Bowl + looping steam wisps, curry-leaf on currentColor. Shared visual
  * reused by both the route-level LoadingScreen and the first-visit splash. */
-export function SteamBowl({ className = 'h-24 w-24' }: { className?: string }) {
+export function SteamBowl({ className = "h-24 w-24" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 100 100"

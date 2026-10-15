@@ -1,21 +1,21 @@
-import type { Metadata } from 'next';
-import { Open_Sans } from 'next/font/google';
-import { display, hand, flourish } from './fonts';
-import './globals.css';
+import type { Metadata } from "next";
+import { Open_Sans } from "next/font/google";
+import { display, hand, flourish } from "./fonts";
+import "./globals.css";
 
 const sans = Open_Sans({
-  variable: '--font-sans',
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  variable: "--font-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
   title: "K's Kitchen | Authentic South Indian",
   description:
-    'An authentic South Indian kitchen where traditional recipes, homemade ingredients, and genuine hospitality come together in a warm, contemporary setting.',
+    "An authentic South Indian kitchen where traditional recipes, homemade ingredients, and genuine hospitality come together in a warm, contemporary setting.",
 };
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"

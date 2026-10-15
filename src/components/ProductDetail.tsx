@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ChevronLeft, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
-import { categories, products, type Product } from '@/lib/store-data';
-import { useCart } from '@/lib/cart-context';
-import { formatNaira } from '@/lib/format';
-import { ProductCard } from './ProductCard';
+import { useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ChevronLeft, Minus, Plus, ShoppingBag, Check } from "lucide-react";
+import { categories, products, type Product } from "@/lib/store-data";
+import { useCart } from "@/lib/cart-context";
+import { formatNaira } from "@/lib/format";
+import { ProductCard } from "./ProductCard";
 
 export function ProductDetail({ product }: { product: Product }) {
   const { addToCart } = useCart();
@@ -64,8 +64,8 @@ export function ProductDetail({ product }: { product: Product }) {
                     onClick={() => setActiveImage(img)}
                     className={`h-16 w-16 overflow-hidden rounded-lg border-2 transition-colors ${
                       activeImage === img
-                        ? 'border-clay-pot'
-                        : 'border-transparent opacity-70 hover:opacity-100'
+                        ? "border-clay-pot"
+                        : "border-transparent opacity-70 hover:opacity-100"
                     }`}
                   >
                     <img
@@ -100,7 +100,7 @@ export function ProductDetail({ product }: { product: Product }) {
             </div>
 
             <p className="mt-2 font-sans text-sm text-roasted-coffee/50">
-              {product.inStock ? '✓ In stock' : 'Currently sold out'}
+              {product.inStock ? "✓ In stock" : "Currently sold out"}
             </p>
 
             <p className="mt-5 font-sans text-[15px] leading-relaxed text-roasted-coffee/75 max-w-md">
