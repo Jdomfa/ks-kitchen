@@ -3,7 +3,11 @@ const ODOO_DB = process.env.ODOO_DB!;
 const ODOO_USERNAME = process.env.ODOO_USERNAME!;
 const ODOO_API_KEY = process.env.ODOO_API_KEY!;
 
-const LAGOS_UTC_OFFSET_HOURS = 1; // Africa/Lagos has no DST, always UTC+1
+const LAGOS_UTC_OFFSET_HOURS = 1;
+
+// ---------------------------------------------------------
+// Generic Odoo JSON-RPC caller
+// ---------------------------------------------------------
 
 async function odooCall<T>(
   model: string,
@@ -39,7 +43,9 @@ async function odooCall<T>(
 
   if (data.error) {
     const detail =
-      data.error.data?.message || data.error.data?.debug || data.error.message;
+      data.error.data?.message ||
+      data.error.data?.debug ||
+      data.error.message;
 
     throw new Error(`Odoo error: ${detail}`);
   }
@@ -76,7 +82,12 @@ async function authenticate(): Promise<number> {
       params: {
         service: "common",
         method: "authenticate",
-        args: [ODOO_DB, ODOO_USERNAME, ODOO_API_KEY, {}],
+        args: [
+          ODOO_DB,
+          ODOO_USERNAME,
+          ODOO_API_KEY,
+          {},
+        ],
       },
     }),
   });
@@ -101,24 +112,38 @@ export async function createHelpdeskTicket(args: {
   whatsappNumber: string;
   message: string;
 }): Promise<number> {
-  const teamName = process.env.ODOO_HELPDESK_TEAM_NAME || "WhatsApp Support";
+  const teamName =
+    process.env.ODOO_HELPDESK_TEAM_NAME || "WhatsApp Support";
 
-  const teamIds = await odooCall<number[]>("helpdesk.team", "search", [
-    [["name", "=", teamName]],
-  ]);
+  const teamIds = await odooCall<number[]>(
+    "helpdesk.team",
+    "search",
+    [
+      [
+        ["name", "=", teamName],
+      ],
+    ],
+  );
 
   if (!teamIds || teamIds.length === 0) {
-    throw new Error(`Odoo helpdesk team "${teamName}" not found.`);
+    throw new Error(
+      `Odoo helpdesk team "${teamName}" not found.`,
+    );
   }
 
-  const ticketId = await odooCall<number>("helpdesk.ticket", "create", [
-    {
-      name: `WhatsApp: ${args.customerName}`,
-      description: args.message,
-      team_id: teamIds[0],
-      x_studio_whatsapp_number: args.whatsappNumber,
-    },
-  ]);
+  const ticketId = await odooCall<number>(
+    "helpdesk.ticket",
+    "create",
+    [
+      {
+        name: `WhatsApp: ${args.customerName}`,
+        description: args.message,
+        team_id: teamIds[0],
+        x_studio_whatsapp_number:
+          args.whatsappNumber,
+      },
+    ],
+  );
 
   return ticketId;
 }
@@ -127,29 +152,46 @@ export async function logCustomerMessageOnTicket(
   ticketId: number,
   message: string,
 ): Promise<void> {
-  await odooCall("helpdesk.ticket", "message_post", [ticketId], {
-    body: `<b>Customer:</b> ${message}`,
-    message_type: "comment",
-  });
-}
-
-export async function clearSendReplyFlag(ticketId: number): Promise<void> {
-  await odooCall("helpdesk.ticket", "write", [
+  await odooCall(
+    "helpdesk.ticket",
+    "message_post",
     [ticketId],
     {
-      x_studio_send_reply_to_customer: false,
+      body: `<b>Customer:</b> ${message}`,
+      message_type: "comment",
     },
-  ]);
+  );
+}
+
+export async function clearSendReplyFlag(
+  ticketId: number,
+): Promise<void> {
+  await odooCall(
+    "helpdesk.ticket",
+    "write",
+    [
+      [ticketId],
+      {
+        x_studio_send_reply_to_customer:
+          false,
+      },
+    ],
+  );
 }
 
 export async function logSentReplyOnTicket(
   ticketId: number,
   message: string,
 ): Promise<void> {
-  await odooCall("helpdesk.ticket", "message_post", [ticketId], {
-    body: `<b>Sent to customer via WhatsApp:</b> ${message}`,
-    message_type: "comment",
-  });
+  await odooCall(
+    "helpdesk.ticket",
+    "message_post",
+    [ticketId],
+    {
+      body: `<b>Sent to customer via WhatsApp:</b> ${message}`,
+      message_type: "comment",
+    },
+  );
 }
 
 // ---------------------------------------------------------
@@ -177,7 +219,6 @@ type OdooPartner = {
   id: number;
   name: string;
   phone: string | false;
-  mobile: string | false;
 };
 
 /**
@@ -189,19 +230,34 @@ type OdooPartner = {
  *
  * 16 October 2026
  */
-function formatReservationWhatsAppDate(dateISO: string): string {
-  const [year, month, day] = dateISO.split("-").map(Number);
+function formatReservationWhatsAppDate(
+  dateISO: string,
+): string {
+  const [year, month, day] = dateISO
+    .split("-")
+    .map(Number);
 
   if (!year || !month || !day) {
     return dateISO;
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(year, month - 1, day)));
+  return new Intl.DateTimeFormat(
+    "en-GB",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    },
+  ).format(
+    new Date(
+      Date.UTC(
+        year,
+        month - 1,
+        day,
+      ),
+    ),
+  );
 }
 
 /**
@@ -213,43 +269,63 @@ function formatReservationWhatsAppDate(dateISO: string): string {
  *
  * 6:00 PM
  */
-function formatReservationWhatsAppTime(time: string): string {
-  const [hourString, minuteString = "00"] = time.split(":");
+function formatReservationWhatsAppTime(
+  time: string,
+): string {
+  const [hourString, minuteString = "00"] =
+    time.split(":");
 
   const hour = Number(hourString);
   const minute = Number(minuteString);
 
-  if (Number.isNaN(hour) || Number.isNaN(minute)) {
+  if (
+    Number.isNaN(hour) ||
+    Number.isNaN(minute)
+  ) {
     return time;
   }
 
-  const suffix = hour >= 12 ? "PM" : "AM";
+  const suffix =
+    hour >= 12 ? "PM" : "AM";
 
-  const displayHour = hour % 12 || 12;
+  const displayHour =
+    hour % 12 || 12;
 
-  return `${displayHour}:${String(minute).padStart(2, "0")} ${suffix}`;
+  return `${displayHour}:${String(
+    minute,
+  ).padStart(2, "0")} ${suffix}`;
 }
 
 /**
  * The reservation confirmation template is configured against
- * res.partner, so we need the actual customer contact record.
+ * res.partner, so we need the actual customer contact.
  *
- * Reservations already create/use a customer partner, therefore
- * this should normally find that record rather than create another.
+ * This Odoo database uses `phone` on res.partner.
+ * It does NOT expose `mobile`, so we deliberately search only
+ * against the phone field.
  */
 async function getOrCreateReservationPartner(
   name: string,
   phone: string,
 ): Promise<number> {
-  const partners = await odooCall<OdooPartner[]>(
-    "res.partner",
-    "search_read",
-    [["|", ["phone", "=", phone], ["mobile", "=", phone]]],
-    {
-      fields: ["id", "name", "phone", "mobile"],
-      limit: 1,
-    },
-  );
+  const partners =
+    await odooCall<OdooPartner[]>(
+      "res.partner",
+      "search_read",
+      [
+        [
+          ["phone", "=", phone],
+        ],
+      ],
+      {
+        fields: [
+          "id",
+          "name",
+          "phone",
+        ],
+        limit: 1,
+      },
+    );
 
   if (partners.length > 0) {
     return partners[0].id;
@@ -259,12 +335,16 @@ async function getOrCreateReservationPartner(
     `No existing Odoo partner found for ${phone}; creating one before sending reservation confirmation.`,
   );
 
-  return odooCall<number>("res.partner", "create", [
-    {
-      name,
-      phone,
-    },
-  ]);
+  return odooCall<number>(
+    "res.partner",
+    "create",
+    [
+      {
+        name,
+        phone,
+      },
+    ],
+  );
 }
 
 /**
@@ -272,7 +352,7 @@ async function getOrCreateReservationPartner(
  *
  * reservation_confirmation_v2
  *
- * Template variables:
+ * Variables:
  *
  * {{1}} = Customer name
  * {{2}} = Guests
@@ -280,19 +360,14 @@ async function getOrCreateReservationPartner(
  * {{4}} = Time
  * {{5}} = Reservation code
  * {{6}} = Phone number
- *
- * Odoo template:
- * Reservation Confirmation V2
- *
- * Production template ID is currently 9, but we intentionally
- * search by template_name instead of hardcoding the database ID.
  */
 export async function sendReservationConfirmationWhatsApp(
   args: ReservationConfirmationWhatsAppArgs,
 ): Promise<void> {
   const name = args.name.trim();
   const phone = args.phone.trim();
-  const reservationCode = args.reservationCode.trim();
+  const reservationCode =
+    args.reservationCode.trim();
 
   if (!name) {
     throw new Error(
@@ -313,23 +388,40 @@ export async function sendReservationConfirmationWhatsApp(
   }
 
   // -------------------------------------------------------
-  // Find approved Odoo template
+  // Find approved Odoo WhatsApp template
   // -------------------------------------------------------
 
-  const templates = await odooCall<OdooWhatsAppTemplate[]>(
-    "whatsapp.template",
-    "search_read",
-    [
+  const templates =
+    await odooCall<
+      OdooWhatsAppTemplate[]
+    >(
+      "whatsapp.template",
+      "search_read",
       [
-        ["template_name", "=", "reservation_confirmation_v2"],
-        ["status", "=", "approved"],
+        [
+          [
+            "template_name",
+            "=",
+            "reservation_confirmation_v2",
+          ],
+          [
+            "status",
+            "=",
+            "approved",
+          ],
+        ],
       ],
-    ],
-    {
-      fields: ["id", "name", "template_name", "status", "model"],
-      limit: 1,
-    },
-  );
+      {
+        fields: [
+          "id",
+          "name",
+          "template_name",
+          "status",
+          "model",
+        ],
+        limit: 1,
+      },
+    );
 
   const template = templates[0];
 
@@ -339,69 +431,99 @@ export async function sendReservationConfirmationWhatsApp(
     );
   }
 
-  if (template.model && template.model !== "res.partner") {
+  if (
+    template.model &&
+    template.model !== "res.partner"
+  ) {
     throw new Error(
       `WhatsApp template reservation_confirmation_v2 is configured for ${template.model}, expected res.partner.`,
     );
   }
 
   // -------------------------------------------------------
-  // Find the contact used by the reservation
+  // Find or create customer partner
   // -------------------------------------------------------
 
-  const partnerId = await getOrCreateReservationPartner(name, phone);
-
-  // -------------------------------------------------------
-  // Create Odoo WhatsApp composer
-  // -------------------------------------------------------
-
-  const composerId = await odooCall<number>("whatsapp.composer", "create", [
-    {
-      res_model: "res.partner",
-
-      /**
-       * Odoo 19 stores res_ids on whatsapp.composer
-       * as a Char field containing the list of IDs.
-       */
-      res_ids: JSON.stringify([partnerId]),
-
-      batch_mode: false,
-
+  const partnerId =
+    await getOrCreateReservationPartner(
+      name,
       phone,
+    );
 
-      wa_template_id: template.id,
+  // -------------------------------------------------------
+  // Create native Odoo WhatsApp composer
+  // -------------------------------------------------------
 
-      // {{1}} Name
-      free_text_1: name,
+  const composerId =
+    await odooCall<number>(
+      "whatsapp.composer",
+      "create",
+      [
+        {
+          res_model: "res.partner",
 
-      // {{2}} Guests
-      free_text_2: String(args.partySize),
+          /**
+           * Odoo 19 stores res_ids as a Char field containing
+           * a serialized list of record IDs.
+           */
+          res_ids: JSON.stringify([
+            partnerId,
+          ]),
 
-      // {{3}} Date
-      free_text_3: formatReservationWhatsAppDate(args.date),
+          batch_mode: false,
 
-      // {{4}} Time
-      free_text_4: formatReservationWhatsAppTime(args.time),
+          phone,
 
-      // {{5}} Reservation code
-      free_text_5: reservationCode,
+          wa_template_id:
+            template.id,
 
-      // {{6}} Phone number
-      free_text_6: phone,
-    },
-  ]);
+          // {{1}} Customer name
+          free_text_1: name,
+
+          // {{2}} Guests
+          free_text_2:
+            String(args.partySize),
+
+          // {{3}} Date
+          free_text_3:
+            formatReservationWhatsAppDate(
+              args.date,
+            ),
+
+          // {{4}} Time
+          free_text_4:
+            formatReservationWhatsAppTime(
+              args.time,
+            ),
+
+          // {{5}} Reservation code
+          free_text_5:
+            reservationCode,
+
+          // {{6}} Phone number
+          free_text_6:
+            phone,
+        },
+      ],
+    );
 
   if (!composerId) {
-    throw new Error("Odoo did not create the WhatsApp composer.");
+    throw new Error(
+      "Odoo did not create the WhatsApp composer.",
+    );
   }
 
   // -------------------------------------------------------
-  // Send using Odoo's native WhatsApp module
+  // Send template through native Odoo WhatsApp module
   // -------------------------------------------------------
 
-  await odooCall("whatsapp.composer", "action_send_whatsapp_template", [
-    [composerId],
-  ]);
+  await odooCall(
+    "whatsapp.composer",
+    "action_send_whatsapp_template",
+    [
+      [composerId],
+    ],
+  );
 
   console.log(
     `Odoo WhatsApp reservation confirmation queued for ${phone} using reservation_confirmation_v2.`,
@@ -412,66 +534,111 @@ export async function sendReservationConfirmationWhatsApp(
 // Reservation → Odoo Appointments sync
 // ---------------------------------------------------------
 
-const RESERVATION_DURATION_MS = 2 * 60 * 60 * 1000;
+const RESERVATION_DURATION_MS =
+  2 * 60 * 60 * 1000;
 
 /**
  * Converts a Lagos-local date + time into an Odoo UTC datetime string.
  *
- * `offsetMs` shifts the result forward, so the stop time is derived
+ * offsetMs shifts the result forward, so the stop time is derived
  * from a real timestamp rather than string arithmetic.
- *
- * This handles both the "24:30" overflow case and midnight rollover
- * into the next UTC day.
  */
-function toOdooUtc(date: string, time: string, offsetMs = 0): string {
-  const [hours, minutes] = time.split(":").map(Number);
+function toOdooUtc(
+  date: string,
+  time: string,
+  offsetMs = 0,
+): string {
+  const [hours, minutes] = time
+    .split(":")
+    .map(Number);
 
-  const dt = new Date(`${date}T00:00:00Z`);
+  const dt = new Date(
+    `${date}T00:00:00Z`,
+  );
 
-  dt.setUTCHours(hours - LAGOS_UTC_OFFSET_HOURS, minutes, 0, 0);
+  dt.setUTCHours(
+    hours -
+      LAGOS_UTC_OFFSET_HOURS,
+    minutes,
+    0,
+    0,
+  );
 
-  return new Date(dt.getTime() + offsetMs)
+  return new Date(
+    dt.getTime() + offsetMs,
+  )
     .toISOString()
     .slice(0, 19)
     .replace("T", " ");
 }
 
-const APPOINTMENT_TYPE_ID = Number(process.env.ODOO_APPOINTMENT_TYPE_ID);
+const APPOINTMENT_TYPE_ID =
+  Number(
+    process.env
+      .ODOO_APPOINTMENT_TYPE_ID,
+  );
 
-const DEFAULT_PARTNER_ID = Number(process.env.ODOO_DEFAULT_PARTNER_ID ?? 3);
+const DEFAULT_PARTNER_ID =
+  Number(
+    process.env
+      .ODOO_DEFAULT_PARTNER_ID ??
+      3,
+  );
 
-type ManyToOneRead = [number, string] | false;
+type ManyToOneRead =
+  | [number, string]
+  | false;
 
-let cachedAppointmentProductId: number | null = null;
+let cachedAppointmentProductId:
+  | number
+  | null = null;
 
 /**
  * calendar.booking requires product_id.
  *
- * Rather than hardcoding an ID, read the product off the
+ * Rather than hardcoding an ID, read the product from the
  * appointment type so it stays correct across databases.
- *
- * ODOO_APPOINTMENT_PRODUCT_ID overrides if needed.
  */
 async function getAppointmentProductId(): Promise<number> {
-  if (cachedAppointmentProductId) {
+  if (
+    cachedAppointmentProductId
+  ) {
     return cachedAppointmentProductId;
   }
 
-  const override = Number(process.env.ODOO_APPOINTMENT_PRODUCT_ID);
+  const override =
+    Number(
+      process.env
+        .ODOO_APPOINTMENT_PRODUCT_ID,
+    );
 
   if (override) {
-    cachedAppointmentProductId = override;
+    cachedAppointmentProductId =
+      override;
 
     return override;
   }
 
-  const [apptType] = await odooCall<
-    {
-      product_id: ManyToOneRead;
-    }[]
-  >("appointment.type", "read", [[APPOINTMENT_TYPE_ID], ["product_id"]]);
+  const [apptType] =
+    await odooCall<
+      {
+        product_id: ManyToOneRead;
+      }[]
+    >(
+      "appointment.type",
+      "read",
+      [
+        [
+          APPOINTMENT_TYPE_ID,
+        ],
+        [
+          "product_id",
+        ],
+      ],
+    );
 
-  const productField = apptType?.product_id;
+  const productField =
+    apptType?.product_id;
 
   if (!productField) {
     throw new Error(
@@ -479,59 +646,90 @@ async function getAppointmentProductId(): Promise<number> {
     );
   }
 
-  cachedAppointmentProductId = productField[0];
+  cachedAppointmentProductId =
+    productField[0];
 
   return cachedAppointmentProductId;
 }
 
-export async function pushReservationToOdoo(args: {
-  reservationId: string;
-  reservationCode?: string;
-  name: string;
-  phone?: string;
-  partySize: number;
-  date: string;
-  time: string;
-}): Promise<number> {
-  const start = toOdooUtc(args.date, args.time);
+export async function pushReservationToOdoo(
+  args: {
+    reservationId: string;
+    reservationCode?: string;
+    name: string;
+    phone?: string;
+    partySize: number;
+    date: string;
+    time: string;
+  },
+): Promise<number> {
+  const start = toOdooUtc(
+    args.date,
+    args.time,
+  );
 
-  const stop = toOdooUtc(args.date, args.time, RESERVATION_DURATION_MS);
+  const stop = toOdooUtc(
+    args.date,
+    args.time,
+    RESERVATION_DURATION_MS,
+  );
 
-  const bookingName = `Table Reservation — ${args.name}${
-    args.reservationCode ? ` [${args.reservationCode}]` : ""
-  }`;
+  const bookingName =
+    `Table Reservation — ${args.name}${
+      args.reservationCode
+        ? ` [${args.reservationCode}]`
+        : ""
+    }`;
 
-  /**
-   * calendar.booking is the public "request" record.
-   *
-   * Creating it triggers Odoo's own auto-assignment logic
-   * and generates a calendar.event behind the scenes.
-   */
-  const bookingId = await odooCall<number>("calendar.booking", "create", [
-    {
-      appointment_type_id: APPOINTMENT_TYPE_ID,
+  const bookingId =
+    await odooCall<number>(
+      "calendar.booking",
+      "create",
+      [
+        {
+          appointment_type_id:
+            APPOINTMENT_TYPE_ID,
 
-      product_id: await getAppointmentProductId(),
+          product_id:
+            await getAppointmentProductId(),
 
-      partner_id: DEFAULT_PARTNER_ID,
+          partner_id:
+            DEFAULT_PARTNER_ID,
 
-      start,
+          start,
 
-      stop,
+          stop,
 
-      asked_capacity: args.partySize,
+          asked_capacity:
+            args.partySize,
 
-      name: bookingName,
-    },
-  ]);
+          name:
+            bookingName,
+        },
+      ],
+    );
 
-  const [bookingRecord] = await odooCall<
-    {
-      calendar_event_id: ManyToOneRead;
-    }[]
-  >("calendar.booking", "read", [[bookingId], ["calendar_event_id"]]);
+  const [bookingRecord] =
+    await odooCall<
+      {
+        calendar_event_id:
+          ManyToOneRead;
+      }[]
+    >(
+      "calendar.booking",
+      "read",
+      [
+        [
+          bookingId,
+        ],
+        [
+          "calendar_event_id",
+        ],
+      ],
+    );
 
-  const eventField = bookingRecord?.calendar_event_id;
+  const eventField =
+    bookingRecord?.calendar_event_id;
 
   if (!eventField) {
     throw new Error(
@@ -549,21 +747,44 @@ export async function updateReservationInOdoo(
     time: string;
   },
 ): Promise<void> {
-  const start = toOdooUtc(args.date, args.time);
+  const start =
+    toOdooUtc(
+      args.date,
+      args.time,
+    );
 
-  const stop = toOdooUtc(args.date, args.time, RESERVATION_DURATION_MS);
+  const stop =
+    toOdooUtc(
+      args.date,
+      args.time,
+      RESERVATION_DURATION_MS,
+    );
 
-  await odooCall("calendar.event", "write", [
-    [odooEventId],
-    {
-      start,
-      stop,
-    },
-  ]);
+  await odooCall(
+    "calendar.event",
+    "write",
+    [
+      [
+        odooEventId,
+      ],
+      {
+        start,
+        stop,
+      },
+    ],
+  );
 }
 
 export async function deleteReservationFromOdoo(
   odooEventId: number,
 ): Promise<void> {
-  await odooCall("calendar.event", "unlink", [[odooEventId]]);
+  await odooCall(
+    "calendar.event",
+    "unlink",
+    [
+      [
+        odooEventId,
+      ],
+    ],
+  );
 }
