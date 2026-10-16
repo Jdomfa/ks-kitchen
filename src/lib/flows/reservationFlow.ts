@@ -8,14 +8,14 @@ import {
   modifyOdooReservation,
 } from "@/lib/odoo/reservations";
 
-import {
-  sendReservationConfirmations,
-  sendReservationUpdateConfirmation,
-} from "@/lib/notifications/confirmation";
+import { sendReservationUpdateConfirmation } from "@/lib/notifications/confirmation";
 
 import { notifyStaffOfHandoff } from "@/lib/notifications/handoff";
 
-import { createHelpdeskTicket } from "@/lib/odoo/client";
+import {
+  createHelpdeskTicket,
+  sendReservationConfirmationWhatsApp,
+} from "@/lib/odoo/client";
 
 import { siteConfig } from "@/lib/site-config";
 
@@ -1363,27 +1363,27 @@ async function handleReservationConfirm(
   });
 
   if (result.success) {
-    sendReservationConfirmations({
-      name,
-
-      phone,
-
-      partySize,
-
-      date,
-
-      time,
-
-      reservationCode: result.reservationCode,
-
-      originChannel: channel,
-    }).catch((error) => {
+    /**
+     * The reservation itself is already confirmed in Odoo at this
+     * point. WhatsApp is deliberately best-effort: a Meta/Odoo
+     * messaging failure must never roll back a valid table booking.
+     */
+    if (result.reservationCode) {
+      sendReservationConfirmationWhatsApp({
+        name,
+        phone,
+        partySize,
+        date,
+        time,
+        reservationCode: result.reservationCode,
+      }).catch((error) => {
+        console.error("Odoo WhatsApp reservation confirmation failed:", error);
+      });
+    } else {
       console.error(
-        "Reservation confirmation send failed:",
-
-        error,
+        "Reservation succeeded but no reservation code was returned; WhatsApp confirmation was not sent.",
       );
-    });
+    }
 
     const codeLine = result.reservationCode
       ? `\n\nYour reservation code is ${result.reservationCode} — keep it handy if you need to change or cancel later.`
