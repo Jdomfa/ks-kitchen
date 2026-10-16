@@ -1322,7 +1322,7 @@ async function restorePlaceholderEvents(
 
  * ========================================================== */
 
-export async function cancelOdooReservationByCode(code: string): Promise<{
+export async function cancelOdooReservation(code: string): Promise<{
   success: boolean;
 
   error?: string;
@@ -1355,7 +1355,7 @@ export async function cancelOdooReservationByCode(code: string): Promise<{
     };
   } catch (error) {
     console.error(
-      "cancelOdooReservationByCode failed:",
+      "cancelOdooReservation failed:",
 
       error,
     );

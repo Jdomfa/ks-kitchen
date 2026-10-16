@@ -4,7 +4,7 @@ import {
   createOdooReservation,
   getOdooReservationByCode,
   getOdooReservationByPhone,
-  cancelOdooReservationByCode,
+  cancelOdooReservation,
   modifyOdooReservation,
 } from "@/lib/odoo/reservations";
 
@@ -199,26 +199,11 @@ const PARTY_SIZE_BUTTONS: FlowButton[] = [
 
  * ========================================================== */
 
-function getWhatsAppAgentButton(): FlowButton {
-  const whatsappNumber = siteConfig.whatsappNumber.replace(
-    /\D/g,
-
-    "",
-  );
-
-  const message = encodeURIComponent("Hi, I need help with a reservation.");
-
-  return {
-    id: "talk_to_agent",
-
-    title: "Talk to an agent on WhatsApp",
-
-    url: `https://wa.me/${whatsappNumber}?text=${message}`,
-  };
-}
-
 function withWhatsAppAgent(buttons: FlowButton[] = []): FlowButton[] {
-  return [...buttons, getWhatsAppAgentButton()];
+  // The chat widget already has a persistent WhatsApp button.
+  // Keep this helper as a passthrough for existing call sites so we
+  // do not render a duplicate generic "Talk to an agent" button.
+  return buttons;
 }
 
 function getPreferredTimeWhatsAppButton(draft: ReservationDraft): FlowButton {
@@ -249,14 +234,20 @@ function getReservationTimeButtons(
   options: string[],
   draft: ReservationDraft,
 ): FlowButton[] {
-  return [
+  const buttons: FlowButton[] = [
     ...options.map((option) => ({
       id: option,
       title: formatDisplayTime(option),
     })),
     getPreferredTimeWhatsAppButton(draft),
-    { id: "choose_another_date", title: "Choose another date" },
   ];
+
+  // Only offer another date when there are no available time slots at all.
+  if (options.length === 0) {
+    buttons.push({ id: "choose_another_date", title: "Choose another date" });
+  }
+
+  return buttons;
 }
 
 /* ============================================================
@@ -493,7 +484,7 @@ function parseDateInput(raw: string): string | null {
 
    */
 
-  const numeric = text.match(/^(\d{1,2})[\\/-](\d{1,2})[\\/-](\d{4})$/);
+  const numeric = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
 
   if (numeric) {
     const [, day, month, year] = numeric;
@@ -954,7 +945,6 @@ function handleReservationMenu(input: string): FlowResult {
     return {
       reply: "What name should the reservation be under?",
       state: { step: "RESERVATION_NAME", draft: {} },
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -967,7 +957,6 @@ function handleReservationMenu(input: string): FlowResult {
       reply:
         "Please enter your reservation code, or the phone number you booked with.",
       state: { step: "MANAGE_CODE", draft: {} },
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1053,7 +1042,7 @@ async function handleReservationPartySize(
         {
           id: "open_whatsapp",
 
-          title: "Talk to an agent on WhatsApp",
+          title: "Continue on WhatsApp",
 
           url,
         },
@@ -1102,8 +1091,6 @@ async function handleReservationPartySize(
     },
 
     inputType: "date",
-
-    buttons: withWhatsAppAgent(),
   };
 }
 
@@ -1129,7 +1116,6 @@ async function handleReservationDate(
           : "Please choose a valid date.",
       state,
       inputType: "date",
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1138,7 +1124,6 @@ async function handleReservationDate(
       reply: "That date is in the past — please choose today or later.",
       state,
       inputType: "date",
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1196,7 +1181,6 @@ function handleReservationTime(input: string, state: FlowState): FlowResult {
         draft: { ...state.draft, date: undefined, time: undefined },
       },
       inputType: "date",
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1251,14 +1235,12 @@ function handleReservationName(input: string, state: FlowState): FlowResult {
       reply:
         "Sorry, I didn't catch that — what name should the reservation be under?",
       state,
-      buttons: withWhatsAppAgent(),
     };
   }
 
   return {
     reply: `Thanks, ${name}! What's the best phone number to reach you on for this booking?`,
     state: { step: "RESERVATION_PHONE", draft: { ...state.draft, name } },
-    buttons: withWhatsAppAgent(),
   };
 }
 
@@ -1275,7 +1257,6 @@ function handleReservationPhone(input: string, state: FlowState): FlowResult {
     return {
       reply: "Please enter a valid phone number.",
       state,
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1446,8 +1427,6 @@ async function handleReservationConfirm(
       },
 
       inputType: "date",
-
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1495,8 +1474,6 @@ async function handleManageCode(
         "Please enter your reservation code, or the phone number you booked with.",
 
       state,
-
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1516,8 +1493,6 @@ async function handleManageCode(
           "I couldn't find a reservation with that phone number.",
 
         state,
-
-        buttons: withWhatsAppAgent(),
       };
     }
 
@@ -1544,8 +1519,6 @@ async function handleManageCode(
         "I couldn't find a reservation with that code. Please double-check it and try again.",
 
       state,
-
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1753,7 +1726,7 @@ async function handleManageAction(
    */
 
   if (normalized === "1" || normalized.includes("cancel")) {
-    const result = await cancelOdooReservationByCode(code);
+    const result = await cancelOdooReservation(code);
 
     return {
       reply: result.success
@@ -1797,8 +1770,6 @@ async function handleManageAction(
       },
 
       inputType: "date",
-
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1866,8 +1837,6 @@ async function handleManageModifyDate(
       state,
 
       inputType: "date",
-
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1878,8 +1847,6 @@ async function handleManageModifyDate(
       state,
 
       inputType: "date",
-
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -1914,8 +1881,6 @@ async function handleManageModifyDate(
       state,
 
       inputType: "date",
-
-      buttons: withWhatsAppAgent(),
     };
   }
 
@@ -2106,8 +2071,6 @@ async function handleManageModifyTime(
       },
 
       inputType: "date",
-
-      buttons: withWhatsAppAgent(),
     };
   }
 
