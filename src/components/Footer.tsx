@@ -101,7 +101,7 @@ const SOCIALS = [
  * right at the top of the footer so it reads as a paper edge rather
  * than a flat color-to-color seam.
  */
-function TornEdge({ color = "fill-banana-leaf" }: { color?: string }) {
+function TornEdge({ color = "fill-tamarind-bark" }: { color?: string }) {
   return (
     <svg
       viewBox="0 0 600 24"
