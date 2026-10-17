@@ -2751,44 +2751,36 @@ async function handleReservationConfirm(
      * messaging failure must never roll back a valid table booking.
      */
     if (result.reservationCode) {
-       console.log("=== WHATSAPP CONFIRMATION START ===");
-       console.log({
-         name,
-         phone,
-         partySize,
-         date,
-         time,
-         reservationCode: result.reservationCode,
-       });
+      console.log("=== WHATSAPP CONFIRMATION START ===");
 
-       sendReservationConfirmationWhatsApp({
-         name,
-         phone,
-         partySize,
-         date,
-         time,
-         reservationCode: result.reservationCode,
-       })
-         .then((sendResult) => {
-           console.log("=== WHATSAPP CONFIRMATION RESULT ===");
-           console.dir(sendResult, { depth: null });
-         })
-         .catch((error) => {
-           console.error("=== WHATSAPP CONFIRMATION ERROR ===");
-           console.error(error);
+  try {
+    const sendResult =
+      await sendReservationConfirmationWhatsApp({
+        name,
+        phone,
+        partySize,
+        date,
+        time,
+        reservationCode: result.reservationCode,
+      });
 
-           if (error instanceof Error) {
-             console.error("message:", error.message);
-             console.error("stack:", error.stack);
-           }
-         });
-    } else {
-      console.error(
-        "Reservation succeeded but no reservation code was returned; WhatsApp confirmation was not sent."
-      );
-    }
+    console.log(
+      "=== WHATSAPP CONFIRMATION RESULT ===",
+    );
 
+    console.dir(sendResult, {
+      depth: null,
+    });
+  } catch (error) {
+    console.error(
+      "=== WHATSAPP CONFIRMATION ERROR ===",
+    );
 
+    console.error(error);
+
+    // Do not fail the reservation itself.
+  }
+}
 
     const codeLine =
 
