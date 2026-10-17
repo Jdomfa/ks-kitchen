@@ -363,171 +363,236 @@ async function getOrCreateReservationPartner(
  */
 export async function sendReservationConfirmationWhatsApp(
   args: ReservationConfirmationWhatsAppArgs,
-): Promise<void> {
+): Promise<unknown> {
   const name = args.name.trim();
   const phone = args.phone.trim();
   const reservationCode =
     args.reservationCode.trim();
 
-  if (!name) {
-    throw new Error(
-      "Cannot send reservation confirmation without a customer name.",
-    );
-  }
+  console.log("========================================");
+  console.log("WHATSAPP CONFIRMATION DEBUG");
+  console.log("========================================");
+  console.log("INPUT", {
+    name,
+    phone,
+    partySize: args.partySize,
+    date: args.date,
+    time: args.time,
+    reservationCode,
+  });
 
-  if (!phone) {
-    throw new Error(
-      "Cannot send reservation confirmation without a phone number.",
-    );
-  }
+  try {
+    const formattedPhone = phone;
+    console.log("PHONE", {
+      original: args.phone,
+      formatted: formattedPhone,
+    });
 
-  if (!reservationCode) {
-    throw new Error(
-      "Cannot send reservation confirmation without a reservation code.",
-    );
-  }
+    if (!name) {
+      throw new Error(
+        "Cannot send reservation confirmation without a customer name.",
+      );
+    }
 
-  // -------------------------------------------------------
-  // Find approved Odoo WhatsApp template
-  // -------------------------------------------------------
+    if (!phone) {
+      throw new Error(
+        "Cannot send reservation confirmation without a phone number.",
+      );
+    }
 
-  const templates =
-    await odooCall<
-      OdooWhatsAppTemplate[]
-    >(
-      "whatsapp.template",
-      "search_read",
-      [
+    if (!reservationCode) {
+      throw new Error(
+        "Cannot send reservation confirmation without a reservation code.",
+      );
+    }
+
+    // -------------------------------------------------------
+    // Find approved Odoo WhatsApp template
+    // -------------------------------------------------------
+
+    const templates =
+      await odooCall<
+        OdooWhatsAppTemplate[]
+      >(
+        "whatsapp.template",
+        "search_read",
         [
           [
-            "template_name",
-            "=",
-            "reservation_confirmation_v2",
-          ],
-          [
-            "status",
-            "=",
-            "approved",
+            [
+              "template_name",
+              "=",
+              "reservation_confirmation_v2",
+            ],
+            [
+              "status",
+              "=",
+              "approved",
+            ],
           ],
         ],
-      ],
-      {
-        fields: [
-          "id",
-          "name",
-          "template_name",
-          "status",
-          "model",
-        ],
-        limit: 1,
-      },
-    );
-
-  const template = templates[0];
-
-  if (!template) {
-    throw new Error(
-      'Approved Odoo WhatsApp template "reservation_confirmation_v2" was not found.',
-    );
-  }
-
-  if (
-    template.model &&
-    template.model !== "res.partner"
-  ) {
-    throw new Error(
-      `WhatsApp template reservation_confirmation_v2 is configured for ${template.model}, expected res.partner.`,
-    );
-  }
-
-  // -------------------------------------------------------
-  // Find or create customer partner
-  // -------------------------------------------------------
-
-  const partnerId =
-    await getOrCreateReservationPartner(
-      name,
-      phone,
-    );
-
-  // -------------------------------------------------------
-  // Create native Odoo WhatsApp composer
-  // -------------------------------------------------------
-
-  const composerId =
-    await odooCall<number>(
-      "whatsapp.composer",
-      "create",
-      [
         {
-          res_model: "res.partner",
-
-          /**
-           * Odoo 19 stores res_ids as a Char field containing
-           * a serialized list of record IDs.
-           */
-          res_ids: JSON.stringify([
-            partnerId,
-          ]),
-
-          batch_mode: false,
-
-          phone,
-
-          wa_template_id:
-            template.id,
-
-          // {{1}} Customer name
-          free_text_1: name,
-
-          // {{2}} Guests
-          free_text_2:
-            String(args.partySize),
-
-          // {{3}} Date
-          free_text_3:
-            formatReservationWhatsAppDate(
-              args.date,
-            ),
-
-          // {{4}} Time
-          free_text_4:
-            formatReservationWhatsAppTime(
-              args.time,
-            ),
-
-          // {{5}} Reservation code
-          free_text_5:
-            reservationCode,
-
-          // {{6}} Phone number
-          free_text_6:
-            phone,
+          fields: [
+            "id",
+            "name",
+            "template_name",
+            "status",
+            "model",
+          ],
+          limit: 1,
         },
-      ],
+      );
+
+    console.log("TEMPLATE LOOKUP", templates);
+
+    const template = templates[0];
+
+    if (!template) {
+      throw new Error(
+        'Approved Odoo WhatsApp template "reservation_confirmation_v2" was not found.',
+      );
+    }
+
+    console.log("TEMPLATE", {
+      id: template.id,
+      name: template.name,
+      status: template.status,
+    });
+
+    if (
+      template.model &&
+      template.model !== "res.partner"
+    ) {
+      throw new Error(
+        `WhatsApp template reservation_confirmation_v2 is configured for ${template.model}, expected res.partner.`,
+      );
+    }
+
+    // -------------------------------------------------------
+    // Find or create customer partner
+    // -------------------------------------------------------
+
+    const partnerId =
+      await getOrCreateReservationPartner(
+        name,
+        formattedPhone,
+      );
+
+    console.log("PARTNER", {
+      partnerId,
+      phone: formattedPhone,
+    });
+
+    // -------------------------------------------------------
+    // Create native Odoo WhatsApp composer
+    // -------------------------------------------------------
+
+    const composerId =
+      await odooCall<number>(
+        "whatsapp.composer",
+        "create",
+        [
+          {
+            res_model: "res.partner",
+
+            /**
+             * Odoo 19 stores res_ids as a Char field containing
+             * a serialized list of record IDs.
+             */
+            res_ids: JSON.stringify([
+              partnerId,
+            ]),
+
+            batch_mode: false,
+
+            phone: formattedPhone,
+
+            wa_template_id:
+              template.id,
+
+            // {{1}} Customer name
+            free_text_1: name,
+
+            // {{2}} Guests
+            free_text_2:
+              String(args.partySize),
+
+            // {{3}} Date
+            free_text_3:
+              formatReservationWhatsAppDate(
+                args.date,
+              ),
+
+            // {{4}} Time
+            free_text_4:
+              formatReservationWhatsAppTime(
+                args.time,
+              ),
+
+            // {{5}} Reservation code
+            free_text_5:
+              reservationCode,
+
+            // {{6}} Phone number
+            free_text_6:
+              formattedPhone,
+          },
+        ],
+      );
+
+    if (!composerId) {
+      throw new Error(
+        "Odoo did not create the WhatsApp composer.",
+      );
+    }
+
+    console.log("ODOO COMPOSER CREATED", {
+      composerId,
+      partnerId,
+      templateId: template.id,
+    });
+
+    // -------------------------------------------------------
+    // Send template through native Odoo WhatsApp module
+    // -------------------------------------------------------
+
+    console.log("ABOUT TO SEND", {
+      partnerId,
+      templateId: template.id,
+      composerId,
+      phone: formattedPhone,
+    });
+
+    const sendResult =
+      await odooCall<unknown>(
+        "whatsapp.composer",
+        "action_send_whatsapp_template",
+        [
+          [composerId],
+        ],
+      );
+
+    console.log("ODOO SEND RESULT");
+    console.dir(sendResult, {
+      depth: null,
+    });
+    console.log(
+      `Odoo WhatsApp reservation confirmation queued for ${formattedPhone} using reservation_confirmation_v2.`,
     );
 
-  if (!composerId) {
-    throw new Error(
-      "Odoo did not create the WhatsApp composer.",
+    return sendResult;
+  } catch (error) {
+    console.error(
+      "WHATSAPP CONFIRMATION SEND FAILED",
     );
+    console.error(error);
+
+    if (error instanceof Error) {
+      console.error("message:", error.message);
+      console.error("stack:", error.stack);
+    }
+
+    throw error;
   }
-
-  // -------------------------------------------------------
-  // Send template through native Odoo WhatsApp module
-  // -------------------------------------------------------
-
-  await odooCall(
-    "whatsapp.composer",
-    "action_send_whatsapp_template",
-    [
-      [composerId],
-    ],
-  );
-
-  console.log(
-    `Odoo WhatsApp reservation confirmation queued for ${phone} using reservation_confirmation_v2.`,
-  );
 }
 
 // ---------------------------------------------------------
