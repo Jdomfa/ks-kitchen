@@ -421,7 +421,7 @@ export async function sendReservationConfirmationWhatsApp(
             [
               "template_name",
               "=",
-              "reservation_confirmation_v2",
+              "reservation_confirmation_v3",
             ],
             [
               "status",
@@ -448,7 +448,7 @@ export async function sendReservationConfirmationWhatsApp(
 
     if (!template) {
       throw new Error(
-        'Approved Odoo WhatsApp template "reservation_confirmation_v2" was not found.',
+        'Approved Odoo WhatsApp template "reservation_confirmation_v3" was not found.',
       );
     }
 
@@ -463,7 +463,7 @@ export async function sendReservationConfirmationWhatsApp(
       template.model !== "res.partner"
     ) {
       throw new Error(
-        `WhatsApp template reservation_confirmation_v2 is configured for ${template.model}, expected res.partner.`,
+        `WhatsApp template reservation_confirmation_v3 is configured for ${template.model}, expected res.partner.`,
       );
     }
 
