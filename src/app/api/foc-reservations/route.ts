@@ -6,26 +6,73 @@ import {
 export const dynamic =
   "force-dynamic";
 
-export async function GET() {
-  try {
-    const slots =
-      await getFocSlots();
+export const revalidate =
+  0;
 
-    return Response.json({
-      success: true,
-      slots,
-    });
-  } catch (error) {
+
+/* ============================================================
+ * GET
+ *
+ * Odoo is the source of truth for FOC availability.
+ *
+ * Optional:
+ * /api/foc-reservations?partySize=3
+ * ========================================================== */
+
+export async function GET(
+  request: Request,
+) {
+  try {
+    const url =
+      new URL(
+        request.url,
+      );
+
+    const partySizeRaw =
+      url.searchParams.get(
+        "partySize",
+      );
+
+    const partySize =
+      partySizeRaw
+        ? Number(
+            partySizeRaw,
+          )
+        : undefined;
+
+    const slots =
+      await getFocSlots(
+        partySize,
+      );
+
+    return Response.json(
+      {
+        success: true,
+        slots,
+      },
+      {
+        headers: {
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate",
+        },
+      },
+    );
+  } catch (
+    error
+  ) {
     console.error(
-      "FOC availability error:",
+      "FOC availability API error:",
       error,
     );
 
     return Response.json(
       {
         success: false,
+
         error:
-          "Unable to load FOC availability.",
+          error instanceof Error
+            ? error.message
+            : "Unable to load FOC availability.",
       },
       {
         status: 500,
@@ -34,6 +81,17 @@ export async function GET() {
   }
 }
 
+
+/* ============================================================
+ * POST
+ *
+ * 1. Re-checks FOC placeholder in Odoo
+ * 2. Claims it in Odoo
+ * 3. Marks appointment booked
+ * 4. Stores FOC/name/phone
+ * 5. Sends V3 WhatsApp template
+ * ========================================================== */
+
 export async function POST(
   request: Request,
 ) {
@@ -41,58 +99,193 @@ export async function POST(
     const body =
       await request.json();
 
-    const result =
-      await createFocReservation({
-        name:
-          String(
-            body.name ??
-              "",
-          ),
+    const name =
+      String(
+        body.name ??
+          "",
+      ).trim();
 
-        phone:
-          String(
-            body.phone ??
-              "",
-          ),
+    const phone =
+      String(
+        body.phone ??
+          "",
+      ).trim();
 
-        partySize:
-          Number(
-            body.partySize,
-          ),
+    const partySize =
+      Number(
+        body.partySize,
+      );
 
-        date:
-          String(
-            body.date ??
-              "",
-          ),
+    const date =
+      String(
+        body.date ??
+          "",
+      ).trim();
 
-        time:
-          String(
-            body.time ??
-              "",
-          ),
-      });
+    const time =
+      String(
+        body.time ??
+          "",
+      ).trim();
 
-    return Response.json(
-      result,
+
+    /* --------------------------------------------------------
+     * Basic API validation
+     * ------------------------------------------------------ */
+
+    if (!name) {
+      return Response.json(
+        {
+          success: false,
+
+          error:
+            "Name is required.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (!phone) {
+      return Response.json(
+        {
+          success: false,
+
+          error:
+            "Phone number is required.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      !Number.isInteger(
+        partySize,
+      ) ||
+      partySize < 1 ||
+      partySize > 4
+    ) {
+      return Response.json(
+        {
+          success: false,
+
+          error:
+            "Party size must be between 1 and 4.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      !date ||
+      !time
+    ) {
+      return Response.json(
+        {
+          success: false,
+
+          error:
+            "Date and time are required.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+
+    console.log(
+      "=== FOC API BOOKING REQUEST ===",
       {
-        status:
-          result.success
-            ? 200
-            : 409,
+        name,
+        phone,
+        partySize,
+        date,
+        time,
       },
     );
-  } catch (error) {
+
+
+    /* --------------------------------------------------------
+     * Odoo + WhatsApp
+     * ------------------------------------------------------ */
+
+    const result =
+      await createFocReservation({
+        name,
+        phone,
+        partySize,
+        date,
+        time,
+      });
+
+
+    if (
+      !result.success
+    ) {
+      console.error(
+        "FOC booking rejected",
+        result,
+      );
+
+      return Response.json(
+        result,
+        {
+          status: 409,
+        },
+      );
+    }
+
+
+    console.log(
+      "=== FOC BOOKING COMPLETE ===",
+      result,
+    );
+
+
+    return Response.json(
+      {
+        success: true,
+
+        eventId:
+          result.eventId,
+
+        reservationCode:
+          result.reservationCode,
+
+        whatsappSent:
+          result.whatsappSent,
+      },
+      {
+        status: 200,
+
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
+  } catch (
+    error
+  ) {
     console.error(
-      "FOC reservation error:",
+      "FOC reservation API error:",
       error,
     );
 
     return Response.json(
       {
         success: false,
+
         error:
-          "Unable to create the FOC reservation.",
+          error instanceof Error
+            ? error.message
+            : "Unable to create FOC reservation.",
       },
       {
         status: 500,
