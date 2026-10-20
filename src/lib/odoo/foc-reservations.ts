@@ -1,6 +1,6 @@
 import {
-  sendReservationConfirmationWhatsApp,
-} from "@/lib/odoo/client";
+  sendFocReservationWhatsApp,
+} from "@/lib/odoo/foc-whatsapp";
 
 const ODOO_URL = process.env.ODOO_URL!;
 const ODOO_DB = process.env.ODOO_DB!;
@@ -1171,46 +1171,32 @@ export async function createFocReservation(
      * ------------------------------------------------------ */
 
     let whatsappSent =
-      false;
+  false;
 
-    try {
-      console.log(
-        "=== FOC WHATSAPP V3 START ===",
-        {
-          name,
-          phone,
-          partySize,
-          date,
-          time,
-          reservationCode,
-        },
-      );
+try {
+  const whatsappResult =
+    await sendFocReservationWhatsApp({
+      name,
+      phone,
+      partySize,
+      date,
+      time,
+      reservationCode,
+    });
 
-      const whatsappResult =
-        await sendReservationConfirmationWhatsApp({
-          name,
-          phone,
-          partySize,
-          date,
-          time,
-          reservationCode,
-        });
+  whatsappSent =
+    true;
 
-      whatsappSent =
-        true;
-
-      console.log(
-        "=== FOC WHATSAPP V3 RESULT ===",
-        whatsappResult,
-      );
-    } catch (
-      error
-    ) {
-      console.error(
-        "FOC V3 WhatsApp confirmation failed:",
-        error,
-      );
-    }
+  console.log(
+    "FOC WhatsApp V3 success",
+    whatsappResult,
+  );
+} catch (error) {
+  console.error(
+    "FOC WhatsApp V3 failed:",
+    error,
+  );
+}
 
 
     /* --------------------------------------------------------
