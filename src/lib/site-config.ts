@@ -8,7 +8,7 @@ export const siteConfig = {
     map: "https://maps.app.goo.gl/39EpHjTwDZq2SfGu5?g_st=ac",
   },
   reservationPhone: "+234 707 037 7712",
-  reservationEmail: "reservations@ks.kitchen",
+  reservationEmail: "connect@ks.kitchen",
   hours: [
     { days: "Mon – Sat", time: "4:00 PM – 11:00 PM" },
     { days: "Sunday", time: "4:00 PM – 11:00 PM" },
@@ -16,7 +16,7 @@ export const siteConfig = {
   social: {
     facebook: "#",
     twitter: "#",
-    instagram: "#",
+    instagram: "https://www.instagram.com/kskitchen.life",
     tiktok: "#",
     whatsapp: "https://wa.me/2347070377712",
   },

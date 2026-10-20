@@ -11,7 +11,7 @@ import { useCart } from "@/lib/cart-context";
 const NAV = [
   { href: "/", label: "Home" },
   { href: "/menu", label: "Menu" },
-  { href: "/store", label: "Store" },
+  //{ href: "/store", label: "Store" },
   { href: "/reservation", label: "Reservation" },
   { href: "/gallery", label: "Gallery" },
 ];
@@ -107,7 +107,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <Link
+          {/* <Link
             href="/cart"
             className="relative flex items-center justify-center h-10 w-10 rounded-full hover:bg-roasted-coffee/5 transition-colors"
             aria-label="View cart"
@@ -121,7 +121,7 @@ export function Header() {
                 {count}
               </span>
             )}
-          </Link>
+          </Link> */}
 
           <button
             className="md:hidden flex items-center justify-center h-10 w-10 relative z-[60]"

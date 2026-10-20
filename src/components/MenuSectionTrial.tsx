@@ -178,13 +178,13 @@ export function MenuSectionTrial() {
                         variants={itemVariants}
                         className="flex justify-center"
                       >
-                        <button
+                        {/* <button
                           onClick={() => setVideoOpen(true)}
                           className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-brushed-brass/60 text-brushed-brass font-sans text-sm tracking-wide hover:bg-brushed-brass hover:text-roasted-coffee transition-colors mb-8"
                         >
                           <PlayCircle className="h-4 w-4" strokeWidth={1.8} />
                           What is a Dosa?
-                        </button>
+                        </button> */}
                       </motion.div>
                     )}
                   </motion.div>
@@ -277,12 +277,12 @@ export function MenuSectionTrial() {
         )}
       </AnimatePresence>
 
-      <VideoModal
+      {/* <VideoModal
         open={videoOpen}
         onClose={() => setVideoOpen(false)}
         src={DOSA_VIDEO_SRC}
         title="What is a Dosa?"
-      />
+      /> */}
 
       <ItemModalTrial
         item={selectedItem?.item ?? null}

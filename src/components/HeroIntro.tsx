@@ -31,11 +31,11 @@ export function HeroIntro() {
         className="relative z-10 flex flex-col items-center"
       >
         <Image
-          src="/brand/logo.png"
+          src="/brand/main_logo_home.svg"
           alt="K's Kitchen"
           width={160}
           height={123}
-          className="h-28 w-auto invert"
+          className="h-28 w-auto"
           priority
         />
 
@@ -44,9 +44,7 @@ export function HeroIntro() {
         </p>
 
         <p className="mt-3 font-sans text-coconut-cream/85 max-w-xl">
-          An authentic South Indian kitchen where traditional recipes, homemade
-          ingredients, and genuine hospitality come together in a warm,
-          contemporary setting.
+          We are happy to introduce an intentionally created experience to showcase South Indian Food & Culture in Lagos, made fresh with boutique ingredients and a lot of love!
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -56,12 +54,12 @@ export function HeroIntro() {
           >
             View Our Menu
           </Link>
-          <Link
+          {/* <Link
             href="/store"
             className="rounded-full border border-coconut-cream/40 px-8 py-3 font-sans text-sm tracking-wide text-coconut-cream transition-transform hover:scale-[1.03]"
           >
             Check Store
-          </Link>
+          </Link> */}
         </div>
       </motion.div>
     </section>

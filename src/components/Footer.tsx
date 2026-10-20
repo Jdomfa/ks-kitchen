@@ -84,14 +84,14 @@ function WhatsAppIcon() {
 }
 
 const SOCIALS = [
-  { href: siteConfig.social.facebook, Icon: FacebookIcon, label: "Facebook" },
-  { href: siteConfig.social.twitter, Icon: XIcon, label: "X" },
+  //{ href: siteConfig.social.facebook, Icon: FacebookIcon, label: "Facebook" },
+  //{ href: siteConfig.social.twitter, Icon: XIcon, label: "X" },
   {
     href: siteConfig.social.instagram,
     Icon: InstagramIcon,
     label: "Instagram",
   },
-  { href: siteConfig.social.tiktok, Icon: TikTokIcon, label: "TikTok" },
+  //{ href: siteConfig.social.tiktok, Icon: TikTokIcon, label: "TikTok" },
   { href: siteConfig.social.whatsapp, Icon: WhatsAppIcon, label: "WhatsApp" },
 ];
 
@@ -230,7 +230,7 @@ export function Footer() {
               </div>
             </div>
 
-            <div className="font-sans text-sm">
+            {/* <div className="font-sans text-sm">
               <h3 className="font-display text-base mb-3 text-coconut-cream">
                 Keep in touch
               </h3>
@@ -252,7 +252,7 @@ export function Footer() {
                   <ArrowRight className="h-4 w-4" strokeWidth={2} />
                 </button>
               </form>
-            </div>
+            </div> */}
           </div>
 
           {/* Bottom bar */}
