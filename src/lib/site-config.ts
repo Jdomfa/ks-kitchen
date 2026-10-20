@@ -3,7 +3,7 @@ export const siteConfig = {
   whatsappNumber: "2347070377712", // digits only, country code, no leading +
   orderEmail: "orders@ks.kitchen",
   address: {
-    line1: "Cino's Square, 39 Onikoyi Rd, Ikoyi",
+    line1: "39 Onikoyi Rd, Ikoyi",
     line2: "106104, Lagos, Nigeria",
     map: "https://maps.app.goo.gl/39EpHjTwDZq2SfGu5?g_st=ac",
   },
