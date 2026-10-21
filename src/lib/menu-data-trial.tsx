@@ -90,7 +90,7 @@ export const menu: MenuTab[] = [
               "Cold-pressed sesame and house podi, inspired by traditional home-style South Indian cooking.",
             price: 15000,
             tags: ["veggie", "nuts", "sesame", "vegan"],
-            image: "/menu-items/dosa-ammas.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792601368/ammas.jpg",
             chefNote:
               "Named for the way it's made at home — no restaurant polish, just the real thing.",
           },
@@ -279,7 +279,7 @@ export const menu: MenuTab[] = [
               "Refreshing South Indian spiced buttermilk blended with herbs.",
             price: 10000,
             tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581278/spice-butter-milk.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792602144/spiced-butter.jpg",
             chefNote:
               "Curry leaf and ginger go in last, so they stay fragrant, not boiled out.",
           },
@@ -290,7 +290,7 @@ export const menu: MenuTab[] = [
               "Rich South Indian filter coffee, slow brewed and served over ice.",
             price: 12000,
             tags: [],
-            image: "/menu-items/iced-filter-coffee.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598904/spiced-butter-milk.jpg",
             chefNote:
               "Brewed hot through a traditional filter first, then cooled — never brewed over ice.",
           },
@@ -301,7 +301,7 @@ export const menu: MenuTab[] = [
               "Premium tea with fresh lemongrass and natural citrus notes.",
             price: 10000,
             tags: ["veggie"],
-            image: "/menu-items/lemongrass-iced-tea.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598905/lemongrass.jpg",
             chefNote: "Cold-brewed overnight for a smoother, less bitter cup.",
           },
           {
@@ -310,7 +310,7 @@ export const menu: MenuTab[] = [
             description: "Premium black tea, saffron and aromatic spices.",
             price: 12000,
             tags: [],
-            image: "/menu-items/zafarani-tea.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598904/zafarani.jpg",
             chefNote: "Steeped with whole saffron threads, not extract.",
           },
           {
@@ -320,7 +320,7 @@ export const menu: MenuTab[] = [
               "Premium black tea, fresh milk, cardamom, cinnamon, ginger and cloves.",
             price: 12000,
             tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581278/Masala-chai.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598904/Masala-chai.jpg",
             chefNote:
               "Our spice blend is ground fresh weekly — it's the first thing regulars notice.",
           },
@@ -331,7 +331,7 @@ export const menu: MenuTab[] = [
               "Traditionally filter-brewed South Indian coffee, rich aroma and a bold finish.",
             price: 10000,
             tags: [],
-            image: "/menu-items/house-filter-coffee.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792602142/house-filter.jpg",
             chefNote:
               "Served the traditional way — in a davara and tumbler, poured tableside.",
           },
