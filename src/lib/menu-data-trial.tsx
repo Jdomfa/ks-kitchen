@@ -123,7 +123,7 @@ export const menu: MenuTab[] = [
               "Fresh paneer, cheese and mild spices, filled with melted mozzarella.",
             price: 15000,
             tags: ["veggie"],
-            image: "/menu-items/dosa-cheese.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/cheese.jpg",
             chefNote:
               "Our most-requested dish by kids — and more than a few adults.",
           },
@@ -144,7 +144,7 @@ export const menu: MenuTab[] = [
               "Onions, house podi and cold-pressed sesame oil on a soft South Indian uthappam.",
             price: 16000,
             tags: ["vegan", "nuts"],
-            image: "/menu-items/uthappam-onion-podi.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598913/onion-ut.jpg",
             chefNote:
               "The podi is roasted fresh each morning — it loses its punch after a day.",
           },
@@ -155,7 +155,7 @@ export const menu: MenuTab[] = [
               "Beetroot, coriander, green chili and curry leaves, freshly grated with onions and herbs.",
             price: 16000,
             tags: ["vegan"],
-            image: "/menu-items/uthappam-beetroot.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598908/beetroot.jpg",
             chefNote:
               "The colour is all beetroot — nothing added, nothing dyed.",
           },
@@ -166,7 +166,7 @@ export const menu: MenuTab[] = [
               "Crisp onions, tomatoes, carrots, coriander and green chillies for a wholesome South Indian meal.",
             price: 16000,
             tags: ["veggie"],
-            image: "/menu-items/uthappam-garden.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792585084/garden-ut.jpg",
             chefNote:
               "Whatever's freshest at the market that week ends up here.",
           },
@@ -185,7 +185,7 @@ export const menu: MenuTab[] = [
               "Moong, coconut milk, jaggery and crisp coconut shavings in a rich, creamy pudding.",
             price: 12000,
             tags: ["vegan", "nuts"],
-            image: "/menu-items/payasam.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598909/payasam.jpg",
             chefNote:
               "Served at every festival in our family — this is the recipe we grew up on.",
           },
@@ -196,7 +196,7 @@ export const menu: MenuTab[] = [
               "Saffron, ghee and cardamom in a rich South Indian semolina dessert.",
             price: 12000,
             tags: ["veggie", "nuts"],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581279/Kesari.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792599170/Kesari.jpg",
             chefNote:
               "A generous pinch of real saffron — you'll see it, not just taste it.",
           },
