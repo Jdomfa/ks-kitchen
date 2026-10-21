@@ -35,7 +35,7 @@ export const menu: MenuTab[] = [
         description:
           '"Almost left out of our menu, this beloved dish never quite fit into our dosa or uthappam collection. But perhaps that\'s exactly what makes it so special. Prepared the traditional way our ancestors would have approved of, it is soft, wholesome, nourishing, and wonderfully delicate, a timeless classic that deserves a place of its own" ',
         image:
-          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792597004/chati-cat.jpg",
+          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792608305/chatti-catt.jpg",
         items: [
           {
             id: "chatti-idli",
