@@ -1,24 +1,37 @@
 import {
-  sendFocReservationWhatsApp,
-} from "@/lib/odoo/foc-whatsapp";
+  sendReservationConfirmationWhatsApp,
+} from "@/lib/odoo/client";
 
-const ODOO_URL = process.env.ODOO_URL!;
-const ODOO_DB = process.env.ODOO_DB!;
-const ODOO_USERNAME = process.env.ODOO_USERNAME!;
-const ODOO_API_KEY = process.env.ODOO_API_KEY!;
+const ODOO_URL =
+  process.env.ODOO_URL!;
 
-const RESERVATION_META_FIELD =
+const ODOO_DB =
+  process.env.ODOO_DB!;
+
+const ODOO_USERNAME =
+  process.env.ODOO_USERNAME!;
+
+const ODOO_API_KEY =
+  process.env.ODOO_API_KEY!;
+
+const META_FIELD =
   "x_studio_reservation_metadata_1";
 
-const LAGOS_UTC_OFFSET_HOURS = 1;
+const LAGOS_UTC_OFFSET_HOURS =
+  1;
 
-const FOC_TIMES = [
+const ALLOWED_TIMES = [
   "16:00",
   "19:00",
   "21:00",
 ];
 
-let cachedUid: number | null = null;
+const PLACEHOLDER_NAME =
+  "Family Placeholder";
+
+let cachedUid:
+  | number
+  | null = null;
 
 type JsonRpcResult<T> = {
   result?: T;
@@ -35,8 +48,11 @@ type JsonRpcResult<T> = {
 
 type CalendarEventRecord = {
   id: number;
+
   name: string;
+
   start: string;
+
   stop: string;
 
   resource_ids: number[];
@@ -60,24 +76,40 @@ type CalendarEventRecord = {
 
 type AppointmentResourceRecord = {
   id: number;
+
   name: string;
+
   capacity: number;
 };
 
-export type FocSlot = {
-  date: string;
-  time: string;
-};
+type PartnerRecord = {
+  id: number;
 
-export type CreateFocReservationInput = {
   name: string;
-  phone: string;
-  partySize: number;
+
+  phone:
+    | string
+    | false;
+};
+
+export type FamilyReservationSlot = {
   date: string;
   time: string;
 };
 
-export type CreateFocReservationResult = {
+export type CreateFamilyReservationInput = {
+  name: string;
+
+  phone: string;
+
+  partySize: number;
+
+  date: string;
+
+  time: string;
+};
+
+export type CreateFamilyReservationResult = {
   success: boolean;
 
   error?: string;
@@ -89,9 +121,8 @@ export type CreateFocReservationResult = {
   whatsappSent?: boolean;
 };
 
-
 /* ============================================================
- * Odoo JSON-RPC
+ * Authentication
  * ========================================================== */
 
 async function getUid(): Promise<number> {
@@ -122,12 +153,15 @@ async function getUid(): Promise<number> {
         },
 
         body: JSON.stringify({
-          jsonrpc: "2.0",
+          jsonrpc:
+            "2.0",
 
-          method: "call",
+          method:
+            "call",
 
           params: {
-            service: "common",
+            service:
+              "common",
 
             method:
               "authenticate",
@@ -140,10 +174,12 @@ async function getUid(): Promise<number> {
             ],
           },
 
-          id: Date.now(),
+          id:
+            Date.now(),
         }),
 
-        cache: "no-store",
+        cache:
+          "no-store",
       },
     );
 
@@ -173,12 +209,19 @@ async function getUid(): Promise<number> {
   return cachedUid;
 }
 
+/* ============================================================
+ * JSON RPC
+ * ========================================================== */
 
 async function odooCall<T>(
   model: string,
   method: string,
   args: unknown[],
-  kwargs: Record<string, unknown> = {},
+  kwargs:
+    Record<
+      string,
+      unknown
+    > = {},
 ): Promise<T> {
   const uid =
     await getUid();
@@ -187,39 +230,46 @@ async function odooCall<T>(
     await fetch(
       `${ODOO_URL}/jsonrpc`,
       {
-        method: "POST",
+        method:
+          "POST",
 
         headers: {
           "Content-Type":
             "application/json",
         },
 
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-
-          method: "call",
-
-          params: {
-            service: "object",
+        body:
+          JSON.stringify({
+            jsonrpc:
+              "2.0",
 
             method:
-              "execute_kw",
+              "call",
 
-            args: [
-              ODOO_DB,
-              uid,
-              ODOO_API_KEY,
-              model,
-              method,
-              args,
-              kwargs,
-            ],
-          },
+            params: {
+              service:
+                "object",
 
-          id: Date.now(),
-        }),
+              method:
+                "execute_kw",
 
-        cache: "no-store",
+              args: [
+                ODOO_DB,
+                uid,
+                ODOO_API_KEY,
+                model,
+                method,
+                args,
+                kwargs,
+              ],
+            },
+
+            id:
+              Date.now(),
+          }),
+
+        cache:
+          "no-store",
       },
     );
 
@@ -234,12 +284,11 @@ async function odooCall<T>(
 
   if (data.error) {
     console.error(
-      "FOC Odoo JSON-RPC error",
+      "Odoo family reservation RPC error:",
       {
         model,
         method,
-        args,
-        kwargs,
+
         error:
           data.error,
       },
@@ -248,16 +297,15 @@ async function odooCall<T>(
     throw new Error(
       data.error.data?.message ??
         data.error.message ??
-        `Odoo ${model}.${method} failed.`,
+        `${model}.${method} failed.`,
     );
   }
 
   return data.result as T;
 }
 
-
 /* ============================================================
- * Date helpers
+ * Date / time
  * ========================================================== */
 
 function toOdooUtcDatetime(
@@ -272,17 +320,14 @@ function toOdooUtcDatetime(
       .split(":")
       .map(Number);
 
-  const utcHours =
-    hours -
-    LAGOS_UTC_OFFSET_HOURS;
-
   const value =
     new Date(
       `${date}T00:00:00Z`,
     );
 
   value.setUTCHours(
-    utcHours,
+    hours -
+      LAGOS_UTC_OFFSET_HOURS,
     minutes,
     0,
     0,
@@ -291,16 +336,15 @@ function toOdooUtcDatetime(
   return value
     .toISOString()
     .slice(0, 19)
-    .replace("T", " ");
+    .replace(
+      "T",
+      " ",
+    );
 }
-
 
 function fromOdooUtcDatetime(
   value: string,
-): {
-  date: string;
-  time: string;
-} {
+): FamilyReservationSlot {
   const utcDate =
     new Date(
       `${value.replace(
@@ -322,15 +366,20 @@ function fromOdooUtcDatetime(
     date:
       lagosDate
         .toISOString()
-        .slice(0, 10),
+        .slice(
+          0,
+          10,
+        ),
 
     time:
       lagosDate
         .toISOString()
-        .slice(11, 16),
+        .slice(
+          11,
+          16,
+        ),
   };
 }
-
 
 /* ============================================================
  * Phone
@@ -348,22 +397,34 @@ function normalizePhone(
       );
 
   if (
-    phone.startsWith("00")
+    phone.startsWith(
+      "00",
+    )
   ) {
     phone =
-      `+${phone.slice(2)}`;
+      `+${phone.slice(
+        2,
+      )}`;
   }
 
   if (
-    phone.startsWith("0")
+    phone.startsWith(
+      "0",
+    )
   ) {
     phone =
-      `+234${phone.slice(1)}`;
+      `+234${phone.slice(
+        1,
+      )}`;
   }
 
   if (
-    !phone.startsWith("+") &&
-    /^\d+$/.test(phone)
+    !phone.startsWith(
+      "+",
+    ) &&
+    /^\d+$/.test(
+      phone,
+    )
   ) {
     phone =
       `+${phone}`;
@@ -371,7 +432,6 @@ function normalizePhone(
 
   return phone;
 }
-
 
 /* ============================================================
  * Partner
@@ -381,15 +441,9 @@ async function getOrCreatePartner(
   name: string,
   phone: string,
 ): Promise<number> {
-  const existing =
+  const partners =
     await odooCall<
-      Array<{
-        id: number;
-        name: string;
-        phone:
-          | string
-          | false;
-      }>
+      PartnerRecord[]
     >(
       "res.partner",
       "search_read",
@@ -414,39 +468,48 @@ async function getOrCreatePartner(
     );
 
   if (
-    existing.length >
+    partners.length >
     0
   ) {
-    return existing[0].id;
+    const partner =
+      partners[0];
+
+    if (
+      partner.name !==
+      name
+    ) {
+      await odooCall<boolean>(
+        "res.partner",
+        "write",
+        [
+          [
+            partner.id,
+          ],
+
+          {
+            name,
+          },
+        ],
+      );
+    }
+
+    return partner.id;
   }
 
-  const partnerId =
-    await odooCall<number>(
-      "res.partner",
-      "create",
-      [
-        {
-          name,
-          phone,
-        },
-      ],
-    );
-
-  console.log(
-    "FOC Odoo partner created",
-    {
-      partnerId,
-      name,
-      phone,
-    },
+  return odooCall<number>(
+    "res.partner",
+    "create",
+    [
+      {
+        name,
+        phone,
+      },
+    ],
   );
-
-  return partnerId;
 }
 
-
 /* ============================================================
- * Appointment resources
+ * Resources
  * ========================================================== */
 
 async function getResources(
@@ -472,6 +535,7 @@ async function getResources(
       "read",
       [
         resourceIds,
+
         [
           "id",
           "name",
@@ -482,7 +546,9 @@ async function getResources(
 
   return new Map(
     resources.map(
-      (resource) => [
+      (
+        resource,
+      ) => [
         resource.id,
         resource,
       ],
@@ -490,14 +556,15 @@ async function getResources(
   );
 }
 
-
 /* ============================================================
- * GET FOC availability from Odoo
+ * Availability
  * ========================================================== */
 
-export async function getFocSlots(
+export async function getFamilyReservationSlots(
   partySize?: number,
-): Promise<FocSlot[]> {
+): Promise<
+  FamilyReservationSlot[]
+> {
   const events =
     await odooCall<
       CalendarEventRecord[]
@@ -509,7 +576,7 @@ export async function getFocSlots(
           [
             "name",
             "ilike",
-            "FOC Placeholder",
+            PLACEHOLDER_NAME,
           ],
 
           [
@@ -548,7 +615,9 @@ export async function getFocSlots(
       Array.from(
         new Set(
           events.flatMap(
-            (event) =>
+            (
+              event,
+            ) =>
               event.resource_ids ??
               [],
           ),
@@ -564,7 +633,7 @@ export async function getFocSlots(
   const uniqueSlots =
     new Map<
       string,
-      FocSlot
+      FamilyReservationSlot
     >();
 
   for (
@@ -581,7 +650,7 @@ export async function getFocSlots(
       !event.name
         .toLowerCase()
         .includes(
-          "foc placeholder",
+          PLACEHOLDER_NAME.toLowerCase(),
         )
     ) {
       continue;
@@ -592,7 +661,8 @@ export async function getFocSlots(
       partySize > 0
     ) {
       const resourceId =
-        event.resource_ids?.[0];
+        event
+          .resource_ids?.[0];
 
       const resource =
         resourceId
@@ -610,25 +680,25 @@ export async function getFocSlots(
       }
     }
 
-    const local =
+    const slot =
       fromOdooUtcDatetime(
         event.start,
       );
 
     if (
-      !FOC_TIMES.includes(
-        local.time,
+      !ALLOWED_TIMES.includes(
+        slot.time,
       )
     ) {
       continue;
     }
 
     const key =
-      `${local.date}-${local.time}`;
+      `${slot.date}-${slot.time}`;
 
     uniqueSlots.set(
       key,
-      local,
+      slot,
     );
   }
 
@@ -637,14 +707,13 @@ export async function getFocSlots(
   );
 }
 
-
 /* ============================================================
- * CREATE FOC reservation
+ * Create reservation
  * ========================================================== */
 
-export async function createFocReservation(
-  input: CreateFocReservationInput,
-): Promise<CreateFocReservationResult> {
+export async function createFamilyReservation(
+  input: CreateFamilyReservationInput,
+): Promise<CreateFamilyReservationResult> {
   try {
     const name =
       input.name.trim();
@@ -667,17 +736,26 @@ export async function createFocReservation(
 
     if (!name) {
       return {
-        success: false,
+        success:
+          false,
+
         error:
-          "Reservation name is required.",
+          "Name is required.",
       };
     }
 
-    if (!phone) {
+    if (
+      phone.replace(
+        /\D/g,
+        "",
+      ).length < 9
+    ) {
       return {
-        success: false,
+        success:
+          false,
+
         error:
-          "Phone number is required.",
+          "A valid phone number is required.",
       };
     }
 
@@ -689,31 +767,25 @@ export async function createFocReservation(
       partySize > 4
     ) {
       return {
-        success: false,
+        success:
+          false,
+
         error:
-          "FOC reservations support 1 to 4 guests.",
+          "Reservations support 1 to 4 guests.",
       };
     }
 
     if (
-      !date
-    ) {
-      return {
-        success: false,
-        error:
-          "Reservation date is required.",
-      };
-    }
-
-    if (
-      !FOC_TIMES.includes(
+      !ALLOWED_TIMES.includes(
         time,
       )
     ) {
       return {
-        success: false,
+        success:
+          false,
+
         error:
-          "Please choose 4 PM, 7 PM or 9 PM.",
+          "That reservation time is not available.",
       };
     }
 
@@ -723,24 +795,9 @@ export async function createFocReservation(
         time,
       );
 
-    console.log(
-      "=== FOC RESERVATION START ===",
-      {
-        name,
-        phone,
-        partySize,
-        date,
-        time,
-        odooStart:
-          start,
-      },
-    );
-
-
-    /* --------------------------------------------------------
-     * 1. Pull exact FOC placeholders from Odoo
-     * ------------------------------------------------------ */
-
+    /*
+     * Fresh Odoo read immediately before booking.
+     */
     const candidates =
       await odooCall<
         CalendarEventRecord[]
@@ -752,7 +809,7 @@ export async function createFocReservation(
             [
               "name",
               "ilike",
-              "FOC Placeholder",
+              PLACEHOLDER_NAME,
             ],
 
             [
@@ -783,49 +840,26 @@ export async function createFocReservation(
         },
       );
 
-    console.log(
-      "FOC Odoo placeholders found",
-      candidates.map(
-        (event) => ({
-          id:
-            event.id,
-
-          name:
-            event.name,
-
-          start:
-            event.start,
-
-          resources:
-            event.resource_ids,
-
-          status:
-            event.appointment_status,
-        }),
-      ),
-    );
-
     if (
       candidates.length ===
       0
     ) {
       return {
-        success: false,
+        success:
+          false,
+
         error:
-          "That FOC reservation time is no longer available.",
+          "That reservation time is no longer available.",
       };
     }
-
-
-    /* --------------------------------------------------------
-     * 2. Find smallest table that seats party
-     * ------------------------------------------------------ */
 
     const resourceIds =
       Array.from(
         new Set(
           candidates.flatMap(
-            (event) =>
+            (
+              event,
+            ) =>
               event.resource_ids ??
               [],
           ),
@@ -840,7 +874,9 @@ export async function createFocReservation(
     const suitable =
       candidates
         .map(
-          (event) => {
+          (
+            event,
+          ) => {
             const resourceId =
               event
                 .resource_ids?.[0];
@@ -862,7 +898,8 @@ export async function createFocReservation(
           (
             item,
           ): item is {
-            event: CalendarEventRecord;
+            event:
+              CalendarEventRecord;
 
             resource:
               AppointmentResourceRecord;
@@ -885,10 +922,11 @@ export async function createFocReservation(
       0
     ) {
       return {
-        success: false,
+        success:
+          false,
 
         error:
-          `No FOC table is available for ${partySize} ${
+          `No table is currently available for ${partySize} ${
             partySize === 1
               ? "guest"
               : "guests"
@@ -899,29 +937,10 @@ export async function createFocReservation(
     const selected =
       suitable[0];
 
-    console.log(
-      "FOC selected table",
-      {
-        eventId:
-          selected.event.id,
-
-        resourceId:
-          selected.resource.id,
-
-        table:
-          selected.resource.name,
-
-        capacity:
-          selected.resource.capacity,
-      },
-    );
-
-
-    /* --------------------------------------------------------
-     * 3. Re-read before claiming
-     * ------------------------------------------------------ */
-
-    const current =
+    /*
+     * Re-read selected event before claiming.
+     */
+    const freshRecords =
       await odooCall<
         CalendarEventRecord[]
       >(
@@ -939,15 +958,12 @@ export async function createFocReservation(
             "stop",
             "resource_ids",
             "appointment_status",
-            "appointment_booker_id",
-            "phone_number",
-            RESERVATION_META_FIELD,
           ],
         ],
       );
 
     const freshEvent =
-      current[0];
+      freshRecords[0];
 
     if (
       !freshEvent ||
@@ -956,21 +972,17 @@ export async function createFocReservation(
       !freshEvent.name
         .toLowerCase()
         .includes(
-          "foc placeholder",
+          PLACEHOLDER_NAME.toLowerCase(),
         )
     ) {
       return {
-        success: false,
+        success:
+          false,
 
         error:
           "That table was just taken. Please choose another available time.",
       };
     }
-
-
-    /* --------------------------------------------------------
-     * 4. Create / locate customer in Odoo
-     * ------------------------------------------------------ */
 
     const partnerId =
       await getOrCreatePartner(
@@ -978,31 +990,14 @@ export async function createFocReservation(
         phone,
       );
 
-    console.log(
-      "FOC Odoo partner",
-      {
-        partnerId,
-        name,
-        phone,
-      },
-    );
-
-
-    /* --------------------------------------------------------
-     * 5. Create FOC reference
-     * ------------------------------------------------------ */
-
     const reservationCode =
-      `FOC-${freshEvent.id}`;
-
-    const eventName =
-      `FOC / ${name} / ${phone}`;
+      `FAM-${freshEvent.id}`;
 
     const metadata = {
       version: 1,
 
       reservationType:
-        "foc",
+        "family",
 
       code:
         reservationCode,
@@ -1034,24 +1029,8 @@ export async function createFocReservation(
           .toISOString(),
     };
 
-
-    /* --------------------------------------------------------
-     * 6. ACTUALLY PUSH THE RESERVATION TO ODOO
-     * ------------------------------------------------------ */
-
-    console.log(
-      "FOC writing reservation to Odoo",
-      {
-        eventId:
-          freshEvent.id,
-
-        eventName,
-
-        partnerId,
-
-        phone,
-      },
-    );
+    const eventName =
+      `Family / ${name} / ${phone}`;
 
     const writeResult =
       await odooCall<boolean>(
@@ -1075,7 +1054,7 @@ export async function createFocReservation(
             phone_number:
               phone,
 
-            [RESERVATION_META_FIELD]:
+            [META_FIELD]:
               JSON.stringify(
                 metadata,
               ),
@@ -1088,15 +1067,13 @@ export async function createFocReservation(
       true
     ) {
       throw new Error(
-        "Odoo did not confirm the FOC calendar event update.",
+        "Odoo did not confirm the reservation update.",
       );
     }
 
-
-    /* --------------------------------------------------------
-     * 7. Verify Odoo write
-     * ------------------------------------------------------ */
-
+    /*
+     * Verify Odoo really saved the booking.
+     */
     const verification =
       await odooCall<
         CalendarEventRecord[]
@@ -1114,7 +1091,7 @@ export async function createFocReservation(
             "appointment_status",
             "appointment_booker_id",
             "phone_number",
-            RESERVATION_META_FIELD,
+            META_FIELD,
           ],
         ],
       );
@@ -1129,18 +1106,13 @@ export async function createFocReservation(
       savedEvent.appointment_status !==
         "booked"
     ) {
-      console.error(
-        "FOC Odoo verification failed",
-        savedEvent,
-      );
-
       throw new Error(
-        "FOC reservation was not saved correctly in Odoo.",
+        "Reservation was not saved correctly in Odoo.",
       );
     }
 
     console.log(
-      "=== FOC ODOO RESERVATION SAVED ===",
+      "Family reservation saved to Odoo:",
       {
         eventId:
           savedEvent.id,
@@ -1151,60 +1123,49 @@ export async function createFocReservation(
         status:
           savedEvent.appointment_status,
 
-        booker:
-          savedEvent.appointment_booker_id,
-
-        phone:
-          savedEvent.phone_number,
-
         reservationCode,
       },
     );
 
-
-    /* --------------------------------------------------------
-     * 8. Send existing V3 WhatsApp template
+    /*
+     * Reuse the SAME WhatsApp sender used by normal reservations.
      *
-     * IMPORTANT:
-     * Odoo reservation has ALREADY succeeded.
-     * WhatsApp failure must not undo it.
-     * ------------------------------------------------------ */
-
+     * Await it so the serverless request does not terminate
+     * before the Odoo WhatsApp call completes.
+     */
     let whatsappSent =
-  false;
+      false;
 
-try {
-  const whatsappResult =
-    await sendFocReservationWhatsApp({
-      name,
-      phone,
-      partySize,
-      date,
-      time,
-      reservationCode,
-    });
+    try {
+      const whatsappResult =
+        await sendReservationConfirmationWhatsApp({
+          name,
+          phone,
+          partySize,
+          date,
+          time,
+          reservationCode,
+        });
 
-  whatsappSent =
-    true;
+      whatsappSent =
+        true;
 
-  console.log(
-    "FOC WhatsApp V3 success",
-    whatsappResult,
-  );
-} catch (error) {
-  console.error(
-    "FOC WhatsApp V3 failed:",
-    error,
-  );
-}
-
-
-    /* --------------------------------------------------------
-     * Success
-     * ------------------------------------------------------ */
+      console.log(
+        "Family reservation WhatsApp sent:",
+        whatsappResult,
+      );
+    } catch (
+      error
+    ) {
+      console.error(
+        "Family reservation WhatsApp failed:",
+        error,
+      );
+    }
 
     return {
-      success: true,
+      success:
+        true,
 
       eventId:
         freshEvent.id,
@@ -1217,17 +1178,18 @@ try {
     error
   ) {
     console.error(
-      "Reservation creation failed:",
+      "createFamilyReservation failed:",
       error,
     );
 
     return {
-      success: false,
+      success:
+        false,
 
       error:
         error instanceof Error
           ? error.message
-          : "Unable to create the reservation.",
+          : "Unable to create reservation.",
     };
   }
 }

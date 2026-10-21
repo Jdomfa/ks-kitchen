@@ -1,23 +1,13 @@
 import {
-  createFocReservation,
-  getFocSlots,
-} from "@/lib/odoo/foc-reservations";
+  createFamilyReservation,
+  getFamilyReservationSlots,
+} from "@/lib/odoo/family-reservations";
 
 export const dynamic =
   "force-dynamic";
 
 export const revalidate =
   0;
-
-
-/* ============================================================
- * GET
- *
- * Odoo is the source of truth for FOC availability.
- *
- * Optional:
- * /api/foc-reservations?partySize=3
- * ========================================================== */
 
 export async function GET(
   request: Request,
@@ -28,20 +18,43 @@ export async function GET(
         request.url,
       );
 
-    const partySizeRaw =
+    const rawPartySize =
       url.searchParams.get(
         "partySize",
       );
 
     const partySize =
-      partySizeRaw
+      rawPartySize
         ? Number(
-            partySizeRaw,
+            rawPartySize,
           )
         : undefined;
 
+    if (
+      partySize !==
+        undefined &&
+      (
+        !Number.isInteger(
+          partySize,
+        ) ||
+        partySize < 1 ||
+        partySize > 4
+      )
+    ) {
+      return Response.json(
+        {
+          success: false,
+          error:
+            "Invalid party size.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
     const slots =
-      await getFocSlots(
+      await getFamilyReservationSlots(
         partySize,
       );
 
@@ -51,6 +64,8 @@ export async function GET(
         slots,
       },
       {
+        status: 200,
+
         headers: {
           "Cache-Control":
             "no-store, no-cache, must-revalidate",
@@ -61,7 +76,7 @@ export async function GET(
     error
   ) {
     console.error(
-      "FOC availability API error:",
+      "Family reservation GET failed:",
       error,
     );
 
@@ -72,7 +87,7 @@ export async function GET(
         error:
           error instanceof Error
             ? error.message
-            : "Unable to load FOC availability.",
+            : "Unable to load reservation availability.",
       },
       {
         status: 500,
@@ -80,17 +95,6 @@ export async function GET(
     );
   }
 }
-
-
-/* ============================================================
- * POST
- *
- * 1. Re-checks FOC placeholder in Odoo
- * 2. Claims it in Odoo
- * 3. Marks appointment booked
- * 4. Stores FOC/name/phone
- * 5. Sends V3 WhatsApp template
- * ========================================================== */
 
 export async function POST(
   request: Request,
@@ -128,16 +132,10 @@ export async function POST(
           "",
       ).trim();
 
-
-    /* --------------------------------------------------------
-     * Basic API validation
-     * ------------------------------------------------------ */
-
     if (!name) {
       return Response.json(
         {
           success: false,
-
           error:
             "Name is required.",
         },
@@ -147,13 +145,17 @@ export async function POST(
       );
     }
 
-    if (!phone) {
+    if (
+      phone.replace(
+        /\D/g,
+        "",
+      ).length < 9
+    ) {
       return Response.json(
         {
           success: false,
-
           error:
-            "Phone number is required.",
+            "A valid phone number is required.",
         },
         {
           status: 400,
@@ -198,25 +200,8 @@ export async function POST(
       );
     }
 
-
-    console.log(
-      "=== FOC API BOOKING REQUEST ===",
-      {
-        name,
-        phone,
-        partySize,
-        date,
-        time,
-      },
-    );
-
-
-    /* --------------------------------------------------------
-     * Odoo + WhatsApp
-     * ------------------------------------------------------ */
-
     const result =
-      await createFocReservation({
+      await createFamilyReservation({
         name,
         phone,
         partySize,
@@ -224,45 +209,13 @@ export async function POST(
         time,
       });
 
-
-    if (
-      !result.success
-    ) {
-      console.error(
-        "FOC booking rejected",
-        result,
-      );
-
-      return Response.json(
-        result,
-        {
-          status: 409,
-        },
-      );
-    }
-
-
-    console.log(
-      "=== FOC BOOKING COMPLETE ===",
-      result,
-    );
-
-
     return Response.json(
+      result,
       {
-        success: true,
-
-        eventId:
-          result.eventId,
-
-        reservationCode:
-          result.reservationCode,
-
-        whatsappSent:
-          result.whatsappSent,
-      },
-      {
-        status: 200,
+        status:
+          result.success
+            ? 200
+            : 409,
 
         headers: {
           "Cache-Control":
@@ -274,7 +227,7 @@ export async function POST(
     error
   ) {
     console.error(
-      "FOC reservation API error:",
+      "Family reservation POST failed:",
       error,
     );
 
@@ -285,7 +238,7 @@ export async function POST(
         error:
           error instanceof Error
             ? error.message
-            : "Unable to create FOC reservation.",
+            : "Unable to create reservation.",
       },
       {
         status: 500,
