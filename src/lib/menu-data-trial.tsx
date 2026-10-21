@@ -45,7 +45,7 @@ export const menu: MenuTab[] = [
             price: 15000,
             tags: ["veggie"],
             image:
-              "https://res.cloudinary.com/ansp9yim/image/upload/v1786983887/bottom-view-chicken-nuggets-lettuce-fork-plate-salt-black-pepper-wooden-spoons-dark-table_2.jpg",
+              "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581405/chatti.jpg",
             chefNote:
               "Steamed low and slow in the clay pot itself — it's what keeps the crumb this soft.",
           },
@@ -67,7 +67,7 @@ export const menu: MenuTab[] = [
             price: 15000,
             tags: ["veggie"],
             image:
-              "https://res.cloudinary.com/ansp9yim/image/upload/v1787002833/delicious-indian-dosa-composition.jpg",
+              "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581281/dosa-1.jpg",
             chefNote:
               "Our batter ferments for 18 hours — the tang you taste is time, not shortcuts.",
           },
@@ -79,7 +79,7 @@ export const menu: MenuTab[] = [
             price: 15000,
             tags: ["veggie"],
             image:
-              "https://res.cloudinary.com/ansp9yim/image/upload/v1787002842/29492.jpg",
+              "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581281/signature.jpg",
             chefNote:
               "The potato masala recipe hasn't changed since our very first pop-up.",
           },
@@ -196,7 +196,7 @@ export const menu: MenuTab[] = [
               "Saffron, ghee and cardamom in a rich South Indian semolina dessert.",
             price: 12000,
             tags: ["veggie", "nuts"],
-            image: "/menu-items/kesari.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581279/Kesari.jpg",
             chefNote:
               "A generous pinch of real saffron — you'll see it, not just taste it.",
           },
@@ -262,7 +262,7 @@ export const menu: MenuTab[] = [
               "Fresh lemonade with cooling mint and vibrant citrus flavour.",
             price: 10000,
             tags: [],
-            image: "/menu-items/lemonade-mint.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581279/lemonade-mint.jpg",
             chefNote:
               "Muddled to order — the mint should still smell green when it hits the glass.",
           },
@@ -279,7 +279,7 @@ export const menu: MenuTab[] = [
               "Refreshing South Indian spiced buttermilk blended with herbs.",
             price: 10000,
             tags: [],
-            image: "/menu-items/spiced-buttermilk.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581278/spice-butter-milk.jpg",
             chefNote:
               "Curry leaf and ginger go in last, so they stay fragrant, not boiled out.",
           },
@@ -320,7 +320,7 @@ export const menu: MenuTab[] = [
               "Premium black tea, fresh milk, cardamom, cinnamon, ginger and cloves.",
             price: 12000,
             tags: [],
-            image: "/menu-items/masala-chai.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581278/Masala-chai.jpg",
             chefNote:
               "Our spice blend is ground fresh weekly — it's the first thing regulars notice.",
           },
