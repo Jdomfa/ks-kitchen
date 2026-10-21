@@ -4,7 +4,7 @@ const ODOO_USERNAME = process.env.ODOO_USERNAME!;
 const ODOO_API_KEY = process.env.ODOO_API_KEY!;
 
 const TEMPLATE_NAME =
-  "reservation_confirmation_v3";
+  "reservation_confirmation_v2";
 
 let cachedUid: number | null = null;
 
