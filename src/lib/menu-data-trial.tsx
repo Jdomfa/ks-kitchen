@@ -176,7 +176,7 @@ export const menu: MenuTab[] = [
         id: "desserts",
         name: "Desserts",
         image:
-          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616386/new_kesari.jpg",
+          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792617076/new_kesari.jpg",
         items: [
           {
             id: "payasam",
@@ -211,7 +211,7 @@ export const menu: MenuTab[] = [
       {
         id: "the-bar",
         name: "The Bar",
-        image: "",
+        image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792618060/drinks-cat.jpg",
         items: [
           {
             id: "house-still",
@@ -219,7 +219,7 @@ export const menu: MenuTab[] = [
             description: "Pure, crisp still water served chilled.",
             price: 3600,
             tags: [],
-            image: "/menu-items/house-still.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792617638/house-still.jpg",
           },
           {
             id: "house-sparkling",
@@ -227,7 +227,7 @@ export const menu: MenuTab[] = [
             description: "Light sparkling water with a refreshing finish.",
             price: 8000,
             tags: [],
-            image: "/menu-items/house-sparkling.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792617635/house-sparkling.jpg",
           },
           {
             id: "aqua-panna",
@@ -235,7 +235,7 @@ export const menu: MenuTab[] = [
             description: "Smooth, naturally filtered premium bottled water.",
             price: 4000,
             tags: [],
-            image: "/menu-items/aqua-panna.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616917/aquapanna.jpg",
           },
           {
             id: "voss-still",
@@ -244,7 +244,7 @@ export const menu: MenuTab[] = [
               "Premium Norwegian still water with exceptional purity.",
             price: 6000,
             tags: [],
-            image: "/menu-items/voss-still.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792618386/voss-new.jpg",
           },
           {
             id: "perrier",
@@ -253,7 +253,7 @@ export const menu: MenuTab[] = [
               "Naturally sparkling mineral water with a crisp finish.",
             price: 9000,
             tags: [],
-            image: "/menu-items/perrier.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792618385/spark-new.jpg",
           },
           {
             id: "lemonade-mint",
@@ -320,7 +320,7 @@ export const menu: MenuTab[] = [
               "Premium black tea, fresh milk, cardamom, cinnamon, ginger and cloves.",
             price: 12000,
             tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598904/Masala-chai.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616963/tea-2.jpg",
             chefNote:
               "Our spice blend is ground fresh weekly — it's the first thing regulars notice.",
           },
