@@ -18,9 +18,15 @@ type PageMode =
   | "reservation-success"
   | "interest-success";
 
+type ApiResponse = {
+  success?: boolean;
+  error?: string;
+  slots?: FamilySlot[];
+};
+
 async function readJsonResponse(
   response: Response,
-) {
+): Promise<ApiResponse> {
   const text =
     await response.text();
 
@@ -31,7 +37,9 @@ async function readJsonResponse(
   }
 
   try {
-    return JSON.parse(text);
+    return JSON.parse(
+      text,
+    ) as ApiResponse;
   } catch {
     console.error(
       "Non-JSON API response:",
@@ -234,8 +242,10 @@ export default function FamilyReservationPage() {
                 slot.date,
             ),
           ),
-        ),
-      [slots],
+        ).sort(),
+      [
+        slots,
+      ],
     );
 
   const availableTimes =
@@ -254,6 +264,15 @@ export default function FamilyReservationPage() {
               slot,
             ) =>
               slot.time,
+          )
+          .sort(
+            (
+              a,
+              b,
+            ) =>
+              a.localeCompare(
+                b,
+              ),
           ),
       [
         slots,
@@ -372,7 +391,7 @@ export default function FamilyReservationPage() {
       err
     ) {
       console.error(
-        "Reservation booking error:",
+        "Family reservation booking error:",
         err,
       );
 
@@ -505,7 +524,7 @@ export default function FamilyReservationPage() {
             K&apos;s Kitchen
           </p>
 
-          <h1 className="mt-4 text-3xl font-display text-roasted-coffee">
+          <h1 className="mt-4 font-display text-3xl text-roasted-coffee">
             Reservation confirmed
           </h1>
 
@@ -545,7 +564,7 @@ export default function FamilyReservationPage() {
             K&apos;s Kitchen
           </p>
 
-          <h1 className="mt-4 text-3xl font-display text-roasted-coffee">
+          <h1 className="mt-4 font-display text-3xl text-roasted-coffee">
             Thank you
           </h1>
 
@@ -586,7 +605,7 @@ export default function FamilyReservationPage() {
               K&apos;s Kitchen
             </p>
 
-            <h1 className="mt-3 text-4xl font-display text-roasted-coffee">
+            <h1 className="mt-3 font-display text-4xl text-roasted-coffee">
               Another day
             </h1>
 
@@ -697,7 +716,7 @@ export default function FamilyReservationPage() {
             K&apos;s Kitchen
           </p>
 
-          <h1 className="mt-3 text-4xl font-display text-roasted-coffee">
+          <h1 className="mt-3 font-display text-4xl text-roasted-coffee">
             Reserve a table
           </h1>
 
@@ -791,19 +810,12 @@ export default function FamilyReservationPage() {
                       setDate("");
                       setTime("");
                     }}
-                    className={`
-                      rounded-xl
-                      border
-                      py-3
-                      font-medium
-                      transition
-                      ${
-                        partySize ===
-                        number
-                          ? "border-banana-leaf bg-banana-leaf text-coconut-cream"
-                          : "border-tamarind-bark/20 bg-coconut-cream text-roasted-coffee"
-                      }
-                    `}
+                    className={`rounded-xl border py-3 font-medium transition ${
+                      partySize ===
+                      number
+                        ? "border-banana-leaf bg-banana-leaf text-coconut-cream"
+                        : "border-tamarind-bark/20 bg-coconut-cream text-roasted-coffee"
+                    }`}
                   >
                     {number}
                   </button>
@@ -818,9 +830,10 @@ export default function FamilyReservationPage() {
             </label>
 
             {loading ? (
-              <p className="text-sm text-tamarind-bark/70">
-                Loading available dates...
-              </p>
+              <div className="space-y-3">
+                <div className="h-14 animate-pulse rounded-xl bg-tamarind-bark/10" />
+                <div className="h-14 animate-pulse rounded-xl bg-tamarind-bark/10" />
+              </div>
             ) : dates.length ===
               0 ? (
               <p className="rounded-xl border border-tamarind-bark/10 bg-coconut-cream px-4 py-4 text-sm text-tamarind-bark/70">
@@ -849,20 +862,12 @@ export default function FamilyReservationPage() {
                           "",
                         );
                       }}
-                      className={`
-                        rounded-xl
-                        border
-                        px-4
-                        py-4
-                        text-left
-                        transition
-                        ${
-                          date ===
-                          option
-                            ? "border-clay-pot bg-clay-pot text-coconut-cream"
-                            : "border-tamarind-bark/20 bg-coconut-cream text-roasted-coffee"
-                        }
-                      `}
+                      className={`rounded-xl border px-4 py-4 text-left transition ${
+                        date ===
+                        option
+                          ? "border-clay-pot bg-clay-pot text-coconut-cream"
+                          : "border-tamarind-bark/20 bg-coconut-cream text-roasted-coffee"
+                      }`}
                     >
                       {formatDate(
                         option,
@@ -896,42 +901,44 @@ export default function FamilyReservationPage() {
                 Time
               </label>
 
-              <div className="grid grid-cols-3 gap-3">
-                {availableTimes.map(
-                  (
-                    option,
-                  ) => (
-                    <button
-                      key={
-                        option
-                      }
-                      type="button"
-                      onClick={() =>
-                        setTime(
-                          option,
-                        )
-                      }
-                      className={`
-                        rounded-xl
-                        border
-                        py-3
-                        font-medium
-                        transition
-                        ${
+              {availableTimes.length >
+              0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {availableTimes.map(
+                    (
+                      option,
+                    ) => (
+                      <button
+                        key={
+                          option
+                        }
+                        type="button"
+                        onClick={() =>
+                          setTime(
+                            option,
+                          )
+                        }
+                        className={`rounded-xl border py-3 font-medium transition ${
                           time ===
                           option
                             ? "border-banana-leaf bg-banana-leaf text-coconut-cream"
                             : "border-tamarind-bark/20 bg-coconut-cream text-roasted-coffee"
-                        }
-                      `}
-                    >
-                      {formatTime(
-                        option,
-                      )}
-                    </button>
-                  ),
-                )}
-              </div>
+                        }`}
+                      >
+                        {formatTime(
+                          option,
+                        )}
+                      </button>
+                    ),
+                  )}
+                </div>
+              ) : (
+                <p className="rounded-xl border border-tamarind-bark/10 bg-coconut-cream px-4 py-4 text-sm text-tamarind-bark/70">
+                  No times are
+                  available for this
+                  date.
+                </p>
+              )}
             </div>
           )}
 
