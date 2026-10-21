@@ -176,7 +176,7 @@ export const menu: MenuTab[] = [
         id: "desserts",
         name: "Desserts",
         image:
-          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792607816/kes-2.jpg",
+          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792615842/new_kesari.jpg",
         items: [
           {
             id: "payasam",
@@ -262,7 +262,7 @@ export const menu: MenuTab[] = [
               "Fresh lemonade with cooling mint and vibrant citrus flavour.",
             price: 10000,
             tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581279/lemonade-mint.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792615797/new-lemon-mint.jpg",
             chefNote:
               "Muddled to order — the mint should still smell green when it hits the glass.",
           },
