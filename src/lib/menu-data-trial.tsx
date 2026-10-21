@@ -67,7 +67,7 @@ export const menu: MenuTab[] = [
             price: 15000,
             tags: ["veggie"],
             image:
-              "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581281/dosa-1.jpg",
+              "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598911/classic.jpg",
             chefNote:
               "Our batter ferments for 18 hours — the tang you taste is time, not shortcuts.",
           },
@@ -79,7 +79,7 @@ export const menu: MenuTab[] = [
             price: 15000,
             tags: ["veggie"],
             image:
-              "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581281/signature.jpg",
+              "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/potatoe.jpg",
             chefNote:
               "The potato masala recipe hasn't changed since our very first pop-up.",
           },
@@ -101,7 +101,7 @@ export const menu: MenuTab[] = [
               "Roasted onions, house podi and Uttukuli cow ghee, with fresh vegetables and aromatic spices.",
             price: 15000,
             tags: ["veggie"],
-            image: "/menu-items/dosa-special.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598912/onion-dosa.jpg",
             chefNote:
               "The onions go in while they still have a little bite — texture matters here.",
           },
@@ -112,7 +112,7 @@ export const menu: MenuTab[] = [
               "Mushrooms, cracked pepper and butter, packed with spiced vegetables and fresh herbs.",
             price: 15000,
             tags: ["veggie"],
-            image: "/menu-items/dosa-street.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/mushroom.jpg",
             chefNote:
               "Inspired by the late-night carts of Chennai — built for heat and speed.",
           },
