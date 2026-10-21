@@ -57,7 +57,7 @@ export const menu: MenuTab[] = [
         description:
           "Dosa is a crisp savoury crepe from South India, made from naturally fermented rice and black lentils. A beloved staple enjoyed for breakfast, dinner or as street-side comfort food, now celebrated around the world.",
         image:
-          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792607816/dosa-cat2.jpg",
+          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616286/dosa-category.jpg",
         items: [
           {
             id: "dosa-classic",
@@ -176,7 +176,7 @@ export const menu: MenuTab[] = [
         id: "desserts",
         name: "Desserts",
         image:
-          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792615842/new_kesari.jpg",
+          "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616386/new_kesari.jpg",
         items: [
           {
             id: "payasam",
@@ -262,7 +262,7 @@ export const menu: MenuTab[] = [
               "Fresh lemonade with cooling mint and vibrant citrus flavour.",
             price: 10000,
             tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792615797/new-lemon-mint.jpg",
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616295/Lemonade-mint-new.jpg",
             chefNote:
               "Muddled to order — the mint should still smell green when it hits the glass.",
           },
