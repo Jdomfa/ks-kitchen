@@ -1280,7 +1280,7 @@ export default function ReservationChatWidget() {
                           title="K's Kitchen location"
                           loading="lazy"
                           referrerPolicy="no-referrer-when-downgrade"
-                          className="h-64 w-full border-0"
+                          className="h-[420px] w-full border-0 sm:h-[480px]"
                           allowFullScreen
                         />
                       </div>
@@ -1338,7 +1338,8 @@ export default function ReservationChatWidget() {
 
                     <div className="mt-8 flex-1">
 
-                      {currentScreen.buttons &&
+                      {!isLocationScreen &&
+                      currentScreen.buttons &&
 
                       currentScreen.buttons.length > 0 ? (
 

@@ -4082,7 +4082,9 @@ function handleEnquiryMenu(input: string): FlowResult {
         step: "ENQUIRY_MENU",
         draft: {},
       },
-      buttons: ENQUIRY_MENU_BUTTONS,
+      ...(topicKey === "location"
+        ? {}
+        : { buttons: ENQUIRY_MENU_BUTTONS }),
     };
   }
 
