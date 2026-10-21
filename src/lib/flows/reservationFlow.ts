@@ -1,8 +1,4 @@
-import {
-
-  getBookableReservationTimes,
-
-} from "@/lib/odoo/reservation-allocation";
+import { getBookableReservationTimes } from "@/lib/odoo/reservation-allocation";
 
 
 
@@ -24,41 +20,33 @@ import {
 
 import {
 
+  sendReservationConfirmations,
+
   sendReservationUpdateConfirmation,
 
 } from "@/lib/notifications/confirmation";
 
 
 
-import {
-
-  notifyStaffOfHandoff,
-
-} from "@/lib/notifications/handoff";
+import { notifyStaffOfHandoff } from "@/lib/notifications/handoff";
 
 
 
-import {
-
-  createHelpdeskTicket,
-
-  sendReservationConfirmationWhatsApp,
-
-} from "@/lib/odoo/client";
+import { createHelpdeskTicket } from "@/lib/odoo/client";
 
 
 
-import {
-
-  siteConfig,
-
-} from "@/lib/site-config";
+import { siteConfig } from "@/lib/site-config";
 
 
 
 /* ============================================================
 
+
+
  * Flow types
+
+
 
  * ========================================================== */
 
@@ -102,11 +90,19 @@ export type ReservationDraft = {
 
   name?: string;
 
+
+
   partySize?: number;
+
+
 
   date?: string;
 
+
+
   time?: string;
+
+
 
   phone?: string;
 
@@ -154,6 +150,8 @@ export const INITIAL_STATE: FlowState = {
 
   step: "MAIN_MENU",
 
+
+
   draft: {},
 
 };
@@ -164,7 +162,11 @@ export type FlowButton = {
 
   id: string;
 
+
+
   title: string;
+
+
 
   url?: string;
 
@@ -175,6 +177,8 @@ export type FlowButton = {
 export type SummaryRow = {
 
   label: string;
+
+
 
   value: string;
 
@@ -208,63 +212,52 @@ export type FlowResult = {
 
 /* ============================================================
 
+
+
  * Main menu
+
+
 
  * ========================================================== */
 
 
 
-const MENU_TEXT = `
-
-https://menu.ks.kitchen
-
-`.trim();
 
 
 
-const MAIN_MENU_TEXT =
 
-  "Welcome to K's Kitchen! How can I help?";
+const MAIN_MENU_TEXT = "Welcome to K's Kitchen! How can I help?";
 
 
 
 const MAIN_MENU_BUTTONS: FlowButton[] = [
-
   {
-
     id: "menu_reservation",
-
     title: "Reservations",
-
   },
-
-
-
   {
-
     id: "menu_enquiries",
-
     title: "Enquiries",
-
   },
-
-
-
   {
-
     id: "menu_menu",
-
     title: "Menu",
-
+    url: `https://wa.me/${siteConfig.whatsappNumber.replace(
+      /\D/g,
+      "",
+    )}?text=${encodeURIComponent("Hi, can I see your menu?")}`,
   },
-
 ];
 
 
 
 /* ============================================================
 
+
+
  * Reservation menu
+
+
 
  * ========================================================== */
 
@@ -282,6 +275,8 @@ const RESERVATION_MENU_BUTTONS: FlowButton[] = [
 
     id: "new",
 
+
+
     title: "New reservation",
 
   },
@@ -291,6 +286,8 @@ const RESERVATION_MENU_BUTTONS: FlowButton[] = [
   {
 
     id: "manage",
+
+
 
     title: "Manage existing",
 
@@ -306,6 +303,8 @@ const PARTY_SIZE_BUTTONS: FlowButton[] = [
 
     id: "1",
 
+
+
     title: "1 guest",
 
   },
@@ -315,6 +314,8 @@ const PARTY_SIZE_BUTTONS: FlowButton[] = [
   {
 
     id: "2",
+
+
 
     title: "2 guests",
 
@@ -326,6 +327,8 @@ const PARTY_SIZE_BUTTONS: FlowButton[] = [
 
     id: "3",
 
+
+
     title: "3 guests",
 
   },
@@ -335,6 +338,8 @@ const PARTY_SIZE_BUTTONS: FlowButton[] = [
   {
 
     id: "4",
+
+
 
     title: "4 guests",
 
@@ -346,6 +351,8 @@ const PARTY_SIZE_BUTTONS: FlowButton[] = [
 
     id: "5+",
 
+
+
     title: "5+ guests",
 
   },
@@ -356,226 +363,169 @@ const PARTY_SIZE_BUTTONS: FlowButton[] = [
 
 /* ============================================================
 
+
+
  * WhatsApp agent support
+
+
 
  * ========================================================== */
 
 
 
-function withWhatsAppAgent(
-  buttons: FlowButton[] = []
-): FlowButton[] {
+function withWhatsAppAgent(buttons: FlowButton[] = []): FlowButton[] {
+
   // The chat widget already has a persistent WhatsApp button.
+
   // Keep this helper as a passthrough for existing call sites so we
+
   // do not render a duplicate generic "Talk to an agent" button.
+
   return buttons;
+
 }
+
+
 
 function getPreferredTimeWhatsAppButton(draft: ReservationDraft): FlowButton {
+
   const whatsappNumber = siteConfig.whatsappNumber.replace(/\D/g, "");
+
   const name = draft.name?.trim() || "there";
+
   const partySize = draft.partySize;
+
   const date = draft.date;
 
+
+
   const details = [
+
     partySize ? `${partySize} ${partySize === 1 ? "guest" : "guests"}` : null,
+
     date ? `on ${date}` : null,
-  ].filter(Boolean).join(" ");
+
+  ]
+
+    .filter(Boolean)
+
+    .join(" ");
+
+
 
   const message = encodeURIComponent(
-    `Hi, my name is ${name}. I'd like to make a reservation${details ? ` for ${details}` : ""}, but my preferred time isn't available. Can you help me?`
+
+    `Hi, my name is ${name}. I'd like to make a reservation${details ? ` for ${details}` : ""}, but my preferred time isn't available. Can you help me?`,
+
   );
 
+
+
   return {
+
     id: "preferred_time_unavailable",
+
     title: "Preferred time isn't available",
+
     url: `https://wa.me/${whatsappNumber}?text=${message}`,
+
   };
+
 }
 
+
+
 function getReservationTimeButtons(
+
   options: string[],
-  draft: ReservationDraft
+
+  draft: ReservationDraft,
+
 ): FlowButton[] {
+
   const buttons: FlowButton[] = [
+
     ...options.map((option) => ({
+
       id: option,
+
       title: formatDisplayTime(option),
+
     })),
+
     getPreferredTimeWhatsAppButton(draft),
+
   ];
 
+
+
   // Only offer another date when there are no available time slots at all.
+
   if (options.length === 0) {
+
     buttons.push({ id: "choose_another_date", title: "Choose another date" });
+
   }
 
+
+
   return buttons;
+
 }
 
 
 
 /* ============================================================
 
+
+
  * Enquiries
+
+
 
  * ========================================================== */
 
 
 
 const ENQUIRY_TOPICS = {
-
   hours: {
-
-    label:
-
-      "Opening Hours",
-
-
-
-    text:
-
-      siteConfig.hours
-
-        .map(
-
-          (hours) =>
-
-            `${hours.days}: ${hours.time}`
-
-        )
-
-        .join("\n"),
-
+    label: "Opening Hours",
+    text: siteConfig.hours
+      .map((hours) => `${hours.days}: ${hours.time}`)
+      .join("\n"),
   },
-
-
-
   location: {
-
-    label:
-
-      "Location",
-
-
-
-    text:
-
-      `${siteConfig.address.line1}, ${siteConfig.address.line2}\n` +
-
-      `Dine-in available via reservation or walk-in.\n` +
-
-      `${siteConfig.address.map}`,
-
+    label: "Location",
+    text: `${siteConfig.address.line1}, ${siteConfig.address.line2}`,
   },
-
-
-
-  takeaway: {
-
-    label:
-
-      "Takeaway & Delivery",
-
-
-
-    text:
-
-      `Takeaway: Yes, takeouts are possible.\n` +
-
-      `Delivery: We haven't started deliveries yet but when we do we'd be sure to let you know.\n` +
-
-      `Orders: ${siteConfig.orderEmail}`,
-
-  },
-
-
-
-  contact: {
-
-    label:
-
-      "Contact & Parking",
-
-
-
-    text:
-
-      `Phone: ${siteConfig.reservationPhone}\n` +
-
-      `Email: ${siteConfig.reservationEmail}\n` +
-
-      `Parking: TODO — confirm availability.`,
-
-  },
-
 } as const;
 
-
-
-type EnquiryTopicKey =
-
-  keyof typeof ENQUIRY_TOPICS;
-
-
+type EnquiryTopicKey = keyof typeof ENQUIRY_TOPICS;
 
 const ENQUIRY_MENU_BUTTONS: FlowButton[] = [
-
   {
-
     id: "1",
-
     title: "Opening Hours",
-
   },
-
-
-
   {
-
     id: "2",
-
     title: "Location",
-
   },
-
-
-
   {
-
     id: "3",
-
-    title: "Takeaway & Delivery",
-
-  },
-
-
-
-  {
-
-    id: "4",
-
-    title: "Contact & Parking",
-
-  },
-
-
-
-  {
-
-    id: "5",
-
     title: "Talk to our team",
-
   },
-
 ];
 
 
 
 /* ============================================================
 
+
+
  * Date helpers
+
+
 
  * ========================================================== */
 
@@ -587,47 +537,37 @@ function getLagosTodayISO(): string {
 
     "en-CA",
 
+
+
     {
 
-      timeZone:
-
-        "Africa/Lagos",
+      timeZone: "Africa/Lagos",
 
 
 
-      year:
-
-        "numeric",
+      year: "numeric",
 
 
 
-      month:
-
-        "2-digit",
+      month: "2-digit",
 
 
 
-      day:
+      day: "2-digit",
 
-        "2-digit",
+    },
 
-    }
-
-  ).format(
-
-    new Date()
-
-  );
+  ).format(new Date());
 
 }
 
 
 
-const MONTH_NAMES:
-
-  Record<string, number> = {
+const MONTH_NAMES: Record<string, number> = {
 
   jan: 0,
+
+
 
   january: 0,
 
@@ -635,17 +575,23 @@ const MONTH_NAMES:
 
   feb: 1,
 
+
+
   february: 1,
 
 
 
   mar: 2,
 
+
+
   march: 2,
 
 
 
   apr: 3,
+
+
 
   april: 3,
 
@@ -657,11 +603,15 @@ const MONTH_NAMES:
 
   jun: 5,
 
+
+
   june: 5,
 
 
 
   jul: 6,
+
+
 
   july: 6,
 
@@ -669,13 +619,19 @@ const MONTH_NAMES:
 
   aug: 7,
 
+
+
   august: 7,
 
 
 
   sep: 8,
 
+
+
   sept: 8,
+
+
 
   september: 8,
 
@@ -683,17 +639,23 @@ const MONTH_NAMES:
 
   oct: 9,
 
+
+
   october: 9,
 
 
 
   nov: 10,
 
+
+
   november: 10,
 
 
 
   dec: 11,
+
+
 
   december: 11,
 
@@ -705,43 +667,43 @@ function buildDateISO(
 
   year: number,
 
+
+
   monthIndex: number,
 
-  day: number
+
+
+  day: number,
 
 ): string | null {
 
-  const date =
+  const date = new Date(
 
-    new Date(
+    Date.UTC(
 
-      Date.UTC(
+      year,
 
-        year,
 
-        monthIndex,
 
-        day
+      monthIndex,
 
-      )
 
-    );
+
+      day,
+
+    ),
+
+  );
 
 
 
   if (
 
-    date.getUTCFullYear() !==
+    date.getUTCFullYear() !== year ||
 
-      year ||
+    date.getUTCMonth() !== monthIndex ||
 
-    date.getUTCMonth() !==
-
-      monthIndex ||
-
-    date.getUTCDate() !==
-
-      day
+    date.getUTCDate() !== day
 
   ) {
 
@@ -753,13 +715,19 @@ function buildDateISO(
 
   return date
 
+
+
     .toISOString()
+
+
 
     .slice(
 
       0,
 
-      10
+
+
+      10,
 
     );
 
@@ -767,35 +735,25 @@ function buildDateISO(
 
 
 
-function parseDateInput(
+function parseDateInput(raw: string): string | null {
 
-  raw: string
-
-): string | null {
-
-  const text =
-
-    raw
-
-      .trim()
-
-      .toLowerCase();
+  const text = raw
 
 
 
-  const todayISO =
-
-    getLagosTodayISO();
+    .trim()
 
 
 
-  if (
+    .toLowerCase();
 
-    text ===
 
-    "today"
 
-  ) {
+  const todayISO = getLagosTodayISO();
+
+
+
+  if (text === "today") {
 
     return todayISO;
 
@@ -803,43 +761,31 @@ function parseDateInput(
 
 
 
-  if (
+  if (text === "tomorrow") {
 
-    text ===
-
-    "tomorrow"
-
-  ) {
-
-    const date =
-
-      new Date(
-
-        `${todayISO}T00:00:00Z`
-
-      );
+    const date = new Date(`${todayISO}T00:00:00Z`);
 
 
 
-    date.setUTCDate(
-
-      date.getUTCDate() +
-
-        1
-
-    );
+    date.setUTCDate(date.getUTCDate() + 1);
 
 
 
     return date
 
+
+
       .toISOString()
+
+
 
       .slice(
 
         0,
 
-        10
+
+
+        10,
 
       );
 
@@ -849,19 +795,17 @@ function parseDateInput(
 
   /**
 
+
+
    * Website date picker.
+
+
 
    */
 
-  if (
 
-    /^\d{4}-\d{2}-\d{2}$/.test(
 
-      text
-
-    )
-
-  ) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
 
     return text;
 
@@ -871,41 +815,27 @@ function parseDateInput(
 
   /**
 
+
+
    * DD/MM/YYYY
+
+
 
    * DD-MM-YYYY
 
+
+
    */
 
-  const numeric =
 
-    text.match(
 
-      /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/
-
-    );
+  const numeric = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
 
 
 
-  if (
+  if (numeric) {
 
-    numeric
-
-  ) {
-
-    const [
-
-      ,
-
-      day,
-
-      month,
-
-      year,
-
-    ] =
-
-      numeric;
+    const [, day, month, year] = numeric;
 
 
 
@@ -915,7 +845,9 @@ function parseDateInput(
 
         year,
 
-        10
+
+
+        10,
 
       ),
 
@@ -925,7 +857,9 @@ function parseDateInput(
 
         month,
 
-        10
+
+
+        10,
 
       ) - 1,
 
@@ -935,9 +869,11 @@ function parseDateInput(
 
         day,
 
-        10
 
-      )
+
+        10,
+
+      ),
 
     );
 
@@ -945,147 +881,129 @@ function parseDateInput(
 
 
 
-  const currentYear =
+  const currentYear = parseInt(
 
-    parseInt(
+    todayISO.slice(
 
-      todayISO.slice(
+      0,
 
-        0,
 
-        4
 
-      ),
+      4,
 
-      10
+    ),
 
-    );
+
+
+    10,
+
+  );
 
 
 
   /**
 
+
+
    * 12 September
+
+
 
    * 12th September
 
+
+
    * 12 September 2026
+
+
 
    */
 
-  const dayFirst =
-
-    text.match(
-
-      /^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)\\.?(?:\s+(\d{4}))?$/
-
-    );
 
 
+  const dayFirst = text.match(
 
-  if (
+    /^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)\\\.?(?:\s+(\d{4}))?$/,
 
-    dayFirst
-
-  ) {
-
-    const [
-
-      ,
-
-      dayString,
-
-      monthString,
-
-      yearString,] =
-
-      dayFirst;
+  );
 
 
 
-    const monthIndex =
+  if (dayFirst) {
 
-      MONTH_NAMES[
-
-        monthString
-
-      ];
+    const [, dayString, monthString, yearString] = dayFirst;
 
 
 
-    if (
-
-      monthIndex !==
-
-      undefined
-
-    ) {
-
-      const year =
-
-        yearString
-
-          ? parseInt(
-
-              yearString,
-
-              10
-
-            )
-
-          : currentYear;
+    const monthIndex = MONTH_NAMES[monthString];
 
 
 
-      let iso =
+    if (monthIndex !== undefined) {
 
-        buildDateISO(
+      const year = yearString
 
-          year,
+        ? parseInt(
+
+            yearString,
+
+
+
+            10,
+
+          )
+
+        : currentYear;
+
+
+
+      let iso = buildDateISO(
+
+        year,
+
+
+
+        monthIndex,
+
+
+
+        parseInt(
+
+          dayString,
+
+
+
+          10,
+
+        ),
+
+      );
+
+
+
+      if (iso && !yearString && iso < todayISO) {
+
+        iso = buildDateISO(
+
+          year + 1,
+
+
 
           monthIndex,
+
+
 
           parseInt(
 
             dayString,
 
-            10
 
-          )
+
+            10,
+
+          ),
 
         );
-
-
-
-      if (
-
-        iso &&
-
-        !yearString &&
-
-        iso <
-
-          todayISO
-
-      ) {
-
-        iso =
-
-          buildDateISO(
-
-            year + 1,
-
-            monthIndex,
-
-            parseInt(
-
-              dayString,
-
-              10
-
-            )
-
-          );
 
       }
 
@@ -1101,127 +1019,103 @@ function parseDateInput(
 
   /**
 
+
+
    * September 12
+
+
 
    * September 12, 2026
 
+
+
    */
 
-  const monthFirst =
-
-    text.match(
-
-      /^([a-z]+)\\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?$/
-
-    );
 
 
+  const monthFirst = text.match(
 
-  if (
+    /^([a-z]+)\\\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?$/,
 
-    monthFirst
-
-  ) {
-
-    const [
-
-      ,
-
-      monthString,
-
-      dayString,
-
-      yearString,
-
-    ] =
-
-      monthFirst;
+  );
 
 
 
-    const monthIndex =
+  if (monthFirst) {
 
-      MONTH_NAMES[
-
-        monthString
-
-      ];
+    const [, monthString, dayString, yearString] = monthFirst;
 
 
 
-    if (
-
-      monthIndex !==
-
-      undefined
-
-    ) {
-
-      const year =
-
-        yearString
-
-          ? parseInt(
-
-              yearString,
-
-              10
-
-            )
-
-          : currentYear;
+    const monthIndex = MONTH_NAMES[monthString];
 
 
 
-      let iso =
+    if (monthIndex !== undefined) {
 
-        buildDateISO(
+      const year = yearString
 
-          year,
+        ? parseInt(
+
+            yearString,
+
+
+
+            10,
+
+          )
+
+        : currentYear;
+
+
+
+      let iso = buildDateISO(
+
+        year,
+
+
+
+        monthIndex,
+
+
+
+        parseInt(
+
+          dayString,
+
+
+
+          10,
+
+        ),
+
+      );
+
+
+
+      if (iso && !yearString && iso < todayISO) {
+
+        iso = buildDateISO(
+
+          year + 1,
+
+
 
           monthIndex,
+
+
 
           parseInt(
 
             dayString,
 
-            10
 
-          )
+
+            10,
+
+          ),
 
         );
-
-
-
-      if (
-
-        iso &&
-
-        !yearString &&
-
-        iso <
-
-          todayISO
-
-      ) {
-
-        iso =
-
-          buildDateISO(
-
-            year + 1,
-
-            monthIndex,
-
-            parseInt(
-
-              dayString,
-
-              10
-
-            )
-
-          );
 
       }
 
@@ -1243,45 +1137,33 @@ function parseDateInput(
 
 /* ============================================================
 
+
+
  * Helpers
+
+
 
  * ========================================================== */
 
 
 
-function isGlobalReset(
+function isGlobalReset(text: string): boolean {
 
-  text: string
+  const value = text
 
-): boolean {
 
-  const value =
 
-    text
+    .trim()
 
-      .trim()
 
-      .toLowerCase();
+
+    .toLowerCase();
 
 
 
   return (
 
-    value ===
-
-      "0" ||
-
-    value ===
-
-      "menu" ||
-
-    value ===
-
-      "restart" ||
-
-    value ===
-
-      "back"
+    value === "0" || value === "menu" || value === "restart" || value === "back"
 
   );
 
@@ -1289,67 +1171,25 @@ function isGlobalReset(
 
 
 
-function formatDisplayTime(
+function formatDisplayTime(time: string): string {
 
-  time: string
-
-): string {
-
-  const [
-
-    hoursString,
-
-    minutesString,
-
-  ] =
-
-    time.split(
-
-      ":"
-
-    );
+  const [hoursString, minutesString] = time.split(":");
 
 
 
-  const hours =
-
-    Number(
-
-      hoursString
-
-    );
+  const hours = Number(hoursString);
 
 
 
-  const minutes =
-
-    Number(
-
-      minutesString
-
-    );
+  const minutes = Number(minutesString);
 
 
 
-  const period =
-
-    hours >= 12
-
-      ? "PM"
-
-      : "AM";
+  const period = hours >= 12 ? "PM" : "AM";
 
 
 
-  const displayHour =
-
-    hours % 12 ===
-
-    0
-
-      ? 12
-
-      : hours % 12;
+  const displayHour = hours % 12 === 0 ? 12 : hours % 12;
 
 
 
@@ -1359,15 +1199,13 @@ function formatDisplayTime(
 
       ? ""
 
-      : `:${String(
-
-          minutes
-
-        ).padStart(
+      : `:${String(minutes).padStart(
 
           2,
 
-          "0"
+
+
+          "0",
 
         )}`;
 
@@ -1379,35 +1217,21 @@ function formatDisplayTime(
 
 
 
-function looksLikePhoneNumber(
+function looksLikePhoneNumber(raw: string): boolean {
 
-  raw: string
+  const digitsOnly = raw.replace(
 
-): boolean {
-
-  const digitsOnly =
-
-    raw.replace(
-
-      /\D/g,
-
-      ""
-
-    );
+    /\D/g,
 
 
 
-  return (
-
-    digitsOnly.length >=
-
-      9 &&
-
-    digitsOnly.length <=
-
-      15
+    "",
 
   );
+
+
+
+  return digitsOnly.length >= 9 && digitsOnly.length <= 15;
 
 }
 
@@ -1415,7 +1239,11 @@ function looksLikePhoneNumber(
 
 /* ============================================================
 
+
+
  * Odoo availability
+
+
 
  * ========================================================== */
 
@@ -1425,27 +1253,13 @@ async function getBookableSlots(
 
   date: string,
 
-  partySize: number
+
+
+  partySize: number,
 
 ): Promise<string[]> {
 
-  if (
-
-    !Number.isInteger(
-
-      partySize
-
-    ) ||
-
-    partySize <
-
-      1 ||
-
-    partySize >
-
-      4
-
-  ) {
+  if (!Number.isInteger(partySize) || partySize < 1 || partySize > 4) {
 
     return [];
 
@@ -1457,7 +1271,9 @@ async function getBookableSlots(
 
     date,
 
-    partySize
+
+
+    partySize,
 
   );
 
@@ -1467,7 +1283,11 @@ async function getBookableSlots(
 
 /* ============================================================
 
+
+
  * Main entry point
+
+
 
  * ========================================================== */
 
@@ -1487,9 +1307,7 @@ export async function processFlowMessage({
 
 
 
-  channel =
-
-    "website",
+  channel = "website",
 
 
 
@@ -1497,81 +1315,43 @@ export async function processFlowMessage({
 
 }: {
 
-  text:
-
-    string;
+  text: string;
 
 
 
-  buttonId?:
-
-    string;
+  buttonId?: string;
 
 
 
-  state:
-
-    FlowState;
+  state: FlowState;
 
 
 
-  channel?:
-
-    | "website"
-
-    | "whatsapp";
+  channel?: "website" | "whatsapp";
 
 
 
-  customerContact?:
-
-    string;
+  customerContact?: string;
 
 }): Promise<FlowResult> {
 
-  const input =
-
-    (
-
-      buttonId ??
-
-      text
-
-    ).trim();
+  const input = (buttonId ?? text).trim();
 
 
 
-  if (
-
-    state.step !==
-
-      "MAIN_MENU" &&
-
-    isGlobalReset(
-
-      text
-
-    )
-
-  ) {
+  if (state.step !== "MAIN_MENU" && isGlobalReset(text)) {
 
     return {
 
-      reply:
-
-        MAIN_MENU_TEXT,
+      reply: MAIN_MENU_TEXT,
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: MAIN_MENU_BUTTONS,
 
     };
 
@@ -1579,39 +1359,23 @@ export async function processFlowMessage({
 
 
 
-  switch (
-
-    state.step
-
-  ) {
+  switch (state.step) {
 
     case "MAIN_MENU":
 
-      return handleMainMenu(
-
-        input
-
-      );
+      return handleMainMenu(input);
 
 
 
     case "RESERVATION_MENU":
 
-      return handleReservationMenu(
-
-        input
-
-      );
+      return handleReservationMenu(input);
 
 
 
     case "ENQUIRY_MENU":
 
-      return handleEnquiryMenu(
-
-        input
-
-      );
+      return handleEnquiryMenu(input);
 
 
 
@@ -1621,11 +1385,17 @@ export async function processFlowMessage({
 
         input,
 
+
+
         state,
+
+
 
         channel,
 
-        customerContact
+
+
+        customerContact,
 
       );
 
@@ -1637,9 +1407,13 @@ export async function processFlowMessage({
 
         input,
 
+
+
         state,
 
-        channel
+
+
+        channel,
 
       );
 
@@ -1651,11 +1425,17 @@ export async function processFlowMessage({
 
         input,
 
+
+
         state,
+
+
 
         channel,
 
-        customerContact
+
+
+        customerContact,
 
       );
 
@@ -1667,9 +1447,13 @@ export async function processFlowMessage({
 
         input,
 
+
+
         state,
 
-        channel
+
+
+        channel,
 
       );
 
@@ -1681,7 +1465,9 @@ export async function processFlowMessage({
 
         input,
 
-        state
+
+
+        state,
 
       );
 
@@ -1693,7 +1479,9 @@ export async function processFlowMessage({
 
         input,
 
-        state
+
+
+        state,
 
       );
 
@@ -1705,7 +1493,9 @@ export async function processFlowMessage({
 
         input,
 
-        state
+
+
+        state,
 
       );
 
@@ -1717,9 +1507,13 @@ export async function processFlowMessage({
 
         input,
 
+
+
         state,
 
-        channel
+
+
+        channel,
 
       );
 
@@ -1731,7 +1525,9 @@ export async function processFlowMessage({
 
         input,
 
-        state
+
+
+        state,
 
       );
 
@@ -1743,7 +1539,9 @@ export async function processFlowMessage({
 
         input,
 
-        state
+
+
+        state,
 
       );
 
@@ -1755,9 +1553,13 @@ export async function processFlowMessage({
 
         input,
 
+
+
         state,
 
-        channel
+
+
+        channel,
 
       );
 
@@ -1769,9 +1571,13 @@ export async function processFlowMessage({
 
         input,
 
+
+
         state,
 
-        channel
+
+
+        channel,
 
       );
 
@@ -1781,21 +1587,15 @@ export async function processFlowMessage({
 
       return {
 
-        reply:
-
-          MAIN_MENU_TEXT,
+        reply: MAIN_MENU_TEXT,
 
 
 
-        state:
-
-          INITIAL_STATE,
+        state: INITIAL_STATE,
 
 
 
-        buttons:
-
-          MAIN_MENU_BUTTONS,
+        buttons: MAIN_MENU_BUTTONS,
 
       };
 
@@ -1807,63 +1607,51 @@ export async function processFlowMessage({
 
 /* ============================================================
 
+
+
  * Main menu handler
+
+
 
  * ========================================================== */
 
 
 
-function handleMainMenu(
+function handleMainMenu(input: string): FlowResult {
 
-  input: string
-
-): FlowResult {
-
-  const normalized =
-
-    input
-
-      .trim()
-
-      .toLowerCase();
+  const normalized = input
 
 
 
-  if (
+    .trim()
 
-    normalized ===
 
-      "menu_reservation" ||
 
-    normalized.includes(
+    .toLowerCase();
 
-      "reserv"
 
-    )
 
-  ) {
+  if (normalized === "menu_reservation" || normalized.includes("reserv")) {
 
     return {
 
-      reply:
-
-        "What name should the reservation be under?",
+      reply: RESERVATION_MENU_TEXT,
 
 
 
       state: {
 
-        step:
-
-          "RESERVATION_NAME",
+        step: "RESERVATION_MENU",
 
 
 
-        draft:
-
-          {},
+        draft: {},
 
       },
+
+
+
+      buttons: withWhatsAppAgent(RESERVATION_MENU_BUTTONS),
 
     };
 
@@ -1871,79 +1659,27 @@ function handleMainMenu(
 
 
 
-  if (
-
-    normalized ===
-
-      "menu_enquiries" ||
-
-    normalized.includes(
-
-      "enquir"
-
-    )
-
-  ) {
+  if (normalized === "menu_enquiries" || normalized.includes("enquir")) {
 
     return {
 
-      reply:
-
-        "What would you like to know?",
+      reply: "What would you like to know?",
 
 
 
       state: {
 
-        step:
-
-          "ENQUIRY_MENU",
+        step: "ENQUIRY_MENU",
 
 
 
-        draft:
-
-          {},
+        draft: {},
 
       },
 
 
 
-      buttons:
-
-        ENQUIRY_MENU_BUTTONS,
-
-    };
-
-  }
-
-
-
-  if (
-
-    normalized ===
-
-    "menu_menu"
-
-  ) {
-
-    return {
-
-      reply:
-
-        MENU_TEXT,
-
-
-
-      state:
-
-        INITIAL_STATE,
-
-
-
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: ENQUIRY_MENU_BUTTONS,
 
     };
 
@@ -1953,21 +1689,15 @@ function handleMainMenu(
 
   return {
 
-    reply:
-
-      MAIN_MENU_TEXT,
+    reply: MAIN_MENU_TEXT,
 
 
 
-    state:
-
-      INITIAL_STATE,
+    state: INITIAL_STATE,
 
 
 
-    buttons:
-
-      MAIN_MENU_BUTTONS,
+    buttons: MAIN_MENU_BUTTONS,
 
   };
 
@@ -1977,41 +1707,81 @@ function handleMainMenu(
 
 /* ============================================================
 
+
+
  * Reservation menu handler
+
+
 
  * ========================================================== */
 
 
 
 function handleReservationMenu(input: string): FlowResult {
-  const normalized = input.trim().toLowerCase();if (normalized === "new" || normalized.includes("new")) {
+
+  const normalized = input.trim().toLowerCase();
+
+
+
+  if (normalized === "new" || normalized.includes("new")) {
+
     return {
+
       reply: "What name should the reservation be under?",
+
       state: { step: "RESERVATION_NAME", draft: {} },
+
     };
+
   }
+
+
 
   if (
+
     normalized === "manage" ||
+
     normalized.includes("manage") ||
+
     normalized.includes("existing")
+
   ) {
+
     return {
-      reply: "Please enter your reservation code, or the phone number you booked with.",
+
+      reply:
+
+        "Please enter your reservation code, or the phone number you booked with.",
+
       state: { step: "MANAGE_CODE", draft: {} },
+
     };
+
   }
 
+
+
   return {
+
     reply: RESERVATION_MENU_TEXT,
+
     state: { step: "RESERVATION_MENU", draft: {} },
+
     buttons: withWhatsAppAgent(RESERVATION_MENU_BUTTONS),
+
   };
+
 }
+
+
 
 /* ============================================================
 
+
+
  * Party size
+
+
 
  * ========================================================== */
 
@@ -2023,125 +1793,87 @@ async function handleReservationPartySize(
 
 
 
-  state:
-
-    FlowState,
+  state: FlowState,
 
 
 
-  channel:
-
-    | "website"
-
-    | "whatsapp",
+  channel: "website" | "whatsapp",
 
 
 
-  customerContact:
-
-    | string
-
-    | undefined
+  customerContact: string | undefined,
 
 ): Promise<FlowResult> {
 
-  const normalized =
-
-    input.trim();
+  const normalized = input.trim();
 
 
 
-  const numericPartySize =
+  const numericPartySize = Number.parseInt(
 
-    Number.parseInt(
+    normalized,
 
-      normalized,
 
-      10
 
-    );
+    10,
+
+  );
 
 
 
   /**
 
+
+
    * 5+ goes to an agent.
+
+
 
    */
 
+
+
   if (
 
-    normalized ===
+    normalized === "5+" ||
 
-      "5+" ||
-
-    (
-
-      Number.isFinite(
-
-        numericPartySize
-
-      ) &&
-
-      numericPartySize >=
-
-        5
-
-    )
+    (Number.isFinite(numericPartySize) && numericPartySize >= 5)
 
   ) {
 
-    if (
+    if (channel === "whatsapp" && customerContact) {
 
-      channel ===
+      const result = await notifyStaffOfHandoff({
 
-        "whatsapp" &&
-
-      customerContact
-
-    ) {
-
-      const result =
-
-        await notifyStaffOfHandoff({
-
-          message:
-
-            "Customer wants to book a table for 5 or more guests.",
+        message: "Customer wants to book a table for 5 or more guests.",
 
 
 
-          channel,
+        channel,
 
 
 
-          customerContact,
+        customerContact,
 
-        });
+      });
 
 
 
       return {
 
-        reply:
+        reply: result.success
 
-          result.success
+          ? "For parties of 5 or more, our team will reply to you here shortly to arrange the best setup."
 
-            ? "For parties of 5 or more, our team will reply to you here shortly to arrange the best setup."
-
-            : "For parties of 5 or more, please contact our team directly and we'll help arrange the best setup.",
+          : "For parties of 5 or more, please contact our team directly and we'll help arrange the best setup.",
 
 
 
-        state:
-
-          INITIAL_STATE,
+        state: INITIAL_STATE,
 
 
 
-        buttons:
-
-          MAIN_MENU_BUTTONS,
+        buttons: MAIN_MENU_BUTTONS,
 
       };
 
@@ -2149,31 +1881,27 @@ async function handleReservationPartySize(
 
 
 
-    const whatsappNumber =
+    const whatsappNumber = siteConfig.whatsappNumber.replace(
 
-      siteConfig.whatsappNumber.replace(
-
-        /\D/g,
-
-        ""
-
-      );
+      /\D/g,
 
 
 
-    const message =
+      "",
 
-      encodeURIComponent(
-
-        "Hi, I'd like to book a table for 5 or more guests."
-
-      );
+    );
 
 
 
-    const url =
+    const message = encodeURIComponent(
 
-      `https://wa.me/${whatsappNumber}?text=${message}`;
+      "Hi, I'd like to book a table for 5 or more guests.",
+
+    );
+
+
+
+    const url = `https://wa.me/${whatsappNumber}?text=${message}`;
 
 
 
@@ -2185,9 +1913,7 @@ async function handleReservationPartySize(
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
@@ -2195,15 +1921,11 @@ async function handleReservationPartySize(
 
         {
 
-          id:
-
-            "open_whatsapp",
+          id: "open_whatsapp",
 
 
 
-          title:
-
-            "Continue on WhatsApp",
+          title: "Continue on WhatsApp",
 
 
 
@@ -2219,9 +1941,7 @@ async function handleReservationPartySize(
 
 
 
-  const partySize =
-
-    numericPartySize;
+  const partySize = numericPartySize;
 
 
 
@@ -2231,25 +1951,25 @@ async function handleReservationPartySize(
 
       1,
 
+
+
       2,
+
+
 
       3,
 
+
+
       4,
 
-    ].includes(
-
-      partySize
-
-    )
+    ].includes(partySize)
 
   ) {
 
     return {
 
-      reply:
-
-        "Please choose a party size below.",
+      reply: "Please choose a party size below.",
 
 
 
@@ -2257,13 +1977,7 @@ async function handleReservationPartySize(
 
 
 
-      buttons:
-
-        withWhatsAppAgent(
-
-          PARTY_SIZE_BUTTONS
-
-        ),
+      buttons: withWhatsAppAgent(PARTY_SIZE_BUTTONS),
 
     };
 
@@ -2273,9 +1987,7 @@ async function handleReservationPartySize(
 
   const dateHint =
 
-    channel ===
-
-    "whatsapp"
+    channel === "whatsapp"
 
       ? "What date would you like to book? (e.g. 'tomorrow', '12th September', or YYYY-MM-DD)"
 
@@ -2285,17 +1997,13 @@ async function handleReservationPartySize(
 
   return {
 
-    reply:
-
-      dateHint,
+    reply: dateHint,
 
 
 
     state: {
 
-      step:
-
-        "RESERVATION_DATE",
+      step: "RESERVATION_DATE",
 
 
 
@@ -2313,9 +2021,7 @@ async function handleReservationPartySize(
 
 
 
-    inputType:
-
-      "date",
+    inputType: "date",
 
   };
 
@@ -2325,195 +2031,363 @@ async function handleReservationPartySize(
 
 /* ============================================================
 
+
+
  * Reservation date
+
+
 
  * ========================================================== */
 
 
 
 async function handleReservationDate(
+
   input: string,
+
   state: FlowState,
-  channel: "website" | "whatsapp"
+
+  channel: "website" | "whatsapp",
+
 ): Promise<FlowResult> {
+
   const date = parseDateInput(input);
+
   const todayISO = getLagosTodayISO();
 
+
+
   if (!date) {
+
     return {
+
       reply:
+
         channel === "whatsapp"
+
           ? "Sorry, I couldn't understand that date. Try 'tomorrow', '12th September', or YYYY-MM-DD."
+
           : "Please choose a valid date.",
+
       state,
+
       inputType: "date",
+
     };
+
   }
 
+
+
   if (date < todayISO) {
+
     return {
+
       reply: "That date is in the past — please choose today or later.",
+
       state,
+
       inputType: "date",
+
     };
+
   }
+
+
 
   const { partySize } = state.draft;
 
+
+
   if (!partySize) {
+
     return {
+
       reply: "Something went wrong — let's start over.",
+
       state: INITIAL_STATE,
+
       buttons: MAIN_MENU_BUTTONS,
+
     };
+
   }
+
+
 
   const draft = { ...state.draft, date };
+
   const bookableSlots = await getBookableSlots(date, partySize);
 
+
+
   if (bookableSlots.length === 0) {
+
     return {
+
       reply: `There are no available reservation times on ${date} for ${partySize} ${partySize === 1 ? "guest" : "guests"}.`,
+
       state: {
+
         step: "RESERVATION_TIME",
+
         draft,
+
         alternatives: [],
+
       },
+
       buttons: getReservationTimeButtons([], draft),
+
     };
+
   }
 
+
+
   return {
+
     reply: `Here's what's available on ${date}:`,
+
     state: {
+
       step: "RESERVATION_TIME",
+
       draft,
+
       alternatives: bookableSlots,
+
     },
+
     buttons: getReservationTimeButtons(bookableSlots, draft),
+
   };
+
 }
 
+
+
 /* ============================================================
+
+
 
  * Reservation time
 
+
+
  * ========================================================== */
 
 
 
-function handleReservationTime(
-  input: string,
-  state: FlowState
-): FlowResult {
+function handleReservationTime(input: string, state: FlowState): FlowResult {
+
   const time = input.trim();
+
   const options = state.alternatives ?? [];
 
+
+
   if (time === "choose_another_date") {
+
     return {
+
       reply: "What date would you like to book?",
-      state: { step: "RESERVATION_DATE", draft: { ...state.draft, date: undefined, time: undefined } },
+
+      state: {
+
+        step: "RESERVATION_DATE",
+
+        draft: { ...state.draft, date: undefined, time: undefined },
+
+      },
+
       inputType: "date",
+
     };
+
   }
+
+
 
   if (!options.includes(time)) {
+
     return {
+
       reply: "Please choose one of the available times below.",
+
       state,
+
       buttons: getReservationTimeButtons(options, state.draft),
+
     };
+
   }
+
+
 
   const draft = { ...state.draft, time };
+
   const { name, phone, partySize, date } = draft;
 
+
+
   if (!name || !phone || !partySize || !date) {
+
     return {
-      reply: "Something went wrong with your booking details — let's start over.",
+
+      reply:
+
+        "Something went wrong with your booking details — let's start over.",
+
       state: INITIAL_STATE,
+
       buttons: MAIN_MENU_BUTTONS,
+
     };
+
   }
 
+
+
   return {
+
     reply: "Please confirm your booking:",
+
     state: { step: "RESERVATION_CONFIRM", draft },
+
     summary: [
+
       { label: "Name", value: name },
+
       { label: "Phone", value: phone },
+
       { label: "Party size", value: String(partySize) },
+
       { label: "Date", value: date },
+
       { label: "Time", value: formatDisplayTime(time) },
+
     ],
+
     buttons: [
+
       { id: "confirm", title: "Confirm" },
+
       { id: "cancel", title: "Cancel" },
+
     ],
+
   };
+
 }
 
+
+
 /* ============================================================
+
+
 
  * Reservation name
 
+
+
  * ========================================================== */
 
 
 
-function handleReservationName(
-  input: string,
-  state: FlowState
-): FlowResult {
+function handleReservationName(input: string, state: FlowState): FlowResult {
+
   const name = input.trim();
 
+
+
   if (!name) {
+
     return {
-      reply: "Sorry, I didn't catch that — what name should the reservation be under?",
+
+      reply:
+
+        "Sorry, I didn't catch that — what name should the reservation be under?",
+
       state,
+
     };
+
   }
 
+
+
   return {
+
     reply: `Thanks, ${name}! What's the best phone number to reach you on for this booking?`,
+
     state: { step: "RESERVATION_PHONE", draft: { ...state.draft, name } },
+
   };
+
 }
 
+
+
 /* ============================================================
+
+
 
  * Reservation phone
 
+
+
  * ========================================================== */
 
 
 
-function handleReservationPhone(
-  input: string,
-  state: FlowState
-): FlowResult {
+function handleReservationPhone(input: string, state: FlowState): FlowResult {
+
   const phone = input.trim();
 
+
+
   if (phone.replace(/\D/g, "").length < 9) {
+
     return {
+
       reply: "Please enter a valid phone number.",
+
       state,
+
     };
+
   }
 
+
+
   return {
+
     reply: "How many guests?",
+
     state: {
+
       step: "RESERVATION_PARTY_SIZE",
+
       draft: { ...state.draft, phone },
+
     },
+
     buttons: withWhatsAppAgent(PARTY_SIZE_BUTTONS),
+
   };
+
 }
+
+
 
 /* ============================================================
 
+
+
  * Reservation confirmation
+
+
 
  * ========================================================== */
 
@@ -2525,59 +2399,39 @@ async function handleReservationConfirm(
 
 
 
-  state:
-
-    FlowState,
+  state: FlowState,
 
 
 
-  channel:
-
-    | "website"
-
-    | "whatsapp"
+  channel: "website" | "whatsapp",
 
 ): Promise<FlowResult> {
 
-  const normalized =
-
-    input
-
-      .trim()
-
-      .toLowerCase();
+  const normalized = input
 
 
 
-  if (
+    .trim()
 
-    normalized ===
 
-      "cancel" ||
 
-    normalized ===
+    .toLowerCase();
 
-      "no"
 
-  ) {
+
+  if (normalized === "cancel" || normalized === "no") {
 
     return {
 
-      reply:
-
-        "No problem, your booking was cancelled.",
+      reply: "No problem, your booking was cancelled.",
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: MAIN_MENU_BUTTONS,
 
     };
 
@@ -2585,23 +2439,11 @@ async function handleReservationConfirm(
 
 
 
-  if (
-
-    normalized !==
-
-      "confirm" &&
-
-    normalized !==
-
-      "yes"
-
-  ) {
+  if (normalized !== "confirm" && normalized !== "yes") {
 
     return {
 
-      reply:
-
-        "Please confirm or cancel.",
+      reply: "Please confirm or cancel.",
 
 
 
@@ -2609,41 +2451,31 @@ async function handleReservationConfirm(
 
 
 
-      buttons:
+      buttons: withWhatsAppAgent([
 
-        withWhatsAppAgent([
+        {
 
-          {
-
-            id:
-
-              "confirm",
+          id: "confirm",
 
 
 
-            title:
+          title: "Confirm",
 
-              "Confirm",
-
-          },
+        },
 
 
 
-          {
+        {
 
-            id:
-
-              "cancel",
+          id: "cancel",
 
 
 
-            title:
+          title: "Cancel",
 
-              "Cancel",
+        },
 
-          },
-
-        ]),
+      ]),
 
     };
 
@@ -2655,33 +2487,27 @@ async function handleReservationConfirm(
 
     name,
 
+
+
     partySize,
+
+
 
     date,
 
+
+
     time,
+
+
 
     phone,
 
-  } =
-
-    state.draft;
+  } = state.draft;
 
 
 
-  if (
-
-    !name ||
-
-    !partySize ||
-
-    !date ||
-
-    !time ||
-
-    !phone
-
-  ) {
+  if (!name || !partySize || !date || !time || !phone) {
 
     return {
 
@@ -2691,15 +2517,11 @@ async function handleReservationConfirm(
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: MAIN_MENU_BUTTONS,
 
     };
 
@@ -2709,13 +2531,43 @@ async function handleReservationConfirm(
 
   /**
 
+
+
    * Fresh Odoo allocation happens here.
+
+
 
    */
 
-  const result =
 
-    await createOdooReservation({
+
+  const result = await createOdooReservation({
+
+    name,
+
+
+
+    phone,
+
+
+
+    partySize,
+
+
+
+    date,
+
+
+
+    time,
+
+  });
+
+
+
+  if (result.success) {
+
+    sendReservationConfirmations({
 
       name,
 
@@ -2735,84 +2587,53 @@ async function handleReservationConfirm(
 
       time,
 
+
+
+      reservationCode: result.reservationCode,
+
+
+
+      originChannel: channel,
+
+    }).catch((error) => {
+
+      console.error(
+
+        "Reservation confirmation send failed:",
+
+
+
+        error,
+
+      );
+
     });
 
 
 
-  if (
+    const codeLine = result.reservationCode
 
-    result.success
+      ? `\n\nYour reservation code is ${result.reservationCode} — keep it handy if you need to change or cancel later.`
 
-  ) {
-
-    /**
-     * The reservation itself is already confirmed in Odoo at this
-     * point. WhatsApp is deliberately best-effort: a Meta/Odoo
-     * messaging failure must never roll back a valid table booking.
-     */
-    if (result.reservationCode) {
-      console.log("=== WHATSAPP CONFIRMATION START ===");
-
-  try {
-    const sendResult =
-      await sendReservationConfirmationWhatsApp({
-        name,
-        phone,
-        partySize,
-        date,
-        time,
-        reservationCode: result.reservationCode,
-      });
-
-    console.log(
-      "=== WHATSAPP CONFIRMATION RESULT ===",
-    );
-
-    console.dir(sendResult, {
-      depth: null,
-    });
-  } catch (error) {
-    console.error(
-      "=== WHATSAPP CONFIRMATION ERROR ===",
-    );
-
-    console.error(error);
-
-    // Do not fail the reservation itself.
-  }
-}
-
-    const codeLine =
-
-      result.reservationCode
-
-        ? `\n\nYour reservation code is ${result.reservationCode} — keep it handy if you need to change or cancel later.`
-
-        : "";
+      : "";
 
 
 
     return {
 
-      reply:
+      reply: `You're booked! Reservation confirmed for ${name}, party of ${partySize}, on ${date} at ${formatDisplayTime(
 
-        `You're booked! Reservation confirmed for ${name}, party of ${partySize}, on ${date} at ${formatDisplayTime(
+        time,
 
-          time
-
-        )}.${codeLine}`,
+      )}.${codeLine}`,
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: MAIN_MENU_BUTTONS,
 
     };
 
@@ -2822,45 +2643,43 @@ async function handleReservationConfirm(
 
   /**
 
+
+
    * Re-read Odoo because another customer may have
+
+
 
    * claimed that table before Confirm was pressed.
 
+
+
    */
 
-  const bookableSlots =
 
-    await getBookableSlots(
 
-      date,
+  const bookableSlots = await getBookableSlots(
 
-      partySize
-
-    );
+    date,
 
 
 
-  if (
+    partySize,
 
-    bookableSlots.length ===
+  );
 
-    0
 
-  ) {
+
+  if (bookableSlots.length === 0) {
 
     return {
 
-      reply:
-
-        `Sorry, that time just became unavailable and there's nothing else open on ${date}. Please choose another date.`,
+      reply: `Sorry, that time just became unavailable and there's nothing else open on ${date}. Please choose another date.`,
 
 
 
       state: {
 
-        step:
-
-          "RESERVATION_DATE",
+        step: "RESERVATION_DATE",
 
 
 
@@ -2874,9 +2693,7 @@ async function handleReservationConfirm(
 
 
 
-      inputType:
-
-        "date",
+      inputType: "date",
 
     };
 
@@ -2886,17 +2703,13 @@ async function handleReservationConfirm(
 
   return {
 
-    reply:
-
-      `Sorry, that time just became unavailable. Here's what's still open on ${date}:`,
+    reply: `Sorry, that time just became unavailable. Here's what's still open on ${date}:`,
 
 
 
     state: {
 
-      step:
-
-        "RESERVATION_TIME",
+      step: "RESERVATION_TIME",
 
 
 
@@ -2912,45 +2725,25 @@ async function handleReservationConfirm(
 
 
 
-      alternatives:
-
-        bookableSlots,
+      alternatives: bookableSlots,
 
     },
 
 
 
-    buttons:
+    buttons: withWhatsAppAgent(
 
-      withWhatsAppAgent(
+      bookableSlots.map((option) => ({
 
-        bookableSlots.map(
-
-          (
-
-            option
-
-          ) => ({
-
-            id:
-
-              option,
+        id: option,
 
 
 
-            title:
+        title: formatDisplayTime(option),
 
-              formatDisplayTime(
+      })),
 
-                option
-
-              ),
-
-          })
-
-        )
-
-      ),
+    ),
 
   };
 
@@ -2960,7 +2753,11 @@ async function handleReservationConfirm(
 
 /* ============================================================
 
+
+
  * Manage existing reservation
+
+
 
  * ========================================================== */
 
@@ -2972,27 +2769,19 @@ async function handleManageCode(
 
 
 
-  state:
-
-    FlowState
+  state: FlowState,
 
 ): Promise<FlowResult> {
 
-  const raw =
-
-    input.trim();
+  const raw = input.trim();
 
 
 
-  if (
+  if (raw.length < 4) {
 
-    raw.length <
+    return {
 
-    4
-
-  ) {
-
-    return {reply:
+      reply:
 
         "Please enter your reservation code, or the phone number you booked with.",
 
@@ -3008,35 +2797,23 @@ async function handleManageCode(
 
   /**
 
+
+
    * Lookup using phone.
+
+
 
    */
 
-  if (
 
-    looksLikePhoneNumber(
 
-      raw
+  if (looksLikePhoneNumber(raw)) {
 
-    )
-
-  ) {
-
-    const result =
-
-      await getOdooReservationByPhone(
-
-        raw
-
-      );
+    const result = await getOdooReservationByPhone(raw);
 
 
 
-    if (
-
-      !result.success
-
-    ) {
+    if (!result.success) {
 
       return {
 
@@ -3060,7 +2837,9 @@ async function handleManageCode(
 
       result,
 
-      result.reservationCode
+
+
+      result.reservationCode,
 
     );
 
@@ -3070,31 +2849,25 @@ async function handleManageCode(
 
   /**
 
+
+
    * Lookup using reservation code.
+
+
 
    */
 
-  const code =
-
-    raw.toUpperCase();
 
 
-
-  const result =
-
-    await getOdooReservationByCode(
-
-      code
-
-    );
+  const code = raw.toUpperCase();
 
 
 
-  if (
+  const result = await getOdooReservationByCode(code);
 
-    !result.success
 
-  ) {
+
+  if (!result.success) {
 
     return {
 
@@ -3116,7 +2889,9 @@ async function handleManageCode(
 
     result,
 
-    code
+
+
+    code,
 
   );
 
@@ -3126,7 +2901,11 @@ async function handleManageCode(
 
 /* ============================================================
 
+
+
  * Reservation summary
+
+
 
  * ========================================================== */
 
@@ -3136,67 +2915,45 @@ function showManageSummary(
 
   result: {
 
-    success:
-
-      boolean;
+    success: boolean;
 
 
 
-    name?:
-
-      string;
+    name?: string;
 
 
 
-    phone?:
-
-      string;
+    phone?: string;
 
 
 
-    partySize?:
-
-      number;
+    partySize?: number;
 
 
 
-    date?:
-
-      string;
+    date?: string;
 
 
 
-    time?:
-
-      string;
+    time?: string;
 
 
 
-    status?:
-
-      string;
+    status?: string;
 
 
 
-    reservationCode?:
-
-      string;
+    reservationCode?: string;
 
   },
 
 
 
-  code?:
-
-    string
+  code?: string,
 
 ): FlowResult {
 
-  if (
-
-    !code
-
-  ) {
+  if (!code) {
 
     return {
 
@@ -3206,19 +2963,11 @@ function showManageSummary(
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        withWhatsAppAgent(
-
-          MAIN_MENU_BUTTONS
-
-        ),
+      buttons: withWhatsAppAgent(MAIN_MENU_BUTTONS),
 
     };
 
@@ -3226,51 +2975,39 @@ function showManageSummary(
 
 
 
-  const displayTime =
+  const displayTime = result.time
 
-    result.time
+    ? formatDisplayTime(
 
-      ? formatDisplayTime(
+        result.time.slice(
 
-          result.time.slice(
-
-            0,
-
-            5
-
-          )
-
-        )
-
-      : "";
+          0,
 
 
 
-  if (
+          5,
 
-    result.status ===
+        ),
 
-    "cancelled"
+      )
 
-  ) {
+    : "";
+
+
+
+  if (result.status === "cancelled") {
 
     return {
 
-      reply:
-
-        "This reservation has already been cancelled.",
+      reply: "This reservation has already been cancelled.",
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: MAIN_MENU_BUTTONS,
 
 
 
@@ -3278,17 +3015,11 @@ function showManageSummary(
 
         {
 
-          label:
-
-            "Name",
+          label: "Name",
 
 
 
-          value:
-
-            result.name ??
-
-            "",
+          value: result.name ?? "",
 
         },
 
@@ -3296,21 +3027,11 @@ function showManageSummary(
 
         {
 
-          label:
-
-            "Party size",
+          label: "Party size",
 
 
 
-          value:
-
-            String(
-
-              result.partySize ??
-
-                ""
-
-            ),
+          value: String(result.partySize ?? ""),
 
         },
 
@@ -3318,17 +3039,11 @@ function showManageSummary(
 
         {
 
-          label:
-
-            "Date",
+          label: "Date",
 
 
 
-          value:
-
-            result.date ??
-
-            "",
+          value: result.date ?? "",
 
         },
 
@@ -3336,15 +3051,11 @@ function showManageSummary(
 
         {
 
-          label:
-
-            "Time",
+          label: "Time",
 
 
 
-          value:
-
-            displayTime,
+          value: displayTime,
 
         },
 
@@ -3352,17 +3063,11 @@ function showManageSummary(
 
         {
 
-          label:
-
-            "Status",
+          label: "Status",
 
 
 
-          value:
-
-            result.status ??
-
-            "",
+          value: result.status ?? "",
 
         },
 
@@ -3376,47 +3081,33 @@ function showManageSummary(
 
   return {
 
-    reply:
-
-      "Here are your reservation details:",
+    reply: "Here are your reservation details:",
 
 
 
     state: {
 
-      step:
-
-        "MANAGE_ACTION",
+      step: "MANAGE_ACTION",
 
 
 
-      draft:
-
-        {},
+      draft: {},
 
 
 
-      manageCode:
-
-        code,
+      manageCode: code,
 
 
 
-      managePartySize:
-
-        result.partySize,
+      managePartySize: result.partySize,
 
 
 
-      manageName:
-
-        result.name,
+      manageName: result.name,
 
 
 
-      managePhone:
-
-        result.phone,
+      managePhone: result.phone,
 
     },
 
@@ -3426,17 +3117,11 @@ function showManageSummary(
 
       {
 
-        label:
-
-          "Name",
+        label: "Name",
 
 
 
-        value:
-
-          result.name ??
-
-          "",
+        value: result.name ?? "",
 
       },
 
@@ -3444,21 +3129,11 @@ function showManageSummary(
 
       {
 
-        label:
-
-          "Party size",
+        label: "Party size",
 
 
 
-        value:
-
-          String(
-
-            result.partySize ??
-
-              ""
-
-          ),
+        value: String(result.partySize ?? ""),
 
       },
 
@@ -3466,17 +3141,11 @@ function showManageSummary(
 
       {
 
-        label:
-
-          "Date",
+        label: "Date",
 
 
 
-        value:
-
-          result.date ??
-
-          "",
+        value: result.date ?? "",
 
       },
 
@@ -3484,15 +3153,11 @@ function showManageSummary(
 
       {
 
-        label:
-
-          "Time",
+        label: "Time",
 
 
 
-        value:
-
-          displayTime,
+        value: displayTime,
 
       },
 
@@ -3500,17 +3165,11 @@ function showManageSummary(
 
       {
 
-        label:
-
-          "Status",
+        label: "Status",
 
 
 
-        value:
-
-          result.status ??
-
-          "confirmed",
+        value: result.status ?? "confirmed",
 
       },
 
@@ -3518,57 +3177,43 @@ function showManageSummary(
 
 
 
-    buttons:
+    buttons: withWhatsAppAgent([
 
-      withWhatsAppAgent([
+      {
 
-        {
-
-          id:
-
-            "1",
+        id: "1",
 
 
 
-          title:
+        title: "Cancel reservation",
 
-            "Cancel reservation",
-
-        },
+      },
 
 
 
-        {
+      {
 
-          id:
-
-            "2",
+        id: "2",
 
 
 
-          title:
+        title: "Change date/time",
 
-            "Change date/time",
-
-        },
+      },
 
 
 
-        {
+      {
 
-          id:
-
-            "3",
+        id: "3",
 
 
 
-          title:
+        title: "Back to main menu",
 
-            "Back to main menu",
+      },
 
-        },
-
-      ]),
+    ]),
 
   };
 
@@ -3578,7 +3223,11 @@ function showManageSummary(
 
 /* ============================================================
 
+
+
  * Manage action
+
+
 
  * ========================================================== */
 
@@ -3590,51 +3239,39 @@ async function handleManageAction(
 
 
 
-  state:
-
-    FlowState
+  state: FlowState,
 
 ): Promise<FlowResult> {
 
-  const normalized =
-
-    input
-
-      .trim()
-
-      .toLowerCase();
+  const normalized = input
 
 
 
-  const code =
-
-    state.manageCode;
+    .trim()
 
 
 
-  if (
+    .toLowerCase();
 
-    !code
 
-  ) {
+
+  const code = state.manageCode;
+
+
+
+  if (!code) {
 
     return {
 
-      reply:
-
-        MAIN_MENU_TEXT,
+      reply: MAIN_MENU_TEXT,
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: MAIN_MENU_BUTTONS,
 
     };
 
@@ -3643,64 +3280,42 @@ async function handleManageAction(
 
 
   /**
+
+
 
    * Cancel reservation.
 
+
+
    */
 
-  if (
 
-    normalized ===
 
-      "1" ||
+  if (normalized === "1" || normalized.includes("cancel")) {
 
-    normalized.includes(
-
-      "cancel"
-
-    )
-
-  ) {
-
-    const result =
-
-      await cancelOdooReservation(
-
-        code
-
-      );
+    const result = await cancelOdooReservation(code);
 
 
 
     return {
 
-      reply:
+      reply: result.success
 
-        result.success
+        ? "Your reservation has been cancelled. We hope to see you another time!"
 
-          ? "Your reservation has been cancelled. We hope to see you another time!"
-
-          : `Sorry, something went wrong cancelling that reservation (${result.error ?? "unknown error"}). Please talk to our team.`,
+        : `Sorry, something went wrong cancelling that reservation (${result.error ?? "unknown error"}). Please talk to our team.`,
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
+      buttons: result.success
 
-        result.success
+        ? MAIN_MENU_BUTTONS
 
-          ? MAIN_MENU_BUTTONS
-
-          : withWhatsAppAgent(
-
-              MAIN_MENU_BUTTONS
-
-            ),
+        : withWhatsAppAgent(MAIN_MENU_BUTTONS),
 
     };
 
@@ -3710,81 +3325,61 @@ async function handleManageAction(
 
   /**
 
+
+
    * Modify reservation.
+
+
 
    */
 
+
+
   if (
 
-    normalized ===
+    normalized === "2" ||
 
-      "2" ||
+    normalized.includes("change") ||
 
-    normalized.includes(
-
-      "change"
-
-    ) ||
-
-    normalized.includes(
-
-      "modify"
-
-    )
+    normalized.includes("modify")
 
   ) {
 
     return {
 
-      reply:
-
-        "What date would you like to move it to?",
+      reply: "What date would you like to move it to?",
 
 
 
       state: {
 
-        step:
-
-          "MANAGE_MODIFY_DATE",
+        step: "MANAGE_MODIFY_DATE",
 
 
 
-        draft:
-
-          {},
+        draft: {},
 
 
 
-        manageCode:
-
-          code,
+        manageCode: code,
 
 
 
-        managePartySize:
-
-          state.managePartySize,
+        managePartySize: state.managePartySize,
 
 
 
-        manageName:
-
-          state.manageName,
+        manageName: state.manageName,
 
 
 
-        managePhone:
-
-          state.managePhone,
+        managePhone: state.managePhone,
 
       },
 
 
 
-      inputType:
-
-        "date",
+      inputType: "date",
 
     };
 
@@ -3792,31 +3387,19 @@ async function handleManageAction(
 
 
 
-  if (
-
-    normalized ===
-
-    "3"
-
-  ) {
+  if (normalized === "3") {
 
     return {
 
-      reply:
-
-        MAIN_MENU_TEXT,
+      reply: MAIN_MENU_TEXT,
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: MAIN_MENU_BUTTONS,
 
     };
 
@@ -3826,9 +3409,7 @@ async function handleManageAction(
 
   return {
 
-    reply:
-
-      "Please choose an option below.",
+    reply: "Please choose an option below.",
 
 
 
@@ -3836,57 +3417,43 @@ async function handleManageAction(
 
 
 
-    buttons:
+    buttons: withWhatsAppAgent([
 
-      withWhatsAppAgent([
+      {
 
-        {
-
-          id:
-
-            "1",
+        id: "1",
 
 
 
-          title:
+        title: "Cancel reservation",
 
-            "Cancel reservation",
-
-        },
+      },
 
 
 
-        {
+      {
 
-          id:
-
-            "2",
+        id: "2",
 
 
 
-          title:
+        title: "Change date/time",
 
-            "Change date/time",
-
-        },
+      },
 
 
 
-        {
+      {
 
-          id:
-
-            "3",
+        id: "3",
 
 
 
-          title:
+        title: "Back to main menu",
 
-            "Back to main menu",
+      },
 
-        },
-
-      ]),
+    ]),
 
   };
 
@@ -3896,7 +3463,11 @@ async function handleManageAction(
 
 /* ============================================================
 
+
+
  * Modify reservation date
+
+
 
  * ========================================================== */
 
@@ -3908,49 +3479,29 @@ async function handleManageModifyDate(
 
 
 
-  state:
-
-    FlowState,
+  state: FlowState,
 
 
 
-  channel:
-
-    | "website"
-
-    | "whatsapp"
+  channel: "website" | "whatsapp",
 
 ): Promise<FlowResult> {
 
-  const date =
-
-    parseDateInput(
-
-      input
-
-    );
+  const date = parseDateInput(input);
 
 
 
-  const todayISO =
-
-    getLagosTodayISO();
+  const todayISO = getLagosTodayISO();
 
 
 
-  if (
-
-    !date
-
-  ) {
+  if (!date) {
 
     return {
 
       reply:
 
-        channel ===
-
-        "whatsapp"
+        channel === "whatsapp"
 
           ? "Sorry, I couldn't understand that date. Try 'tomorrow', '12th September', or YYYY-MM-DD."
 
@@ -3962,9 +3513,7 @@ async function handleManageModifyDate(
 
 
 
-      inputType:
-
-        "date",
+      inputType: "date",
 
     };
 
@@ -3972,107 +3521,11 @@ async function handleManageModifyDate(
 
 
 
-  if (
-
-    date <
-
-    todayISO
-
-  ) {
+  if (date < todayISO) {
 
     return {
 
-      reply:
-
-        "That date is in the past — please choose today or later.",
-
-
-
-      state,inputType:
-
-        "date",
-
-    };
-
-  }
-
-
-
-  const partySize =
-
-    state.managePartySize ??
-
-    1;
-
-
-
-  /**
-
-   * Larger reservations remain agent-managed.
-
-   */
-
-  if (
-
-    partySize >
-
-    4
-
-  ) {
-
-    return {
-
-      reply:
-
-        "Please contact our team to change this reservation.",
-
-
-
-      state:
-
-        INITIAL_STATE,
-
-
-
-      buttons:
-
-        withWhatsAppAgent(
-
-          MAIN_MENU_BUTTONS
-
-        ),
-
-    };
-
-  }
-
-
-
-  const bookableSlots =
-
-    await getBookableSlots(
-
-      date,
-
-      partySize
-
-    );
-
-
-
-  if (
-
-    bookableSlots.length ===
-
-    0
-
-  ) {
-
-    return {
-
-      reply:
-
-        `Sorry, we're fully booked on ${date} for ${partySize} guests. Please choose another date.`,
+      reply: "That date is in the past — please choose today or later.",
 
 
 
@@ -4080,9 +3533,75 @@ async function handleManageModifyDate(
 
 
 
-      inputType:
+      inputType: "date",
 
-        "date",
+    };
+
+  }
+
+
+
+  const partySize = state.managePartySize ?? 1;
+
+
+
+  /**
+
+
+
+   * Larger reservations remain agent-managed.
+
+
+
+   */
+
+
+
+  if (partySize > 4) {
+
+    return {
+
+      reply: "Please contact our team to change this reservation.",
+
+
+
+      state: INITIAL_STATE,
+
+
+
+      buttons: withWhatsAppAgent(MAIN_MENU_BUTTONS),
+
+    };
+
+  }
+
+
+
+  const bookableSlots = await getBookableSlots(
+
+    date,
+
+
+
+    partySize,
+
+  );
+
+
+
+  if (bookableSlots.length === 0) {
+
+    return {
+
+      reply: `Sorry, we're fully booked on ${date} for ${partySize} guests. Please choose another date.`,
+
+
+
+      state,
+
+
+
+      inputType: "date",
 
     };
 
@@ -4092,17 +3611,13 @@ async function handleManageModifyDate(
 
   return {
 
-    reply:
-
-      `Here's what's available on ${date}:`,
+    reply: `Here's what's available on ${date}:`,
 
 
 
     state: {
 
-      step:
-
-        "MANAGE_MODIFY_TIME",
+      step: "MANAGE_MODIFY_TIME",
 
 
 
@@ -4114,69 +3629,41 @@ async function handleManageModifyDate(
 
 
 
-      manageCode:
-
-        state.manageCode,
+      manageCode: state.manageCode,
 
 
 
-      managePartySize:
-
-        partySize,
+      managePartySize: partySize,
 
 
 
-      manageName:
-
-        state.manageName,
+      manageName: state.manageName,
 
 
 
-      managePhone:
-
-        state.managePhone,
+      managePhone: state.managePhone,
 
 
 
-      alternatives:
-
-        bookableSlots,
+      alternatives: bookableSlots,
 
     },
 
 
 
-    buttons:
+    buttons: withWhatsAppAgent(
 
-      withWhatsAppAgent(
+      bookableSlots.map((option) => ({
 
-        bookableSlots.map(
-
-          (
-
-            option
-
-          ) => ({
-
-            id:
-
-              option,
+        id: option,
 
 
 
-            title:
+        title: formatDisplayTime(option),
 
-              formatDisplayTime(
+      })),
 
-                option
-
-              ),
-
-          })
-
-        )
-
-      ),
+    ),
 
   };
 
@@ -4186,7 +3673,11 @@ async function handleManageModifyDate(
 
 /* ============================================================
 
+
+
  * Modify reservation time
+
+
 
  * ========================================================== */
 
@@ -4198,73 +3689,39 @@ async function handleManageModifyTime(
 
 
 
-  state:
-
-    FlowState,
+  state: FlowState,
 
 
 
-  channel:
-
-    | "website"
-
-    | "whatsapp"
+  channel: "website" | "whatsapp",
 
 ): Promise<FlowResult> {
 
-  const time =
-
-    input.trim();
+  const time = input.trim();
 
 
 
-  const {
-
-    date,
-
-  } =
-
-    state.draft;
+  const { date } = state.draft;
 
 
 
-  const code =
-
-    state.manageCode;
+  const code = state.manageCode;
 
 
 
-  const partySize =
-
-    state.managePartySize ??
-
-    1;
+  const partySize = state.managePartySize ?? 1;
 
 
 
-  const options =
-
-    state.alternatives ??
-
-    [];
+  const options = state.alternatives ?? [];
 
 
 
-  if (
-
-    !options.includes(
-
-      time
-
-    )
-
-  ) {
+  if (!options.includes(time)) {
 
     return {
 
-      reply:
-
-        "Please choose one of the available times below.",
+      reply: "Please choose one of the available times below.",
 
 
 
@@ -4272,37 +3729,19 @@ async function handleManageModifyTime(
 
 
 
-      buttons:
+      buttons: withWhatsAppAgent(
 
-        withWhatsAppAgent(
+        options.map((option) => ({
 
-          options.map(
-
-            (
-
-              option
-
-            ) => ({
-
-              id:
-
-                option,
+          id: option,
 
 
 
-              title:
+          title: formatDisplayTime(option),
 
-                formatDisplayTime(
+        })),
 
-                  option
-
-                ),
-
-            })
-
-          )
-
-        ),
+      ),
 
     };
 
@@ -4310,31 +3749,19 @@ async function handleManageModifyTime(
 
 
 
-  if (
-
-    !date ||
-
-    !code
-
-  ) {
+  if (!date || !code) {
 
     return {
 
-      reply:
-
-        "Something went wrong — let's start over.",
+      reply: "Something went wrong — let's start over.",
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: MAIN_MENU_BUTTONS,
 
     };
 
@@ -4344,73 +3771,91 @@ async function handleManageModifyTime(
 
   /**
 
+
+
    * Odoo:
+
+
 
    *
 
+
+
    * secure new allocation
+
+
 
    * release old allocation
 
+
+
    */
 
-  const result =
 
-    await modifyOdooReservation(
 
-      code,
+  const result = await modifyOdooReservation(
 
-      date,
-
-      time
-
-    );
+    code,
 
 
 
-  if (
+    date,
 
-    result.success
 
-  ) {
+
+    time,
+
+  );
+
+
+
+  if (result.success) {
 
     /**
 
+
+
      * Send WhatsApp update confirmation.
 
+
+
      *
+
+
 
      * Website edits use the approved reservation_updated
 
+
+
      * template.
+
+
 
      *
 
+
+
      * WhatsApp edits use a normal message while the
+
+
 
      * conversation is active.
 
+
+
      */
 
-    if (
 
-      state.manageName &&
 
-      state.managePhone
-
-    ) {
+    if (state.manageName && state.managePhone) {
 
       sendReservationUpdateConfirmation({
 
-        name:
-
-          state.manageName,
+        name: state.manageName,
 
 
 
-        phone:
-
-          state.managePhone,
+        phone: state.managePhone,
 
 
 
@@ -4426,35 +3871,25 @@ async function handleManageModifyTime(
 
 
 
-        reservationCode:
-
-          code,
+        reservationCode: code,
 
 
 
-        originChannel:
+        originChannel: channel,
 
-          channel,
+      }).catch((error) => {
 
-      }).catch(
+        console.error(
 
-        (
+          "Reservation update confirmation failed:",
 
-          error
 
-        ) => {
 
-          console.error(
+          error,
 
-            "Reservation update confirmation failed:",
+        );
 
-            error
-
-          );
-
-        }
-
-      );
+      });
 
     }
 
@@ -4462,25 +3897,19 @@ async function handleManageModifyTime(
 
     return {
 
-      reply:
+      reply: `Done! Your reservation has been moved to ${date} at ${formatDisplayTime(
 
-        `Done! Your reservation has been moved to ${date} at ${formatDisplayTime(
+        time,
 
-          time
-
-        )}.`,
+      )}.`,
 
 
 
-      state:
-
-        INITIAL_STATE,
+      state: INITIAL_STATE,
 
 
 
-      buttons:
-
-        MAIN_MENU_BUTTONS,
+      buttons: MAIN_MENU_BUTTONS,
 
     };
 
@@ -4490,83 +3919,69 @@ async function handleManageModifyTime(
 
   /**
 
+
+
    * The new allocation disappeared between selection
+
+
 
    * and confirmation.
 
+
+
    */
 
-  const refreshedSlots =
 
-    await getBookableSlots(
 
-      date,
+  const refreshedSlots = await getBookableSlots(
 
-      partySize
-
-    );
+    date,
 
 
 
-  if (
+    partySize,
 
-    refreshedSlots.length ===
+  );
 
-    0
 
-  ) {
+
+  if (refreshedSlots.length === 0) {
 
     return {
 
-      reply:
-
-        `Sorry, that time just became unavailable and there's nothing else open on ${date}. Please choose another date.`,
+      reply: `Sorry, that time just became unavailable and there's nothing else open on ${date}. Please choose another date.`,
 
 
 
       state: {
 
-        step:
-
-          "MANAGE_MODIFY_DATE",
+        step: "MANAGE_MODIFY_DATE",
 
 
 
-        draft:
-
-          {},
+        draft: {},
 
 
 
-        manageCode:
-
-          code,
+        manageCode: code,
 
 
 
-        managePartySize:
-
-          partySize,
+        managePartySize: partySize,
 
 
 
-        manageName:
-
-          state.manageName,
+        manageName: state.manageName,
 
 
 
-        managePhone:
-
-          state.managePhone,
+        managePhone: state.managePhone,
 
       },
 
 
 
-      inputType:
-
-        "date",
+      inputType: "date",
 
     };
 
@@ -4576,17 +3991,13 @@ async function handleManageModifyTime(
 
   return {
 
-    reply:
-
-      `Sorry, that time just became unavailable. Here's what's still open on ${date}:`,
+    reply: `Sorry, that time just became unavailable. Here's what's still open on ${date}:`,
 
 
 
     state: {
 
-      step:
-
-        "MANAGE_MODIFY_TIME",
+      step: "MANAGE_MODIFY_TIME",
 
 
 
@@ -4598,69 +4009,41 @@ async function handleManageModifyTime(
 
 
 
-      manageCode:
-
-        code,
+      manageCode: code,
 
 
 
-      managePartySize:
-
-        partySize,
+      managePartySize: partySize,
 
 
 
-      manageName:
-
-        state.manageName,
+      manageName: state.manageName,
 
 
 
-      managePhone:
-
-        state.managePhone,
+      managePhone: state.managePhone,
 
 
 
-      alternatives:
-
-        refreshedSlots,
+      alternatives: refreshedSlots,
 
     },
 
 
 
-    buttons:
+    buttons: withWhatsAppAgent(
 
-      withWhatsAppAgent(
+      refreshedSlots.map((option) => ({
 
-        refreshedSlots.map(
-
-          (
-
-            option
-
-          ) => ({
-
-            id:
-
-              option,
+        id: option,
 
 
 
-            title:
+        title: formatDisplayTime(option),
 
-              formatDisplayTime(
+      })),
 
-                option
-
-              ),
-
-          })
-
-        )
-
-      ),
+    ),
 
   };
 
@@ -4670,209 +4053,71 @@ async function handleManageModifyTime(
 
 /* ============================================================
 
+
+
  * Enquiry menu
+
+
 
  * ========================================================== */
 
 
 
-function handleEnquiryMenu(
+function handleEnquiryMenu(input: string): FlowResult {
+  const normalized = input.trim().toLowerCase();
 
-  input: string
-
-): FlowResult {
-
-  const normalized =
-
-    input
-
-      .trim()
-
-      .toLowerCase();
-
-
-
-  const topicByNumber:
-
-    Record<
-
-      string,
-
-      EnquiryTopicKey
-
-    > = {
-
-    "1":
-
-      "hours",
-
-
-
-    "2":
-
-      "location",
-
-
-
-    "3":
-
-      "takeaway",
-
-
-
-    "4":
-
-      "contact",
-
+  const topicByNumber: Record<string, EnquiryTopicKey> = {
+    "1": "hours",
+    "2": "location",
   };
 
+  const topicKey = topicByNumber[normalized];
 
-
-  const topicKey =
-
-    topicByNumber[
-
-      normalized
-
-    ];
-
-
-
-  if (
-
-    topicKey
-
-  ) {
-
-    const topic =
-
-      ENQUIRY_TOPICS[
-
-        topicKey
-
-      ];
-
-
+  if (topicKey) {
+    const topic = ENQUIRY_TOPICS[topicKey];
 
     return {
-
-      reply:
-
-        `${topic.label}\n\n${topic.text}`,
-
-
-
+      reply: `${topic.label}\n\n${topic.text}`,
       state: {
-
-        step:
-
-          "ENQUIRY_MENU",
-
-
-
-        draft:
-
-          {},
-
+        step: "ENQUIRY_MENU",
+        draft: {},
       },
-
-
-
-      buttons:
-
-        ENQUIRY_MENU_BUTTONS,
-
+      buttons: ENQUIRY_MENU_BUTTONS,
     };
-
   }
 
-
-
   if (
-
-    normalized ===
-
-      "5" ||
-
-    normalized.includes(
-
-      "team"
-
-    ) ||
-
-    normalized.includes(
-
-      "agent"
-
-    )
-
+    normalized === "3" ||
+    normalized.includes("team") ||
+    normalized.includes("agent")
   ) {
-
     return {
-
       reply:
-
         "Sure — what would you like to ask our team? Type your question and we'll get back to you shortly.",
-
-
-
       state: {
-
-        step:
-
-          "ENQUIRY_HANDOFF_MESSAGE",
-
-
-
-        draft:
-
-          {},
-
+        step: "ENQUIRY_HANDOFF_MESSAGE",
+        draft: {},
       },
-
     };
-
   }
-
-
 
   return {
-
-    reply:
-
-      "What would you like to know?",
-
-
-
+    reply: "What would you like to know?",
     state: {
-
-      step:
-
-        "ENQUIRY_MENU",
-
-
-
-      draft:
-
-        {},
-
+      step: "ENQUIRY_MENU",
+      draft: {},
     },
-
-
-
-    buttons:
-
-      ENQUIRY_MENU_BUTTONS,
-
+    buttons: ENQUIRY_MENU_BUTTONS,
   };
-
 }
-
-
 
 /* ============================================================
 
+
+
  * Enquiry handoff
+
+
 
  * ========================================================== */
 
@@ -4884,39 +4129,23 @@ async function handleEnquiryHandoffMessage(
 
 
 
-  state:
-
-    FlowState,
+  state: FlowState,
 
 
 
-  channel:
-
-    | "website"
-
-    | "whatsapp",
+  channel: "website" | "whatsapp",
 
 
 
-  customerContact:
-
-    | string
-
-    | undefined
+  customerContact: string | undefined,
 
 ): Promise<FlowResult> {
 
-  const message =
-
-    input.trim();
+  const message = input.trim();
 
 
 
-  if (
-
-    !message
-
-  ) {
+  if (!message) {
 
     return {
 
@@ -4936,33 +4165,27 @@ async function handleEnquiryHandoffMessage(
 
   /**
 
+
+
    * WhatsApp already gives us a customer number.
+
+
 
    */
 
-  if (
 
-    channel ===
 
-      "whatsapp" &&
-
-    customerContact
-
-  ) {
+  if (channel === "whatsapp" && customerContact) {
 
     try {
 
       await createHelpdeskTicket({
 
-        customerName:
-
-          customerContact,
+        customerName: customerContact,
 
 
 
-        whatsappNumber:
-
-          customerContact,
+        whatsappNumber: customerContact,
 
 
 
@@ -4980,27 +4203,23 @@ async function handleEnquiryHandoffMessage(
 
 
 
-        state:
-
-          INITIAL_STATE,
+        state: INITIAL_STATE,
 
 
 
-        buttons:MAIN_MENU_BUTTONS,
+        buttons: MAIN_MENU_BUTTONS,
 
       };
 
-    } catch (
-
-      error
-
-    ) {
+    } catch (error) {
 
       console.error(
 
         "Failed to create Odoo ticket:",
 
-        error
+
+
+        error,
 
       );
 
@@ -5014,15 +4233,11 @@ async function handleEnquiryHandoffMessage(
 
 
 
-        state:
-
-          INITIAL_STATE,
+        state: INITIAL_STATE,
 
 
 
-        buttons:
-
-          MAIN_MENU_BUTTONS,
+        buttons: MAIN_MENU_BUTTONS,
 
       };
 
@@ -5034,11 +4249,19 @@ async function handleEnquiryHandoffMessage(
 
   /**
 
+
+
    * Website doesn't already give us the customer's
+
+
 
    * WhatsApp/contact identity.
 
+
+
    */
+
+
 
   return {
 
@@ -5050,21 +4273,15 @@ async function handleEnquiryHandoffMessage(
 
     state: {
 
-      step:
-
-        "ENQUIRY_HANDOFF_CONTACT",
+      step: "ENQUIRY_HANDOFF_CONTACT",
 
 
 
-      draft:
-
-        {},
+      draft: {},
 
 
 
-      handoffMessage:
-
-        message,
+      handoffMessage: message,
 
     },
 
@@ -5080,33 +4297,19 @@ async function handleEnquiryHandoffContact(
 
 
 
-  state:
-
-    FlowState,
+  state: FlowState,
 
 
 
-  channel:
-
-    | "website"
-
-    | "whatsapp"
+  channel: "website" | "whatsapp",
 
 ): Promise<FlowResult> {
 
-  const contact =
-
-    input.trim();
+  const contact = input.trim();
 
 
 
-  if (
-
-    contact.length <
-
-    5
-
-  ) {
+  if (contact.length < 5) {
 
     return {
 
@@ -5124,55 +4327,41 @@ async function handleEnquiryHandoffContact(
 
 
 
-  const message =
-
-    state.handoffMessage ??
-
-    "(no message provided)";
+  const message = state.handoffMessage ?? "(no message provided)";
 
 
 
-  const result =
+  const result = await notifyStaffOfHandoff({
 
-    await notifyStaffOfHandoff({
-
-      message,
+    message,
 
 
 
-      channel,
+    channel,
 
 
 
-      customerContact:
+    customerContact: contact,
 
-        contact,
-
-    });
+  });
 
 
 
   return {
 
-    reply:
+    reply: result.success
 
-      result.success
+      ? "Thanks — I've passed your message to our team, and they'll reach out to you shortly."
 
-        ? "Thanks — I've passed your message to our team, and they'll reach out to you shortly."
-
-        : "We're having a small issue notifying the team right now. Please try again shortly.",
+      : "We're having a small issue notifying the team right now. Please try again shortly.",
 
 
 
-    state:
-
-      INITIAL_STATE,
+    state: INITIAL_STATE,
 
 
 
-    buttons:
-
-      MAIN_MENU_BUTTONS,
+    buttons: MAIN_MENU_BUTTONS,
 
   };
 
