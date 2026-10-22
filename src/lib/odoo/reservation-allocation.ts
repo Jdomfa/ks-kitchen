@@ -1,345 +1,1591 @@
-import {
-  getPlaceholderInventoryForDate,
-  type PlaceholderOption,
-} from "@/lib/odoo/placeholder";
+const ODOO_URL = process.env.ODOO_URL!;
 
-export type AllocationResource = {
-  id: number;
-  name: string;
-  capacity: number;
-};
+const ODOO_DB = process.env.ODOO_DB!;
 
-export type ReservationAllocation =
-  | {
-      type: "single";
+const ODOO_USERNAME = process.env.ODOO_USERNAME!;
 
-      time: string;
+const ODOO_API_KEY = process.env.ODOO_API_KEY!;
 
-      start: string;
-      stop: string;
 
-      capacity: number;
 
-      eventIds: [number];
+const LAGOS_UTC_OFFSET_HOURS = 1;
 
-      resources: [AllocationResource];
-    }
-  | {
-      type: "merged";
 
-      time: string;
 
-      start: string;
-      stop: string;
+const DEFAULT_PARTNER_ID = Number(
 
-      capacity: number;
+  process.env.ODOO_DEFAULT_PARTNER_ID ?? 3
 
-      eventIds: [number, number];
+);
 
-      resources: [AllocationResource, AllocationResource];
+
+
+const PUBLIC_PLACEHOLDER_NAME =
+
+  "Public Placeholder";
+
+
+
+type JsonRpcResult<T> = {
+
+  result?: T;
+
+  error?: {
+
+    message?: string;
+
+    data?: {
+
+      message?: string;
+
+      debug?: string;
+
     };
 
-/* ============================================================
- * Helpers
- * ========================================================== */
-
-function toResource(option: PlaceholderOption): AllocationResource {
-  return {
-    id: option.resourceId,
-
-    name: option.resourceName,
-
-    capacity: option.capacity,
   };
+
+};
+
+
+
+async function odooCall<T>(
+
+  model: string,
+
+  method: string,
+
+  args: unknown[],
+
+  kwargs: Record<string, unknown> = {}
+
+): Promise<T> {
+
+  const res = await fetch(`${ODOO_URL}/jsonrpc`, {
+
+    method: "POST",
+
+
+
+    headers: {
+
+      "Content-Type": "application/json",
+
+    },
+
+
+
+    body: JSON.stringify({
+
+      jsonrpc: "2.0",
+
+      method: "call",
+
+
+
+      params: {
+
+        service: "object",
+
+        method: "execute_kw",
+
+
+
+        args: [
+
+          ODOO_DB,
+
+          await getUid(),
+
+          ODOO_API_KEY,
+
+          model,
+
+          method,
+
+          args,
+
+          kwargs,
+
+        ],
+
+      },
+
+    }),
+
+
+
+    cache: "no-store",
+
+  });
+
+
+
+  if (!res.ok) {
+
+    throw new Error(
+
+      `Odoo HTTP error: ${res.status} ${res.statusText}`
+
+    );
+
+  }
+
+
+
+  const data =
+
+    (await res.json()) as JsonRpcResult<T>;
+
+
+
+  if (data.error) {
+
+    const detail =
+
+      data.error.data?.message ||
+
+      data.error.data?.debug ||
+
+      data.error.message ||
+
+      "Unknown Odoo error";
+
+
+
+    throw new Error(`Odoo error: ${detail}`);
+
+  }
+
+
+
+  if (data.result === undefined) {
+
+    throw new Error(
+
+      `Odoo returned no result for ${model}.${method}`
+
+    );
+
+  }
+
+
+
+  return data.result;
+
 }
 
-function areLinked(left: PlaceholderOption, right: PlaceholderOption): boolean {
-  /**
-   * Treat either direction as sufficient.
-   *
-   * This means:
-   *
-   * Table 1 -> linked to Table 2
-   *
-   * is enough even if someone did not also configure:
-   *
-   * Table 2 -> linked to Table 1
-   */
-  return (
-    left.linkedResourceIds.includes(right.resourceId) ||
-    right.linkedResourceIds.includes(left.resourceId)
+
+
+let cachedUid: number | null = null;
+
+
+
+async function getUid(): Promise<number> {
+
+  if (cachedUid !== null) {
+
+    return cachedUid;
+
+  }
+
+
+
+  const res = await fetch(`${ODOO_URL}/jsonrpc`, {
+
+    method: "POST",
+
+
+
+    headers: {
+
+      "Content-Type": "application/json",
+
+    },
+
+
+
+    body: JSON.stringify({
+
+      jsonrpc: "2.0",
+
+      method: "call",
+
+
+
+      params: {
+
+        service: "common",
+
+        method: "authenticate",
+
+
+
+        args: [
+
+          ODOO_DB,
+
+          ODOO_USERNAME,
+
+          ODOO_API_KEY,
+
+          {},
+
+        ],
+
+      },
+
+    }),
+
+
+
+    cache: "no-store",
+
+  });
+
+
+
+  if (!res.ok) {
+
+    throw new Error(
+
+      `Odoo authentication HTTP error: ${res.status} ${res.statusText}`
+
+    );
+
+  }
+
+
+
+  const data =
+
+    (await res.json()) as JsonRpcResult<number>;
+
+
+
+  if (!data.result) {
+
+    throw new Error(
+
+      "Odoo authentication failed — check ODOO_DB, ODOO_USERNAME, and ODOO_API_KEY."
+
+    );
+
+  }
+
+
+
+  cachedUid = data.result;
+
+
+
+  return cachedUid;
+
+}
+
+
+
+function toOdooUtcDatetime(
+
+  date: string,
+
+  time: string
+
+): string {
+
+  const [hours, minutes] = time
+
+    .split(":")
+
+    .map(Number);
+
+
+
+  if (
+
+    !Number.isInteger(hours) ||
+
+    !Number.isInteger(minutes)
+
+  ) {
+
+    throw new Error(
+
+      `Invalid time value: "${time}"`
+
+    );
+
+  }
+
+
+
+  const dt = new Date(
+
+    `${date}T00:00:00Z`
+
   );
+
+
+
+  if (Number.isNaN(dt.getTime())) {
+
+    throw new Error(
+
+      `Invalid date value: "${date}"`
+
+    );
+
+  }
+
+
+
+  const utcHours =
+
+    hours - LAGOS_UTC_OFFSET_HOURS;
+
+
+
+  dt.setUTCHours(
+
+    utcHours,
+
+    minutes,
+
+    0,
+
+    0
+
+  );
+
+
+
+  return dt
+
+    .toISOString()
+
+    .slice(0, 19)
+
+    .replace("T", " ");
+
 }
 
+
+
 /* ============================================================
- * Single table
+
+ * Types
+
  * ========================================================== */
 
-function findSingleAllocations(
-  placeholders: PlaceholderOption[],
-  partySize: number,
-): ReservationAllocation[] {
-  return placeholders
-    .filter((option) => option.capacity >= partySize)
-    .sort((a, b) => {
+
+
+export type PlaceholderOption = {
+
+  eventId: number;
+
+  label: string;
+
+
+
+  resourceId?: number;
+
+  resourceName?: string;
+
+
+
+  capacity: number;
+
+};
+
+
+
+export type Placeholder = {
+
+  id: number;
+
+
+
+  name: string;
+
+
+
+  start: string;
+
+  stop: string;
+
+
+
+  capacity: number;
+
+  available: boolean;
+
+
+
+  partnerId: number | false;
+
+
+
+  resourceId?: number;
+
+  resourceName?: string;
+
+
+
+  /**
+
+   * Native Odoo Appointment values.
+
+   *
+
+   * Keep these available for the dashboard/debugging while
+
+   * we decide whether they should replace the Studio fields.
+
+   */
+
+  appointmentStatus?: string | false;
+
+
+
+  availableCapacity?: number;
+
+
+
+  totalCapacityReserved?: number;
+
+
+
+  totalCapacityUsed?: number;
+
+
+
+  bookingLineIds?: number[];
+
+};
+
+
+
+type CalendarEventRecord = {
+
+  id: number;
+
+
+
+  name: string;
+
+
+
+  start: string;
+
+  stop: string;
+
+
+
+  partner_id:
+
+    | [number, string]
+
+    | false;
+
+
+
+  /**
+
+   * Both of these were confirmed on your Odoo instance.
+
+   */
+
+  resource_ids: number[];
+
+
+
+  appointment_resource_ids: number[];
+
+
+
+  booking_line_ids: number[];
+
+
+
+  appointment_status:
+
+    | string
+
+    | false;
+
+
+
+  available_capacity:
+
+    | number
+
+    | false;
+
+
+
+  total_capacity_reserved:
+
+    | number
+
+    | false;
+
+
+
+  total_capacity_used:
+
+    | number
+
+    | false;
+
+
+
+  x_studio_slot_capacity:
+
+    | number
+
+    | false;
+
+
+
+  x_studio_slot_avalability:
+
+    | boolean
+
+    | false;
+
+};
+
+
+
+type AppointmentResourceRecord = {
+
+  id: number;
+
+  name: string;
+
+};
+
+
+
+/* ============================================================
+
+ * Resource helpers
+
+ * ========================================================== */
+
+
+
+async function getAppointmentResources(
+
+  resourceIds: number[]
+
+): Promise<
+
+  Map<number, AppointmentResourceRecord>
+
+> {
+
+  if (resourceIds.length === 0) {
+
+    return new Map();
+
+  }
+
+
+
+  const resources =
+
+    await odooCall<
+
+      AppointmentResourceRecord[]
+
+    >(
+
+      "appointment.resource",
+
+      "read",
+
+      [
+
+        resourceIds,
+
+        [
+
+          "id",
+
+          "name",
+
+        ],
+
+      ]
+
+    );
+
+
+
+  return new Map(
+
+    resources.map((resource) => [
+
+      resource.id,
+
+      resource,
+
+    ])
+
+  );
+
+}
+
+
+
+function getPrimaryResourceId(
+
+  record: Pick<
+
+    CalendarEventRecord,
+
+    | "resource_ids"
+
+    | "appointment_resource_ids"
+
+  >
+
+): number | undefined {
+
+  /**
+
+   * resource_ids is the direct relation we want to use
+
+   * for grouping/display.
+
+   *
+
+   * appointment_resource_ids is kept as a fallback because
+
+   * your event currently has both populated with the same id.
+
+   */
+
+  return (
+
+    record.resource_ids?.[0] ??
+
+    record.appointment_resource_ids?.[0]
+
+  );
+
+}
+
+
+
+/* ============================================================
+
+ * Get all placeholders
+
+ * ========================================================== */
+
+
+
+export async function getAllPlaceholders(): Promise<
+
+  Placeholder[]
+
+> {
+
+  const records =
+
+    await odooCall<
+
+      CalendarEventRecord[]
+
+    >(
+
+      "calendar.event",
+
+      "search_read",
+
+
+
+      [
+
+        [
+
+          [
+
+            "name",
+
+            "ilike",
+
+            PUBLIC_PLACEHOLDER_NAME,
+
+          ],
+
+        ],
+
+
+
+        [
+
+          "id",
+
+          "name",
+
+          "start",
+
+          "stop",
+
+
+
+          "partner_id",
+
+
+
+          "resource_ids",
+
+          "appointment_resource_ids",
+
+
+
+          "booking_line_ids",
+
+
+
+          "appointment_status",
+
+
+
+          "available_capacity",
+
+          "total_capacity_reserved",
+
+          "total_capacity_used",
+
+
+
+          "x_studio_slot_capacity",
+
+          "x_studio_slot_avalability",
+
+        ],
+
+      ],
+
+
+
+      {
+
+        order: "start asc",
+
+      }
+
+    );
+
+
+
+  /**
+
+   * Collect all unique Appointment resource ids.
+
+   */
+
+  const resourceIds =
+
+    Array.from(
+
+      new Set(
+
+        records.flatMap(
+
+          (record) => [
+
+            ...(record.resource_ids ?? []),
+
+
+
+            ...(
+
+              record.appointment_resource_ids ??
+
+              []
+
+            ),
+
+          ]
+
+        )
+
+      )
+
+    );
+
+
+
+  /**
+
+   * Resolve ids such as:
+
+   *
+
+   * 3 -> "Table 3"
+
+   */
+
+  const resourceMap =
+
+    await getAppointmentResources(
+
+      resourceIds
+
+    );
+
+
+
+  return records.map((record) => {
+
+    const resourceId =
+
+      getPrimaryResourceId(record);
+
+
+
+    const resource =
+
+      resourceId
+
+        ? resourceMap.get(resourceId)
+
+        : undefined;
+
+
+
+    return {
+
+      id: record.id,
+
+
+
+      name:
+
+        record.name ||
+
+        `Calendar Event ${record.id}`,
+
+
+
+      start: record.start,
+
+      stop: record.stop,
+
+
+
       /**
-       * Prefer smallest suitable table.
+
+       * Keep your current Studio field behavior for now.
+
        *
-       * Party 1:
-       * capacity 2 beats capacity 4.
-       *
-       * Party 2:
-       * capacity 2 beats capacity 4.
+
+       * We will revisit this because your inspected record
+
+       * currently has Studio capacity = 0 while Odoo native
+
+       * available_capacity = 30.
+
        */
-      if (a.capacity !== b.capacity) {
-        return a.capacity - b.capacity;
-      }
 
-      return a.resourceId - b.resourceId;
-    })
-    .map((option): ReservationAllocation => ({
-      type: "single",
+      capacity:
 
-      time: option.time,
+        typeof record.x_studio_slot_capacity ===
 
-      start: option.start,
+        "number"
 
-      stop: option.stop,
+          ? record.x_studio_slot_capacity
 
-      capacity: option.capacity,
+          : 0,
 
-      eventIds: [option.eventId],
 
-      resources: [toResource(option)],
-    }));
+
+      available:
+
+        record.x_studio_slot_avalability ===
+
+        true,
+
+
+
+      partnerId:
+
+        record.partner_id
+
+          ? record.partner_id[0]
+
+          : false,
+
+
+
+      resourceId,
+
+
+
+      resourceName:
+
+        resource?.name,
+
+
+
+      appointmentStatus:
+
+        record.appointment_status,
+
+
+
+      availableCapacity:
+
+        typeof record.available_capacity ===
+
+        "number"
+
+          ? record.available_capacity
+
+          : 0,
+
+
+
+      totalCapacityReserved:
+
+        typeof record.total_capacity_reserved ===
+
+        "number"
+
+          ? record.total_capacity_reserved
+
+          : 0,
+
+
+
+      totalCapacityUsed:
+
+        typeof record.total_capacity_used ===
+
+        "number"
+
+          ? record.total_capacity_used
+
+          : 0,
+
+
+
+      bookingLineIds:
+
+        record.booking_line_ids ?? [],
+
+    };
+
+  });
+
 }
 
-/* ============================================================
- * Merge
- * ========================================================== */
 
-function findMergedAllocations(
-  placeholders: PlaceholderOption[],
-  partySize: number,
-): ReservationAllocation[] {
-  /**
-   * We only merge for parties of 3 or 4.
-   */
-  if (partySize < 3 || partySize > 4) {
-    return [];
-  }
-
-  /**
-   * Keep merge rules intentionally simple:
-   *
-   * 2-seat + 2-seat only.
-   */
-  const twoSeatTables = placeholders
-    .filter((option) => option.capacity === 2)
-    .sort((a, b) => a.resourceId - b.resourceId);
-
-  const allocations: ReservationAllocation[] = [];
-
-  const seen = new Set<string>();
-
-  for (let i = 0; i < twoSeatTables.length; i++) {
-    for (let j = i + 1; j < twoSeatTables.length; j++) {
-      const left = twoSeatTables[i];
-
-      const right = twoSeatTables[j];
-
-      /**
-       * Must be linked in Odoo.
-       */
-      if (!areLinked(left, right)) {
-        continue;
-      }
-
-      const combinedCapacity = left.capacity + right.capacity;
-
-      if (combinedCapacity < partySize) {
-        continue;
-      }
-
-      /**
-       * Prevent duplicate:
-       *
-       * Table 1 + Table 2
-       *
-       * and
-       *
-       * Table 2 + Table 1
-       */
-      const key = [left.resourceId, right.resourceId]
-        .sort((a, b) => a - b)
-        .join(":");
-
-      if (seen.has(key)) {
-        continue;
-      }
-
-      seen.add(key);
-
-      allocations.push({
-        type: "merged",
-
-        time: left.time,
-
-        start: left.start,
-
-        stop: left.stop,
-
-        capacity: combinedCapacity,
-
-        eventIds: [left.eventId, right.eventId],
-
-        resources: [toResource(left), toResource(right)],
-      });
-    }
-  }
-
-  return allocations;
-}
 
 /* ============================================================
- * Sorting
+
+ * Find available placeholders
+
  * ========================================================== */
 
-function compareAllocations(
-  left: ReservationAllocation,
-  right: ReservationAllocation,
-): number {
-  const timeComparison = left.start.localeCompare(right.start);
 
-  if (timeComparison !== 0) {
-    return timeComparison;
-  }
 
-  /**
-   * Single table always beats merged table.
-   */
-  if (left.resources.length !== right.resources.length) {
-    return left.resources.length - right.resources.length;
-  }
+export async function findAvailablePlaceholders(
 
-  /**
-   * Then prefer smaller capacity.
-   */
-  if (left.capacity !== right.capacity) {
-    return left.capacity - right.capacity;
-  }
-
-  /**
-   * Stable fallback.
-   */
-  return left.resources[0].id - right.resources[0].id;
-}
-
-/* ============================================================
- * Main allocator
- * ========================================================== */
-
-export async function getReservationAllocations(
   date: string,
-  partySize: number,
-): Promise<ReservationAllocation[]> {
-  if (!Number.isInteger(partySize) || partySize < 1 || partySize > 4) {
-    return [];
-  }
 
-  /**
-   * IMPORTANT:
-   *
-   * Pull ALL placeholder inventory first.
-   *
-   * Do NOT filter out 2-seat tables based on partySize here.
-   *
-   * A party of 4 may need:
-   *
-   * Table 1 capacity 2
-   * +
-   * Table 2 capacity 2
-   */
-  const inventory = await getPlaceholderInventoryForDate(date);
-
-  /**
-   * Group by exact start + stop.
-   *
-   * Two tables can only be merged if their placeholder windows
-   * are identical.
-   */
-  const byPeriod = new Map<string, PlaceholderOption[]>();
-
-  for (const placeholder of inventory) {
-    const key = `${placeholder.start}::${placeholder.stop}`;
-
-    const group = byPeriod.get(key) ?? [];
-
-    group.push(placeholder);
-
-    byPeriod.set(key, group);
-  }
-
-  const allocations: ReservationAllocation[] = [];
-
-  for (const group of byPeriod.values()) {
-    const singles = findSingleAllocations(group, partySize);
-
-    /**
-     * This is deliberate.
-     *
-     * If a suitable single table exists at this time,
-     * don't waste two tables by returning merged alternatives.
-     */
-    if (singles.length > 0) {
-      allocations.push(...singles);
-
-      continue;
-    }
-
-    /**
-     * Only try merging if no suitable single table exists.
-     */
-    allocations.push(...findMergedAllocations(group, partySize));
-  }
-
-  return allocations.sort(compareAllocations);
-}
-
-/* ============================================================
- * Customer-facing times
- * ========================================================== */
-
-export async function getBookableReservationTimes(
-  date: string,
-  partySize: number,
-): Promise<string[]> {
-  const allocations = await getReservationAllocations(date, partySize);
-
-  /**
-   * Multiple table choices may exist for one time.
-   *
-   * Customer sees the time once.
-   */
-  return Array.from(new Set(allocations.map((allocation) => allocation.time)));
-}
-
-/* ============================================================
- * Final confirmation lookup
- * ========================================================== */
-
-export async function findBestAllocation(
-  date: string,
   time: string,
-  partySize: number,
-): Promise<ReservationAllocation | null> {
-  /**
-   * Fresh query.
-   *
-   * We deliberately do NOT remember the table picked when the
-   * customer first saw the available time.
-   */
-  const allocations = await getReservationAllocations(date, partySize);
 
-  return allocations.find((allocation) => allocation.time === time) ?? null;
+  partySize: number
+
+): Promise<PlaceholderOption[]> {
+
+  if (
+
+    !Number.isInteger(partySize) ||
+
+    partySize <= 0
+
+  ) {
+
+    throw new Error(
+
+      "partySize must be a positive integer."
+
+    );
+
+  }
+
+
+
+  const start =
+
+    toOdooUtcDatetime(date, time);
+
+
+
+  const records =
+
+    await odooCall<
+
+      {
+
+        id: number;
+
+
+
+        name: string;
+
+
+
+        resource_ids: number[];
+
+
+
+        appointment_resource_ids: number[];
+
+
+
+        x_studio_slot_capacity:
+
+          | number
+
+          | false;
+
+      }[]
+
+    >(
+
+      "calendar.event",
+
+      "search_read",
+
+
+
+      [
+
+        [
+
+          [
+
+            "name",
+
+            "ilike",
+
+            PUBLIC_PLACEHOLDER_NAME,
+
+          ],
+
+
+
+          [
+
+            "start",
+
+            "=",
+
+            start,
+
+          ],
+
+
+
+          [
+
+            "x_studio_slot_avalability",
+
+            "=",
+
+            true,
+
+          ],
+
+
+
+          [
+
+            "x_studio_slot_capacity",
+
+            ">=",
+
+            partySize,
+
+          ],
+
+        ],
+
+
+
+        [
+
+          "id",
+
+          "name",
+
+
+
+          "resource_ids",
+
+          "appointment_resource_ids",
+
+
+
+          "x_studio_slot_capacity",
+
+        ],
+
+      ],
+
+
+
+      {
+
+        order:
+
+          "x_studio_slot_capacity asc, id asc",
+
+      }
+
+    );
+
+
+
+  const resourceIds =
+
+    Array.from(
+
+      new Set(
+
+        records.flatMap(
+
+          (record) => [
+
+            ...(record.resource_ids ?? []),
+
+
+
+            ...(
+
+              record.appointment_resource_ids ??
+
+              []
+
+            ),
+
+          ]
+
+        )
+
+      )
+
+    );
+
+
+
+  const resourceMap =
+
+    await getAppointmentResources(
+
+      resourceIds
+
+    );
+
+
+
+  return records.map((record) => {
+
+    const resourceId =
+
+      record.resource_ids?.[0] ??
+
+      record.appointment_resource_ids?.[0];
+
+
+
+    return {
+
+      eventId: record.id,
+
+
+
+      label:
+
+        record.name ||
+
+        `${PUBLIC_PLACEHOLDER_NAME} ${record.id}`,
+
+
+
+      resourceId,
+
+
+
+      resourceName:
+
+        resourceId
+
+          ? resourceMap.get(
+
+              resourceId
+
+            )?.name
+
+          : undefined,
+
+
+
+      capacity:
+
+        typeof record.x_studio_slot_capacity ===
+
+        "number"
+
+          ? record.x_studio_slot_capacity
+
+          : 0,
+
+    };
+
+  });
+
+}
+
+
+
+/* ============================================================
+
+ * Claim placeholder
+
+ * ========================================================== */
+
+
+
+export async function claimPlaceholder(
+
+  eventId: number,
+
+  details: {
+
+    name: string;
+
+    phone?: string;
+
+    partySize: number;
+
+    reservationCode?: string;
+
+  }
+
+): Promise<{
+
+  success: boolean;
+
+  error?: string;
+
+}> {
+
+  if (
+
+    !Number.isInteger(eventId) ||
+
+    eventId <= 0
+
+  ) {
+
+    return {
+
+      success: false,
+
+      error:
+
+        "Invalid Odoo event id.",
+
+    };
+
+  }
+
+
+
+  if (!details.name.trim()) {
+
+    return {
+
+      success: false,
+
+      error:
+
+        "Customer name is required.",
+
+    };
+
+  }
+
+
+
+  if (
+
+    !Number.isInteger(
+
+      details.partySize
+
+    ) ||
+
+    details.partySize <= 0
+
+  ) {
+
+    return {
+
+      success: false,
+
+
+
+      error:
+
+        "Party size must be a positive integer.",
+
+    };
+
+  }
+
+
+
+  /**
+
+   * Re-check immediately before claiming.
+
+   */
+
+  const [current] =
+
+    await odooCall<
+
+      {
+
+        id: number;
+
+        name: string;
+
+
+
+        x_studio_slot_avalability:
+
+          | boolean
+
+          | false;
+
+
+
+        x_studio_slot_capacity:
+
+          | number
+
+          | false;
+
+      }[]
+
+    >(
+
+      "calendar.event",
+
+      "read",
+
+
+
+      [
+
+        [eventId],
+
+
+
+        [
+
+          "id",
+
+          "name",
+
+          "x_studio_slot_avalability",
+
+          "x_studio_slot_capacity",
+
+        ],
+
+      ]
+
+    );
+
+
+
+  if (!current) {
+
+    return {
+
+      success: false,
+
+
+
+      error:
+
+        "The selected reservation slot no longer exists.",
+
+    };
+
+  }
+
+
+
+  if (
+
+    !current.name
+
+      .toLowerCase()
+
+      .includes(
+
+        PUBLIC_PLACEHOLDER_NAME.toLowerCase()
+
+      )
+
+  ) {
+
+    return {
+
+      success: false,
+
+      error:
+
+        "That reservation slot is not a public placeholder.",
+
+    };
+
+  }
+
+
+
+  if (
+
+    current.x_studio_slot_avalability !==
+
+    true
+
+  ) {
+
+    return {
+
+      success: false,
+
+
+
+      error:
+
+        "That reservation slot was just taken by someone else.",
+
+    };
+
+  }
+
+
+
+  const capacity =
+
+    typeof current.x_studio_slot_capacity ===
+
+    "number"
+
+      ? current.x_studio_slot_capacity
+
+      : 0;
+
+
+
+  if (
+
+    capacity <
+
+    details.partySize
+
+  ) {
+
+    return {
+
+      success: false,
+
+
+
+      error:
+
+        `This slot only supports ${capacity} guest` +
+
+        `${capacity === 1 ? "" : "s"}.`,
+
+    };
+
+  }
+
+
+
+  const displayName =
+
+    `Table Reservation — ${details.name.trim()}` +
+
+    (
+
+      details.reservationCode
+
+        ? ` [${details.reservationCode}]`
+
+        : ""
+
+    );
+
+
+
+  await odooCall<boolean>(
+
+    "calendar.event",
+
+    "write",
+
+
+
+    [
+
+      [eventId],
+
+
+
+      {
+
+        x_studio_slot_avalability:
+
+          false,
+
+
+
+        name: displayName,
+
+
+
+        partner_id:
+
+          DEFAULT_PARTNER_ID,
+
+      },
+
+    ]
+
+  );
+
+
+
+  return {
+
+    success: true,
+
+  };
+
 }

@@ -6,183 +6,489 @@ const ODOO_USERNAME = process.env.ODOO_USERNAME!;
 
 const ODOO_API_KEY = process.env.ODOO_API_KEY!;
 
-const RESERVATION_META_FIELD = "x_studio_reservation_metadata_1";
 
-const LEGACY_META_PREFIX = "KK_RESERVATION_META:";
+
+const RESERVATION_META_FIELD =
+
+  'x_studio_reservation_metadata_1';
+
+
+
+const LEGACY_META_PREFIX =
+
+  'KK_RESERVATION_META:';
+
+
+
+const RESERVATION_NAME_PREFIX =
+
+  'Table Reservation — ';
+
+
+
+const PUBLIC_PLACEHOLDER_NAME =
+
+  'Public Placeholder';
+
+
+
+/**
+
+ * Odoo calendar palette indexes.
+
+ *
+
+ * These can be overridden later without changing code:
+
+ *
+
+ * ODOO_PLACEHOLDER_COLOR=4
+
+ * ODOO_BOOKED_COLOR=2
+
+ */
+
+const PLACEHOLDER_COLOR = Number(
+
+  process.env.ODOO_PLACEHOLDER_COLOR ?? 4
+
+);
+
+
+
+const BOOKED_COLOR = Number(
+
+  process.env.ODOO_BOOKED_COLOR ?? 2
+
+);
+
+
 
 type JsonRpcResult<T> = {
+
   result?: T;
 
+
+
   error?: {
+
     message?: string;
 
+
+
     data?: {
+
       message?: string;
 
       debug?: string;
+
     };
+
   };
+
 };
 
-type Many2One = [number, string] | false;
+
+
+type Many2One =
+
+  | [number, string]
+
+  | false;
+
+
 
 type AllocationResource = {
+
   id: number;
 
   name: string;
 
   capacity: number;
+
 };
 
+
+
 export type ReservationAllocation =
+
   | {
-      type: "single";
+
+      type: 'single';
+
+
 
       time: string;
+
+
 
       start: string;
 
       stop: string;
 
+
+
       capacity: number;
+
+
 
       eventIds: [number];
 
-      resources: [AllocationResource];
+
+
+      resources: [
+
+        AllocationResource
+
+      ];
+
     }
+
   | {
-      type: "merged";
+
+      type: 'merged';
+
+
 
       time: string;
+
+
 
       start: string;
 
       stop: string;
 
+
+
       capacity: number;
 
-      eventIds: [number, number];
 
-      resources: [AllocationResource, AllocationResource];
+
+      eventIds: [
+
+        number,
+
+        number
+
+      ];
+
+
+
+      resources: [
+
+        AllocationResource,
+
+        AllocationResource
+
+      ];
+
     };
 
+
+
 type OriginalEventState = {
+
   id: number;
+
+
 
   name: string;
 
-  description: string | false;
 
-  appointmentBookerId: number | false;
 
-  phoneNumber: string | false;
+  description:
+
+    | string
+
+    | false;
+
+
+
+  appointmentBookerId:
+
+    | number
+
+    | false;
+
+
+
+  phoneNumber:
+
+    | string
+
+    | false;
+
+
+
+  color:
+
+    number | false;
+
 };
 
+
+
 type ReservationMetadata = {
+
   version: 2;
+
+
 
   code: string;
 
+
+
   name: string;
+
+
 
   phone: string;
 
+
+
   partySize: number;
+
+
 
   date: string;
 
+
+
   time: string;
 
-  status: "confirmed" | "cancelled";
+
+
+  status:
+
+    | 'confirmed'
+
+    | 'cancelled';
+
+
 
   partnerId: number;
 
+
+
   eventIds: number[];
+
+
 
   resourceIds: number[];
 
-  allocationType: "single" | "merged";
 
-  originalEvents: OriginalEventState[];
+
+  allocationType:
+
+    | 'single'
+
+    | 'merged';
+
+
+
+  originalEvents:
+
+    OriginalEventState[];
+
+
 
   createdAt: string;
 
+
+
   updatedAt: string;
+
 };
 
+
+
 type CalendarEventRecord = {
+
   id: number;
 
+
+
   name: string;
+
+
 
   start: string;
 
+
+
   stop: string;
 
-  description: string | false;
 
-  phone_number?: string | false;
 
-  appointment_booker_id: Many2One;
+  description:
 
-  appointment_resource_ids: number[];
+    | string
 
-  booking_line_ids: number[];
+    | false;
 
-  x_studio_reservation_metadata_1?: string | false;
 
-  [key: string]: unknown;
+
+  color:
+
+    number
+
+    | false;
+
+
+
+  phone_number?:
+
+    | string
+
+    | false;
+
+
+
+  appointment_booker_id:
+
+    Many2One;
+
+
+
+  appointment_resource_ids:
+
+    number[];
+
+
+
+  booking_line_ids:
+
+    number[];
+
+
+
+  x_studio_reservation_metadata_1?:
+
+    | string
+
+    | false;
+
+
+
+  [key: string]:
+
+    unknown;
+
 };
 
+
+
 type PartnerRecord = {
+
   id: number;
+
+
 
   name: string;
 
-  phone: string | false;
 
-  mobile: string | false;
+
+  phone:
+
+    | string
+
+    | false;
+
+
+
+  mobile:
+
+    | string
+
+    | false;
+
 };
 
+
+
 export type ReservationLookupResult = {
+
   success: boolean;
 
-  reservationId?: string;
 
-  reservationCode?: string;
+
+  reservation_id?: string;
+
+
+
+  reservation_code?: string;
+
+
 
   name?: string;
 
+
+
   phone?: string;
 
-  partySize?: number;
 
-  date?: string;
 
-  time?: string;
+  party_size?: number;
+
+
+
+  reservation_date?: string;
+
+
+
+  reservation_time?: string;
+
+
 
   status?: string;
 
-  eventIds?: number[];
+
+
+  event_ids?: number[];
+
+
 
   error?: string;
 
+
+
   multiple?: boolean;
+
 };
 
+
+
 export type CreateReservationInput = {
+
   name: string;
+
+
 
   phone: string;
 
-  partySize: number;
+
+
+  party_size: number;
+
+
 
   date: string;
 
+
+
   time: string;
+
 };
 
-let cachedUid: number | null = null;
+
+
+let cachedUid:
+
+  | number
+
+  | null = null;
+
+
 
 /* ============================================================
 
@@ -190,55 +496,133 @@ let cachedUid: number | null = null;
 
  * ========================================================== */
 
+
+
 async function getUid(): Promise<number> {
-  if (cachedUid !== null) {
+
+  if (
+
+    cachedUid !== null
+
+  ) {
+
     return cachedUid;
+
   }
 
-  const response = await fetch(
-    `${ODOO_URL}/jsonrpc`,
 
-    {
-      method: "POST",
 
-      headers: {
-        "Content-Type": "application/json",
-      },
+  const response =
 
-      body: JSON.stringify({
-        jsonrpc: "2.0",
+    await fetch(
 
-        method: "call",
+      `${ODOO_URL}/jsonrpc`,
 
-        params: {
-          service: "common",
+      {
 
-          method: "authenticate",
+        method: 'POST',
 
-          args: [ODOO_DB, ODOO_USERNAME, ODOO_API_KEY, {}],
+
+
+        headers: {
+
+          'Content-Type':
+
+            'application/json',
+
         },
 
-        id: Date.now(),
-      }),
 
-      cache: "no-store",
-    },
-  );
 
-  const data = (await response.json()) as JsonRpcResult<number>;
+        body: JSON.stringify({
 
-  if (data.error || !data.result) {
-    throw new Error(
-      data.error?.data?.message ||
-        data.error?.message ||
-        "Odoo authentication failed.",
+          jsonrpc: '2.0',
+
+
+
+          method: 'call',
+
+
+
+          params: {
+
+            service: 'common',
+
+
+
+            method: 'authenticate',
+
+
+
+            args: [
+
+              ODOO_DB,
+
+              ODOO_USERNAME,
+
+              ODOO_API_KEY,
+
+              {},
+
+            ],
+
+          },
+
+
+
+          id: Date.now(),
+
+        }),
+
+
+
+        cache: 'no-store',
+
+      }
+
     );
+
+
+
+  const data =
+
+    (await response.json()) as JsonRpcResult<number>;
+
+
+
+  if (
+
+    data.error ||
+
+    !data.result
+
+  ) {
+
+    throw new Error(
+
+      data.error?.data?.message ||
+
+        data.error?.message ||
+
+        'Odoo authentication failed.'
+
+    );
+
   }
 
-  cachedUid = data.result;
+
+
+  cachedUid =
+
+    data.result;
+
+
 
   return cachedUid;
+
 }
+
+
 
 /* ============================================================
 
@@ -246,65 +630,167 @@ async function getUid(): Promise<number> {
 
  * ========================================================== */
 
+
+
 async function odooCall<T>(
+
   model: string,
 
   method: string,
 
   args: unknown[],
 
-  kwargs: Record<string, unknown> = {},
+  kwargs: Record<
+
+    string,
+
+    unknown
+
+  > = {}
+
 ): Promise<T> {
-  const uid = await getUid();
 
-  const response = await fetch(
-    `${ODOO_URL}/jsonrpc`,
+  const uid =
 
-    {
-      method: "POST",
+    await getUid();
 
-      headers: {
-        "Content-Type": "application/json",
-      },
 
-      body: JSON.stringify({
-        jsonrpc: "2.0",
 
-        method: "call",
+  const response =
 
-        params: {
-          service: "object",
+    await fetch(
 
-          method: "execute_kw",
+      `${ODOO_URL}/jsonrpc`,
 
-          args: [ODOO_DB, uid, ODOO_API_KEY, model, method, args, kwargs],
+      {
+
+        method: 'POST',
+
+
+
+        headers: {
+
+          'Content-Type':
+
+            'application/json',
+
         },
 
-        id: Date.now(),
-      }),
 
-      cache: "no-store",
-    },
-  );
 
-  const data = (await response.json()) as JsonRpcResult<T>;
+        body: JSON.stringify({
 
-  if (data.error) {
+          jsonrpc: '2.0',
+
+
+
+          method: 'call',
+
+
+
+          params: {
+
+            service: 'object',
+
+
+
+            method: 'execute_kw',
+
+
+
+            args: [
+
+              ODOO_DB,
+
+              uid,
+
+              ODOO_API_KEY,
+
+              model,
+
+              method,
+
+              args,
+
+              kwargs,
+
+            ],
+
+          },
+
+
+
+          id: Date.now(),
+
+        }),
+
+
+
+        cache: 'no-store',
+
+      }
+
+    );
+
+
+
+  const data =
+
+    (await response.json()) as JsonRpcResult<T>;
+
+
+
+  if (
+
+    data.error
+
+  ) {
+
     const detail =
+
       data.error.data?.message ||
+
       data.error.data?.debug ||
+
       data.error.message ||
-      "Unknown Odoo error";
 
-    throw new Error(`Odoo error: ${detail}`);
+      'Unknown Odoo error';
+
+
+
+    throw new Error(
+
+      `Odoo error: ${detail}`
+
+    );
+
   }
 
-  if (data.result === undefined) {
-    throw new Error(`Odoo returned no result for ${model}.${method}`);
+
+
+  if (
+
+    data.result ===
+
+    undefined
+
+  ) {
+
+    throw new Error(
+
+      `Odoo returned no result for ${model}.${method}`
+
+    );
+
   }
+
+
 
   return data.result;
+
 }
+
+
 
 /* ============================================================
 
@@ -312,27 +798,101 @@ async function odooCall<T>(
 
  * ========================================================== */
 
+
+
 async function validateOdooFields() {
-  const fields = await odooCall<Record<string, unknown>>(
-    "calendar.event",
 
-    "fields_get",
+  const fields =
 
-    [],
+    await odooCall<
 
-    {
-      attributes: ["string", "type", "readonly"],
-    },
-  );
+      Record<
 
-  if (!fields[RESERVATION_META_FIELD]) {
-    throw new Error(`Missing calendar.event field: ${RESERVATION_META_FIELD}`);
+        string,
+
+        unknown
+
+      >
+
+    >(
+
+      'calendar.event',
+
+      'fields_get',
+
+      [],
+
+      {
+
+        attributes: [
+
+          'string',
+
+          'type',
+
+          'readonly',
+
+        ],
+
+      }
+
+    );
+
+
+
+  if (
+
+    !fields[
+
+      RESERVATION_META_FIELD
+
+    ]
+
+  ) {
+
+    throw new Error(
+
+      `Missing calendar.event field: ${RESERVATION_META_FIELD}`
+
+    );
+
   }
 
-  if (!fields.appointment_booker_id) {
-    throw new Error("calendar.event does not expose appointment_booker_id.");
+
+
+  if (
+
+    !fields.color
+
+  ) {
+
+    throw new Error(
+
+      'calendar.event does not expose the color field on this Odoo database.'
+
+    );
+
   }
+
+
+
+  if (
+
+    !fields.appointment_booker_id
+
+  ) {
+
+    throw new Error(
+
+      'calendar.event does not expose appointment_booker_id.'
+
+    );
+
+  }
+
 }
+
+
 
 /* ============================================================
 
@@ -340,31 +900,93 @@ async function validateOdooFields() {
 
  * ========================================================== */
 
-function normalizePhone(phone: string): string {
-  let digits = phone.replace(
-    /\D/g,
 
-    "",
-  );
 
-  if (digits.length === 11 && digits.startsWith("0")) {
-    digits = `234${digits.slice(1)}`;
+function normalizePhone(
+
+  phone: string
+
+): string {
+
+  let digits =
+
+    phone.replace(
+
+      /\D/g,
+
+      ''
+
+    );
+
+
+
+  if (
+
+    digits.length === 11 &&
+
+    digits.startsWith('0')
+
+  ) {
+
+    digits =
+
+      `234${digits.slice(1)}`;
+
   }
 
+
+
   return digits;
+
 }
 
-function phoneVariants(phone: string): string[] {
-  const normalized = normalizePhone(phone);
 
-  const local = normalized.startsWith("234")
-    ? `0${normalized.slice(3)}`
-    : normalized;
+
+function phoneVariants(
+
+  phone: string
+
+): string[] {
+
+  const normalized =
+
+    normalizePhone(phone);
+
+
+
+  const local =
+
+    normalized.startsWith(
+
+      '234'
+
+    )
+
+      ? `0${normalized.slice(3)}`
+
+      : normalized;
+
+
 
   return Array.from(
-    new Set([phone.trim(), normalized, local, `+${normalized}`]),
+
+    new Set([
+
+      phone.trim(),
+
+      normalized,
+
+      local,
+
+      `+${normalized}`,
+
+    ])
+
   );
+
 }
+
+
 
 /* ============================================================
 
@@ -372,23 +994,35 @@ function phoneVariants(phone: string): string[] {
 
  * ========================================================== */
 
+
+
 function makeReservationCode(): string {
-  const random = Math.random()
 
-    .toString(16)
+  const random =
 
-    .slice(2, 8)
+    Math.random()
 
-    .toUpperCase()
+      .toString(16)
 
-    .padEnd(
-      6,
+      .slice(2, 8)
 
-      "0",
-    );
+      .toUpperCase()
+
+      .padEnd(
+
+        6,
+
+        '0'
+
+      );
+
+
 
   return `KK-${random}`;
+
 }
+
+
 
 /* ============================================================
 
@@ -396,58 +1030,187 @@ function makeReservationCode(): string {
 
  * ========================================================== */
 
-function encodeMetadata(metadata: ReservationMetadata): string {
-  return Buffer.from(
-    JSON.stringify(metadata),
 
-    "utf8",
-  )
 
-    .toString("base64url");
-}
+function encodeMetadata(
 
-function decodeMetadata(
-  raw: string | false | undefined,
-): ReservationMetadata | null {
-  if (!raw || typeof raw !== "string") {
-    return null;
-  }
+  metadata: ReservationMetadata
 
-  let encoded = raw.trim();
+): string {
 
-  if (encoded.startsWith(LEGACY_META_PREFIX)) {
-    encoded = encoded.slice(LEGACY_META_PREFIX.length);
-  }
+  return Buffer
 
-  try {
-    const json = Buffer.from(
-      encoded,
+    .from(
 
-      "base64url",
+      JSON.stringify(
+
+        metadata
+
+      ),
+
+      'utf8'
+
     )
 
-      .toString("utf8");
+    .toString(
 
-    return JSON.parse(json) as ReservationMetadata;
-  } catch {
-    return null;
-  }
+      'base64url'
+
+    );
+
 }
 
-function extractLegacyMetadata(
-  description: string | false,
+
+
+function decodeMetadata(
+
+  raw:
+
+    | string
+
+    | false
+
+    | undefined
+
 ): ReservationMetadata | null {
-  if (typeof description !== "string") {
+
+  if (
+
+    !raw ||
+
+    typeof raw !== 'string'
+
+  ) {
+
     return null;
+
   }
 
-  const index = description.indexOf(LEGACY_META_PREFIX);
 
-  if (index < 0) {
-    return null;
+
+  let encoded =
+
+    raw.trim();
+
+
+
+  if (
+
+    encoded.startsWith(
+
+      LEGACY_META_PREFIX
+
+    )
+
+  ) {
+
+    encoded =
+
+      encoded.slice(
+
+        LEGACY_META_PREFIX.length
+
+      );
+
   }
 
-  let encoded = description.slice(index + LEGACY_META_PREFIX.length);
+
+
+  try {
+
+    const json =
+
+      Buffer
+
+        .from(
+
+          encoded,
+
+          'base64url'
+
+        )
+
+        .toString(
+
+          'utf8'
+
+        );
+
+
+
+    return JSON.parse(
+
+      json
+
+    ) as ReservationMetadata;
+
+  } catch {
+
+    return null;
+
+  }
+
+}
+
+
+
+function extractLegacyMetadata(
+
+  description:
+
+    | string
+
+    | false
+
+): ReservationMetadata | null {
+
+  if (
+
+    typeof description !==
+
+    'string'
+
+  ) {
+
+    return null;
+
+  }
+
+
+
+  const index =
+
+    description.indexOf(
+
+      LEGACY_META_PREFIX
+
+    );
+
+
+
+  if (
+
+    index < 0
+
+  ) {
+
+    return null;
+
+  }
+
+
+
+  let encoded =
+
+    description.slice(
+
+      index +
+
+        LEGACY_META_PREFIX.length
+
+    );
+
+
 
   /**
 
@@ -457,26 +1220,87 @@ function extractLegacyMetadata(
 
    */
 
-  encoded = encoded.split("<")[0].split("\n")[0].trim();
+  encoded =
 
-  return decodeMetadata(encoded);
+    encoded
+
+      .split('<')[0]
+
+      .split('\n')[0]
+
+      .trim();
+
+
+
+  return decodeMetadata(
+
+    encoded
+
+  );
+
 }
+
+
 
 function getMetadataFromEvent(
-  event: CalendarEventRecord,
+
+  event: CalendarEventRecord
+
 ): ReservationMetadata | null {
-  const studioValue = event[RESERVATION_META_FIELD];
 
-  if (typeof studioValue === "string" && studioValue.trim()) {
-    const parsed = decodeMetadata(studioValue);
+  const studioValue =
 
-    if (parsed) {
+    event[
+
+      RESERVATION_META_FIELD
+
+    ];
+
+
+
+  if (
+
+    typeof studioValue ===
+
+      'string' &&
+
+    studioValue.trim()
+
+  ) {
+
+    const parsed =
+
+      decodeMetadata(
+
+        studioValue
+
+      );
+
+
+
+    if (
+
+      parsed
+
+    ) {
+
       return parsed;
+
     }
+
   }
 
-  return extractLegacyMetadata(event.description);
+
+
+  return extractLegacyMetadata(
+
+    event.description
+
+  );
+
 }
+
+
 
 /* ============================================================
 
@@ -484,105 +1308,191 @@ function getMetadataFromEvent(
 
  * ========================================================== */
 
-let cachedPartnerFields: Set<string> | null = null;
 
-async function getPartnerFields(): Promise<Set<string>> {
-  if (cachedPartnerFields) {
-    return cachedPartnerFields;
-  }
 
-  const fields = await odooCall<Record<string, unknown>>(
-    "res.partner",
-    "fields_get",
-    [],
-    {
-      attributes: ["string", "type", "readonly"],
-    },
-  );
+async function findPartnerByPhone(
 
-  cachedPartnerFields = new Set(Object.keys(fields));
+  phone: string
 
-  return cachedPartnerFields;
-}
-
-function buildReservationDisplayName(
-  name: string,
-  phone: string,
-  reservationCode: string,
-): string {
-  return `${name.trim()} / ${phone.trim()} / ${reservationCode.trim()}`;
-}
-
-async function findReservationPartner(
-  displayName: string,
 ): Promise<PartnerRecord | null> {
-  const partnerFields = await getPartnerFields();
 
-  const readFields = ["id", "name"];
+  for (
 
-  if (partnerFields.has("phone")) {
-    readFields.push("phone");
+    const variant of
+
+    phoneVariants(phone)
+
+  ) {
+
+    const records =
+
+      await odooCall<
+
+        PartnerRecord[]
+
+      >(
+
+        'res.partner',
+
+        'search_read',
+
+        [
+
+          [
+
+            '|',
+
+
+
+            [
+
+              'phone',
+
+              '=ilike',
+
+              variant,
+
+            ],
+
+
+
+            [
+
+              'mobile',
+
+              '=ilike',
+
+              variant,
+
+            ],
+
+          ],
+
+        ],
+
+        {
+
+          fields: [
+
+            'id',
+
+            'name',
+
+            'phone',
+
+            'mobile',
+
+          ],
+
+
+
+          limit: 1,
+
+        }
+
+      );
+
+
+
+    if (
+
+      records.length >
+
+      0
+
+    ) {
+
+      return records[0];
+
+    }
+
   }
 
-  if (partnerFields.has("mobile")) {
-    readFields.push("mobile");
+
+
+  return null;
+
+}
+
+
+
+async function getOrCreateCustomerPartner({
+
+  name,
+
+  phone,
+
+}: {
+
+  name: string;
+
+  phone: string;
+
+}): Promise<number> {
+
+  const existing =
+
+    await findPartnerByPhone(
+
+      phone
+
+    );
+
+
+
+  if (
+
+    existing
+
+  ) {
+
+    return existing.id;
+
   }
 
-  const records = await odooCall<PartnerRecord[]>(
-    "res.partner",
-    "search_read",
-    [[["name", "=", displayName]]],
-    {
-      fields: readFields,
 
-      limit: 1,
-    },
+
+  return odooCall<number>(
+
+    'res.partner',
+
+    'create',
+
+    [
+
+      {
+
+        name:
+
+          name.trim(),
+
+
+
+        phone:
+
+          phone.trim(),
+
+
+
+        mobile:
+
+          phone.trim(),
+
+
+
+        customer_rank:
+
+          1,
+
+      },
+
+    ]
+
   );
 
-  return records[0] ?? null;
 }
 
-async function getOrCreateReservationPartner({
-  name,
-  phone,
-  reservationCode,
-}: {
-  name: string;
-  phone: string;
-  reservationCode: string;
-}): Promise<number> {
-  const displayName = buildReservationDisplayName(name, phone, reservationCode);
 
-  /**
-   * Use a booking-specific partner so older bookings keep their
-   * own reservation code even when the same customer books again.
-   */
-  const existing = await findReservationPartner(displayName);
-
-  if (existing) {
-    return existing.id;
-  }
-
-  const partnerFields = await getPartnerFields();
-
-  const values: Record<string, unknown> = {
-    name: displayName,
-  };
-
-  if (partnerFields.has("phone")) {
-    values.phone = phone.trim();
-  }
-
-  if (partnerFields.has("mobile")) {
-    values.mobile = phone.trim();
-  }
-
-  if (partnerFields.has("customer_rank")) {
-    values.customer_rank = 1;
-  }
-
-  return odooCall<number>("res.partner", "create", [values]);
-}
 
 /* ============================================================
 
@@ -590,32 +1500,53 @@ async function getOrCreateReservationPartner({
 
  * ========================================================== */
 
+
+
 async function findAllocation(
+
   date: string,
 
   time: string,
 
-  partySize: number,
+  partySize: number
+
 ): Promise<ReservationAllocation | null> {
+
   const module =
-    (await import("@/lib/odoo/reservation-allocation")) as unknown as {
+
+    (await import(
+
+      '@/lib/odoo/reservation-allocation'
+
+    )) as unknown as {
+
       findBestAllocation: (
+
         date: string,
 
         time: string,
 
-        partySize: number,
+        partySize: number
+
       ) => Promise<ReservationAllocation | null>;
+
     };
 
+
+
   return module.findBestAllocation(
+
     date,
 
     time,
 
-    partySize,
+    partySize
+
   );
+
 }
+
+
 
 /* ============================================================
 
@@ -623,41 +1554,77 @@ async function findAllocation(
 
  * ========================================================== */
 
+
+
 const EVENT_FIELDS = [
-  "id",
 
-  "name",
+  'id',
 
-  "start",
+  'name',
 
-  "stop",
+  'start',
 
-  "description",
+  'stop',
 
-  "phone_number",
+  'description',
 
-  "appointment_booker_id",
+  'color',
 
-  "appointment_resource_ids",
+  'phone_number',
 
-  "booking_line_ids",
+  'appointment_booker_id',
+
+  'appointment_resource_ids',
+
+  'booking_line_ids',
 
   RESERVATION_META_FIELD,
+
 ];
 
-async function readEvents(ids: number[]): Promise<CalendarEventRecord[]> {
-  if (ids.length === 0) {
+
+
+async function readEvents(
+
+  ids: number[]
+
+): Promise<CalendarEventRecord[]> {
+
+  if (
+
+    ids.length === 0
+
+  ) {
+
     return [];
+
   }
 
-  return odooCall<CalendarEventRecord[]>(
-    "calendar.event",
 
-    "read",
 
-    [ids, EVENT_FIELDS],
+  return odooCall<
+
+    CalendarEventRecord[]
+
+  >(
+
+    'calendar.event',
+
+    'read',
+
+    [
+
+      ids,
+
+      EVENT_FIELDS,
+
+    ]
+
   );
+
 }
+
+
 
 /* ============================================================
 
@@ -665,39 +1632,117 @@ async function readEvents(ids: number[]): Promise<CalendarEventRecord[]> {
 
  * ========================================================== */
 
+
+
 async function migrateLegacyEvent(
-  event: CalendarEventRecord,
+
+  event: CalendarEventRecord
+
 ): Promise<ReservationMetadata | null> {
-  const current = event[RESERVATION_META_FIELD];
 
-  if (typeof current === "string" && current.trim()) {
-    return decodeMetadata(current);
+  const current =
+
+    event[
+
+      RESERVATION_META_FIELD
+
+    ];
+
+
+
+  if (
+
+    typeof current ===
+
+      'string' &&
+
+    current.trim()
+
+  ) {
+
+    return decodeMetadata(
+
+      current
+
+    );
+
   }
 
-  const legacy = extractLegacyMetadata(event.description);
 
-  if (!legacy) {
+
+  const legacy =
+
+    extractLegacyMetadata(
+
+      event.description
+
+    );
+
+
+
+  if (
+
+    !legacy
+
+  ) {
+
     return null;
+
   }
+
+
 
   await odooCall<boolean>(
-    "calendar.event",
 
-    "write",
+    'calendar.event',
+
+    'write',
 
     [
-      [event.id],
+
+      [
+
+        event.id,
+
+      ],
+
+
 
       {
-        [RESERVATION_META_FIELD]: encodeMetadata(legacy),
 
-        description: false,
+        [RESERVATION_META_FIELD]:
+
+          encodeMetadata(
+
+            legacy
+
+          ),
+
+
+
+        description:
+
+          false,
+
+
+
+        color:
+
+          BOOKED_COLOR,
+
       },
-    ],
+
+    ]
+
   );
 
+
+
   return legacy;
+
 }
+
+
 
 /**
 
@@ -722,42 +1767,244 @@ async function migrateLegacyEvent(
  */
 
 export async function migrateLegacyReservationMetadata(): Promise<{
+
   success: boolean;
 
   migrated: number;
+
 }> {
+
   await validateOdooFields();
 
-  const events = await odooCall<CalendarEventRecord[]>(
-    "calendar.event",
 
-    "search_read",
 
-    [[["description", "ilike", LEGACY_META_PREFIX]]],
+  const events =
 
-    {
-      fields: EVENT_FIELDS,
+    await odooCall<
 
-      order: "start asc",
-    },
-  );
+      CalendarEventRecord[]
 
-  let migrated = 0;
+    >(
 
-  for (const event of events) {
-    const result = await migrateLegacyEvent(event);
+      'calendar.event',
 
-    if (result) {
+      'search_read',
+
+      [
+
+        [
+
+          [
+
+            'description',
+
+            'ilike',
+
+            LEGACY_META_PREFIX,
+
+          ],
+
+        ],
+
+      ],
+
+      {
+
+        fields:
+
+          EVENT_FIELDS,
+
+
+
+        order:
+
+          'start asc',
+
+      }
+
+    );
+
+
+
+  let migrated =
+
+    0;
+
+
+
+  for (
+
+    const event of
+
+    events
+
+  ) {
+
+    const result =
+
+      await migrateLegacyEvent(
+
+        event
+
+      );
+
+
+
+    if (
+
+      result
+
+    ) {
+
       migrated++;
+
     }
+
   }
 
+
+
   return {
-    success: true,
+
+    success:
+
+      true,
+
+
 
     migrated,
+
   };
+
 }
+
+
+
+/* ============================================================
+
+ * Color existing placeholders
+
+ * ========================================================== */
+
+
+
+/**
+
+ * Run once to make all existing placeholder events use the
+
+ * configured placeholder calendar color.
+
+ */
+
+export async function colorizeExistingPlaceholders(): Promise<{
+
+  success: boolean;
+
+  updated: number;
+
+}> {
+
+  await validateOdooFields();
+
+
+
+  const ids =
+
+    await odooCall<
+
+      number[]
+
+    >(
+
+      'calendar.event',
+
+      'search',
+
+      [
+
+        [
+
+          [
+
+            'name',
+
+            'ilike',
+
+            PUBLIC_PLACEHOLDER_NAME,
+
+          ],
+
+        ],
+
+      ]
+
+    );
+
+
+
+  if (
+
+    ids.length ===
+
+    0
+
+  ) {
+
+    return {
+
+      success: true,
+
+      updated: 0,
+
+    };
+
+  }
+
+
+
+  await odooCall<boolean>(
+
+    'calendar.event',
+
+    'write',
+
+    [
+
+      ids,
+
+
+
+      {
+
+        color:
+
+          PLACEHOLDER_COLOR,
+
+      },
+
+    ]
+
+  );
+
+
+
+  return {
+
+    success:
+
+      true,
+
+
+
+    updated:
+
+      ids.length,
+
+  };
+
+}
+
+
 
 /* ============================================================
 
@@ -765,197 +2012,529 @@ export async function migrateLegacyReservationMetadata(): Promise<{
 
  * ========================================================== */
 
+
+
 export async function createOdooReservation(
-  input: CreateReservationInput,
+
+  input: CreateReservationInput
+
 ): Promise<{
+
   success: boolean;
 
-  reservationId?: string;
 
-  reservationCode?: string;
 
-  eventIds?: number[];
+  reservation_id?: string;
+
+
+
+  reservation_code?: string;
+
+
+
+  event_ids?: number[];
+
+
 
   error?: string;
 
+
+
   reason?: string;
+
 }> {
+
   try {
+
     await validateOdooFields();
 
-    const name = input.name.trim();
 
-    const phone = input.phone.trim();
 
-    const partySize = Number(input.partySize);
+    const name =
 
-    if (!name) {
-      return {
-        success: false,
+      input.name.trim();
 
-        error: "Customer name is required.",
-      };
-    }
+
+
+    const phone =
+
+      input.phone.trim();
+
+
+
+    const partySize =
+
+      Number(
+
+        input.party_size
+
+      );
+
+
 
     if (
+
+      !name
+
+    ) {
+
+      return {
+
+        success: false,
+
+
+
+        error:
+
+          'Customer name is required.',
+
+      };
+
+    }
+
+
+
+    if (
+
       phone.replace(
+
         /\D/g,
 
-        "",
+        ''
+
       ).length < 9
+
     ) {
+
       return {
+
         success: false,
 
-        error: "A valid phone number is required.",
+
+
+        error:
+
+          'A valid phone number is required.',
+
       };
+
     }
 
-    if (!Number.isInteger(partySize) || partySize < 1 || partySize > 4) {
+
+
+    if (
+
+      !Number.isInteger(
+
+        partySize
+
+      ) ||
+
+      partySize < 1 ||
+
+      partySize > 4
+
+    ) {
+
       return {
+
         success: false,
 
-        error: "Automated reservations support 1–4 guests.",
+
+
+        error:
+
+          'Automated reservations support 1–4 guests.',
+
       };
+
     }
+
+
 
     /**
+
      * Re-read Odoo and choose the best allocation immediately
+
      * before confirmation.
+
      */
-    const allocation = await findAllocation(
-      input.date,
 
-      input.time,
+    const allocation =
 
-      partySize,
-    );
+      await findAllocation(
 
-    if (!allocation) {
+        input.date,
+
+        input.time,
+
+        partySize
+
+      );
+
+
+
+    if (
+
+      !allocation
+
+    ) {
+
       return {
+
         success: false,
 
-        reason: "unavailable",
 
-        error: "That reservation time is no longer available.",
+
+        reason:
+
+          'unavailable',
+
+
+
+        error:
+
+          'That reservation time is no longer available.',
+
       };
+
     }
 
-    const eventIds = [...allocation.eventIds];
 
-    const events = await readEvents(eventIds);
 
-    if (events.length !== eventIds.length) {
+    const eventIds =
+
+      [
+
+        ...allocation.eventIds,
+
+      ];
+
+
+
+    const events =
+
+      await readEvents(
+
+        eventIds
+
+      );
+
+
+
+    if (
+
+      events.length !==
+
+      eventIds.length
+
+    ) {
+
       return {
+
         success: false,
 
-        reason: "unavailable",
 
-        error: "One or more reservation slots no longer exist.",
+
+        reason:
+
+          'unavailable',
+
+
+
+        error:
+
+          'One or more reservation slots no longer exist.',
+
       };
+
     }
+
+
 
     /**
+
      * Final safety check.
+
      */
-    for (const event of events) {
-      const existingMetadata = getMetadataFromEvent(event);
 
-      if (existingMetadata?.status === "confirmed") {
-        return {
-          success: false,
+    for (
 
-          reason: "unavailable",
+      const event of
 
-          error: "That reservation time was just taken.",
-        };
-      }
+      events
+
+    ) {
+
+      const metadata =
+
+        getMetadataFromEvent(
+
+          event
+
+        );
+
+
 
       if (
+
+        metadata?.status ===
+
+        'confirmed'
+
+      ) {
+
+        return {
+
+          success: false,
+
+
+
+          reason:
+
+            'unavailable',
+
+
+
+          error:
+
+            'That reservation time was just taken.',
+
+        };
+
+      }
+
+
+
+      if (
+
         !event.name
 
           .toLowerCase()
 
-          .includes("placeholder")
+          .includes(
+            PUBLIC_PLACEHOLDER_NAME.toLowerCase()
+          )
+
       ) {
+
         return {
+
           success: false,
 
-          reason: "unavailable",
 
-          error: "That reservation slot is no longer available.",
+
+          reason:
+
+            'unavailable',
+
+
+
+          error:
+
+            'That reservation slot is no longer available.',
+
         };
+
       }
+
     }
 
-    const code = makeReservationCode();
+
 
     /**
-     * Both the event title and appointment booker use:
+
+     * This is what fixes "Administrator".
+
      *
-     * Customer Name / Phone Number / Reservation Code
+
+     * We find/create an actual Odoo contact for the customer.
+
      */
-    const partnerId = await getOrCreateReservationPartner({
-      name,
 
-      phone,
+    const partnerId =
 
-      reservationCode: code,
-    });
+      await getOrCreateCustomerPartner(
 
-    const now = new Date().toISOString();
+        {
 
-    const metadata: ReservationMetadata = {
-      version: 2,
+          name,
 
-      code,
+          phone,
 
-      name,
+        }
 
-      phone,
+      );
 
-      partySize,
 
-      date: input.date,
 
-      time: input.time,
+    const code =
 
-      status: "confirmed",
+      makeReservationCode();
 
-      partnerId,
 
-      eventIds,
 
-      resourceIds: allocation.resources.map((resource) => resource.id),
+    const now =
 
-      allocationType: allocation.type,
+      new Date()
 
-      originalEvents: events.map((event) => ({
-        id: event.id,
+        .toISOString();
 
-        name: event.name,
 
-        description: event.description,
 
-        appointmentBookerId: event.appointment_booker_id
-          ? event.appointment_booker_id[0]
-          : false,
+    const metadata: ReservationMetadata =
 
-        phoneNumber: event.phone_number ?? false,
-      })),
+      {
 
-      createdAt: now,
+        version:
 
-      updatedAt: now,
-    };
+          2,
 
-    const displayName = buildReservationDisplayName(
-      name,
 
-      phone,
 
-      code,
-    );
+        code,
+
+
+
+        name,
+
+
+
+        phone,
+
+
+
+        partySize,
+
+
+
+        date:
+
+          input.date,
+
+
+
+        time:
+
+          input.time,
+
+
+
+        status:
+
+          'confirmed',
+
+
+
+        partnerId,
+
+
+
+        eventIds,
+
+
+
+        resourceIds:
+
+          allocation.resources.map(
+
+            (
+
+              resource
+
+            ) =>
+
+              resource.id
+
+          ),
+
+
+
+        allocationType:
+
+          allocation.type,
+
+
+
+        originalEvents:
+
+          events.map(
+
+            (
+
+              event
+
+            ) => ({
+
+              id:
+
+                event.id,
+
+
+
+              name:
+
+                event.name,
+
+
+
+              description:
+
+                event.description,
+
+
+
+              appointmentBookerId:
+
+                event.appointment_booker_id
+
+                  ? event
+
+                      .appointment_booker_id[0]
+
+                  : false,
+
+
+
+              phoneNumber:
+
+                event.phone_number ??
+
+                false,
+
+
+
+              color:
+
+                event.color ??
+
+                PLACEHOLDER_COLOR,
+
+            })
+
+          ),
+
+
+
+        createdAt:
+
+          now,
+
+
+
+        updatedAt:
+
+          now,
+
+      };
+
+
+
+    const displayName =
+
+      `${RESERVATION_NAME_PREFIX}${name} [${code}]`;
+
+
 
     /**
 
@@ -967,6 +2546,7 @@ export async function createOdooReservation(
 
      * 2. Description is cleared
 
+     * 3. Calendar becomes booked color
 
      *
 
@@ -975,51 +2555,134 @@ export async function createOdooReservation(
      */
 
     await odooCall<boolean>(
-      "calendar.event",
 
-      "write",
+      'calendar.event',
+
+      'write',
 
       [
+
         eventIds,
 
+
+
         {
-          name: displayName,
 
-          appointment_booker_id: partnerId,
+          name:
 
-          phone_number: phone,
+            displayName,
 
-          description: false,
 
-          [RESERVATION_META_FIELD]: encodeMetadata(metadata),
+
+          appointment_booker_id:
+
+            partnerId,
+
+
+
+          phone_number:
+
+            phone,
+
+
+
+          description:
+
+            false,
+
+
+
+          color:
+
+            BOOKED_COLOR,
+
+
+
+          [RESERVATION_META_FIELD]:
+
+            encodeMetadata(
+
+              metadata
+
+            ),
+
         },
-      ],
+
+      ]
+
     );
 
+
+
     return {
-      success: true,
 
-      reservationId: String(eventIds[0]),
+      success:
 
-      reservationCode: code,
+        true,
 
-      eventIds: eventIds,
+
+
+      reservation_id:
+
+        String(
+
+          eventIds[0]
+
+        ),
+
+
+
+      reservation_code:
+
+        code,
+
+
+
+      event_ids:
+
+        eventIds,
+
     };
-  } catch (error) {
-    console.error(
-      "createOdooReservation failed:",
 
-      error,
+  } catch (
+
+    error
+
+  ) {
+
+    console.error(
+
+      'createOdooReservation failed:',
+
+      error
+
     );
 
+
+
     return {
-      success: false,
+
+      success:
+
+        false,
+
+
 
       error:
-        error instanceof Error ? error.message : "Unknown reservation error.",
+
+        error instanceof Error
+
+          ? error.message
+
+          : 'Unknown reservation error.',
+
     };
+
   }
+
 }
+
+
 
 /* ============================================================
 
@@ -1027,40 +2690,111 @@ export async function createOdooReservation(
 
  * ========================================================== */
 
+
+
 async function findReservationEventsByCode(
-  code: string,
+
+  code: string
+
 ): Promise<CalendarEventRecord[]> {
+
   await validateOdooFields();
 
-  const normalized = code
 
-    .trim()
 
-    .toUpperCase();
+  const normalized =
 
-  return odooCall<CalendarEventRecord[]>(
-    "calendar.event",
+    code
 
-    "search_read",
+      .trim()
 
-    [[["name", "ilike", normalized]]],
+      .toUpperCase();
+
+
+
+  return odooCall<
+
+    CalendarEventRecord[]
+
+  >(
+
+    'calendar.event',
+
+    'search_read',
+
+    [
+
+      [
+
+        [
+
+          'name',
+
+          'ilike',
+
+          `[${normalized}]`,
+
+        ],
+
+      ],
+
+    ],
 
     {
-      fields: EVENT_FIELDS,
 
-      order: "start asc",
-    },
+      fields:
+
+        EVENT_FIELDS,
+
+
+
+      order:
+
+        'start asc',
+
+    }
+
   );
+
 }
 
-async function hydrateMetadata(
-  event: CalendarEventRecord,
-): Promise<ReservationMetadata | null> {
-  const current = event[RESERVATION_META_FIELD];
 
-  if (typeof current === "string" && current.trim()) {
-    return decodeMetadata(current);
+
+async function hydrateMetadata(
+
+  event: CalendarEventRecord
+
+): Promise<ReservationMetadata | null> {
+
+  const current =
+
+    event[
+
+      RESERVATION_META_FIELD
+
+    ];
+
+
+
+  if (
+
+    typeof current ===
+
+      'string' &&
+
+    current.trim()
+
+  ) {
+
+    return decodeMetadata(
+
+      current
+
+    );
+
   }
+
+
 
   /**
 
@@ -1070,8 +2804,15 @@ async function hydrateMetadata(
 
    */
 
-  return migrateLegacyEvent(event);
+  return migrateLegacyEvent(
+
+    event
+
+  );
+
 }
+
+
 
 /* ============================================================
 
@@ -1079,65 +2820,191 @@ async function hydrateMetadata(
 
  * ========================================================== */
 
+
+
 export async function getOdooReservationByCode(
-  code: string,
+
+  code: string
+
 ): Promise<ReservationLookupResult> {
+
   try {
-    const events = await findReservationEventsByCode(code);
 
-    if (events.length === 0) {
+    const events =
+
+      await findReservationEventsByCode(
+
+        code
+
+      );
+
+
+
+    if (
+
+      events.length ===
+
+      0
+
+    ) {
+
       return {
-        success: false,
 
-        error: "Reservation not found.",
+        success:
+
+          false,
+
+
+
+        error:
+
+          'Reservation not found.',
+
       };
+
     }
 
-    const metadata = await hydrateMetadata(events[0]);
 
-    if (!metadata) {
+
+    const metadata =
+
+      await hydrateMetadata(
+
+        events[0]
+
+      );
+
+
+
+    if (
+
+      !metadata
+
+    ) {
+
       return {
-        success: false,
 
-        error: "Reservation metadata could not be read.",
+        success:
+
+          false,
+
+
+
+        error:
+
+          'Reservation metadata could not be read.',
+
       };
+
     }
+
+
 
     return {
-      success: true,
 
-      reservationId: String(events[0].id),
+      success:
 
-      reservationCode: metadata.code,
+        true,
 
-      name: metadata.name,
 
-      phone: metadata.phone,
 
-      partySize: metadata.partySize,
+      reservation_id:
 
-      date: metadata.date,
+        String(
 
-      time: metadata.time,
+          events[0].id
 
-      status: metadata.status,
+        ),
 
-      eventIds: metadata.eventIds,
+
+
+      reservation_code:
+
+        metadata.code,
+
+
+
+      name:
+
+        metadata.name,
+
+
+
+      phone:
+
+        metadata.phone,
+
+
+
+      party_size:
+
+        metadata.partySize,
+
+
+
+      reservation_date:
+
+        metadata.date,
+
+
+
+      reservation_time:
+
+        metadata.time,
+
+
+
+      status:
+
+        metadata.status,
+
+
+
+      event_ids:
+
+        metadata.eventIds,
+
     };
-  } catch (error) {
-    console.error(
-      "getOdooReservationByCode failed:",
 
-      error,
+  } catch (
+
+    error
+
+  ) {
+
+    console.error(
+
+      'getOdooReservationByCode failed:',
+
+      error
+
     );
 
-    return {
-      success: false,
 
-      error: error instanceof Error ? error.message : "Unknown lookup error.",
+
+    return {
+
+      success:
+
+        false,
+
+
+
+      error:
+
+        error instanceof Error
+
+          ? error.message
+
+          : 'Unknown lookup error.',
+
     };
+
   }
+
 }
+
+
 
 /* ============================================================
 
@@ -1145,122 +3012,371 @@ export async function getOdooReservationByCode(
 
  * ========================================================== */
 
+
+
 export async function getOdooReservationByPhone(
-  phone: string,
+
+  phone: string
+
 ): Promise<ReservationLookupResult> {
+
   try {
+
     await validateOdooFields();
 
-    const normalized = normalizePhone(phone);
 
-    const events = await odooCall<CalendarEventRecord[]>(
-      "calendar.event",
 
-      "search_read",
+    const normalized =
 
-      [
+      normalizePhone(
+
+        phone
+
+      );
+
+
+
+    const events =
+
+      await odooCall<
+
+        CalendarEventRecord[]
+
+      >(
+
+        'calendar.event',
+
+        'search_read',
+
         [
-          "|",
 
-          [RESERVATION_META_FIELD, "!=", false],
+          [
 
-          ["description", "ilike", LEGACY_META_PREFIX],
+            [
+
+              'name',
+
+              'ilike',
+
+              RESERVATION_NAME_PREFIX,
+
+            ],
+
+          ],
+
         ],
-      ],
 
-      {
-        fields: EVENT_FIELDS,
+        {
 
-        order: "start desc",
+          fields:
 
-        limit: 500,
-      },
-    );
+            EVENT_FIELDS,
+
+
+
+          order:
+
+            'start desc',
+
+
+
+          limit:
+
+            500,
+
+        }
+
+      );
+
+
 
     const matches: Array<{
+
       event: CalendarEventRecord;
 
       metadata: ReservationMetadata;
+
     }> = [];
 
-    const seen = new Set<string>();
 
-    for (const event of events) {
-      const metadata = await hydrateMetadata(event);
 
-      if (!metadata) {
+    const seen =
+
+      new Set<string>();
+
+
+
+    for (
+
+      const event of
+
+      events
+
+    ) {
+
+      const metadata =
+
+        await hydrateMetadata(
+
+          event
+
+        );
+
+
+
+      if (
+
+        !metadata
+
+      ) {
+
         continue;
+
       }
 
-      if (normalizePhone(metadata.phone) !== normalized) {
+
+
+      if (
+
+        normalizePhone(
+
+          metadata.phone
+
+        ) !==
+
+        normalized
+
+      ) {
+
         continue;
+
       }
 
-      if (seen.has(metadata.code)) {
+
+
+      if (
+
+        seen.has(
+
+          metadata.code
+
+        )
+
+      ) {
+
         continue;
+
       }
 
-      seen.add(metadata.code);
+
+
+      seen.add(
+
+        metadata.code
+
+      );
+
+
 
       matches.push({
+
         event,
 
         metadata,
+
       });
+
     }
 
-    if (matches.length === 0) {
+
+
+    if (
+
+      matches.length ===
+
+      0
+
+    ) {
+
       return {
-        success: false,
 
-        error: "No reservation was found for that phone number.",
+        success:
+
+          false,
+
+
+
+        error:
+
+          'No reservation was found for that phone number.',
+
       };
+
     }
 
-    const confirmed = matches.filter(
-      (match) => match.metadata.status === "confirmed",
-    );
 
-    const selected = confirmed[0] ?? matches[0];
+
+    const confirmed =
+
+      matches.filter(
+
+        (
+
+          match
+
+        ) =>
+
+          match.metadata
+
+            .status ===
+
+          'confirmed'
+
+      );
+
+
+
+    const selected =
+
+      confirmed[0] ??
+
+      matches[0];
+
+
 
     return {
-      success: true,
 
-      reservationId: String(selected.event.id),
+      success:
 
-      reservationCode: selected.metadata.code,
+        true,
 
-      name: selected.metadata.name,
 
-      phone: selected.metadata.phone,
 
-      partySize: selected.metadata.partySize,
+      reservation_id:
 
-      date: selected.metadata.date,
+        String(
 
-      time: selected.metadata.time,
+          selected
 
-      status: selected.metadata.status,
+            .event.id
 
-      eventIds: selected.metadata.eventIds,
+        ),
 
-      multiple: matches.length > 1,
+
+
+      reservation_code:
+
+        selected
+
+          .metadata.code,
+
+
+
+      name:
+
+        selected
+
+          .metadata.name,
+
+
+
+      phone:
+
+        selected
+
+          .metadata.phone,
+
+
+
+      party_size:
+
+        selected
+
+          .metadata
+
+          .partySize,
+
+
+
+      reservation_date:
+
+        selected
+
+          .metadata.date,
+
+
+
+      reservation_time:
+
+        selected
+
+          .metadata.time,
+
+
+
+      status:
+
+        selected
+
+          .metadata.status,
+
+
+
+      event_ids:
+
+        selected
+
+          .metadata.eventIds,
+
+
+
+      multiple:
+
+        matches.length >
+
+        1,
+
     };
-  } catch (error) {
-    console.error(
-      "getOdooReservationByPhone failed:",
 
-      error,
+  } catch (
+
+    error
+
+  ) {
+
+    console.error(
+
+      'getOdooReservationByPhone failed:',
+
+      error
+
     );
 
+
+
     return {
-      success: false,
+
+      success:
+
+        false,
+
+
 
       error:
-        error instanceof Error ? error.message : "Unknown phone lookup error.",
+
+        error instanceof Error
+
+          ? error.message
+
+          : 'Unknown phone lookup error.',
+
     };
+
   }
+
 }
+
+
 
 /* ============================================================
 
@@ -1268,20 +3384,45 @@ export async function getOdooReservationByPhone(
 
  * ========================================================== */
 
-async function restorePlaceholderEvents(
-  metadata: ReservationMetadata,
-): Promise<void> {
-  for (const original of metadata.originalEvents) {
-    await odooCall<boolean>(
-      "calendar.event",
 
-      "write",
+
+async function restorePlaceholderEvents(
+
+  metadata: ReservationMetadata
+
+): Promise<void> {
+
+  for (
+
+    const original of
+
+    metadata.originalEvents
+
+  ) {
+
+    await odooCall<boolean>(
+
+      'calendar.event',
+
+      'write',
 
       [
-        [original.id],
+
+        [
+
+          original.id,
+
+        ],
+
+
 
         {
-          name: original.name,
+
+          name:
+
+            original.name,
+
+
 
           /**
 
@@ -1291,7 +3432,11 @@ async function restorePlaceholderEvents(
 
            */
 
-          description: original.description,
+          description:
+
+            original.description,
+
+
 
           /**
 
@@ -1299,9 +3444,21 @@ async function restorePlaceholderEvents(
 
            */
 
-          appointment_booker_id: original.appointmentBookerId || false,
+          appointment_booker_id:
 
-          phone_number: original.phoneNumber || false,
+            original.appointmentBookerId ||
+
+            false,
+
+
+
+          phone_number:
+
+            original.phoneNumber ||
+
+            false,
+
+
 
           /**
 
@@ -1309,12 +3466,33 @@ async function restorePlaceholderEvents(
 
            */
 
-          [RESERVATION_META_FIELD]: false,
+          [RESERVATION_META_FIELD]:
+
+            false,
+
+
+
+          /**
+
+           * Back to placeholder color.
+
+           */
+
+          color:
+
+            PLACEHOLDER_COLOR,
+
         },
-      ],
+
+      ]
+
     );
+
   }
+
 }
+
+
 
 /* ============================================================
 
@@ -1322,52 +3500,147 @@ async function restorePlaceholderEvents(
 
  * ========================================================== */
 
-export async function cancelOdooReservation(code: string): Promise<{
+
+
+export async function cancelOdooReservationByCode(
+
+  code: string
+
+): Promise<{
+
   success: boolean;
 
   error?: string;
+
 }> {
+
   try {
-    const events = await findReservationEventsByCode(code);
 
-    if (events.length === 0) {
+    const events =
+
+      await findReservationEventsByCode(
+
+        code
+
+      );
+
+
+
+    if (
+
+      events.length ===
+
+      0
+
+    ) {
+
       return {
-        success: false,
 
-        error: "Reservation not found.",
+        success:
+
+          false,
+
+
+
+        error:
+
+          'Reservation not found.',
+
       };
+
     }
 
-    const metadata = await hydrateMetadata(events[0]);
 
-    if (!metadata) {
+
+    const metadata =
+
+      await hydrateMetadata(
+
+        events[0]
+
+      );
+
+
+
+    if (
+
+      !metadata
+
+    ) {
+
       return {
-        success: false,
 
-        error: "Reservation metadata could not be read.",
+        success:
+
+          false,
+
+
+
+        error:
+
+          'Reservation metadata could not be read.',
+
       };
+
     }
 
-    await restorePlaceholderEvents(metadata);
 
-    return {
-      success: true,
-    };
-  } catch (error) {
-    console.error(
-      "cancelOdooReservation failed:",
 
-      error,
+    await restorePlaceholderEvents(
+
+      metadata
+
     );
 
+
+
     return {
-      success: false,
+
+      success:
+
+        true,
+
+    };
+
+  } catch (
+
+    error
+
+  ) {
+
+    console.error(
+
+      'cancelOdooReservationByCode failed:',
+
+      error
+
+    );
+
+
+
+    return {
+
+      success:
+
+        false,
+
+
 
       error:
-        error instanceof Error ? error.message : "Unknown cancellation error.",
+
+        error instanceof Error
+
+          ? error.message
+
+          : 'Unknown cancellation error.',
+
     };
+
   }
+
 }
+
+
 
 /* ============================================================
 
@@ -1375,61 +3648,155 @@ export async function cancelOdooReservation(code: string): Promise<{
 
  * ========================================================== */
 
+
+
 export async function modifyOdooReservation(
+
   code: string,
 
   newDate: string,
 
-  newTime: string,
+  newTime: string
+
 ): Promise<{
+
   success: boolean;
 
   error?: string;
 
   reason?: string;
+
 }> {
+
   try {
+
     await validateOdooFields();
 
-    const oldEvents = await findReservationEventsByCode(code);
 
-    if (oldEvents.length === 0) {
+
+    const oldEvents =
+
+      await findReservationEventsByCode(
+
+        code
+
+      );
+
+
+
+    if (
+
+      oldEvents.length ===
+
+      0
+
+    ) {
+
       return {
-        success: false,
 
-        error: "Reservation not found.",
+        success:
+
+          false,
+
+
+
+        error:
+
+          'Reservation not found.',
+
       };
+
     }
 
-    const oldMetadata = await hydrateMetadata(oldEvents[0]);
 
-    if (!oldMetadata) {
+
+    const oldMetadata =
+
+      await hydrateMetadata(
+
+        oldEvents[0]
+
+      );
+
+
+
+    if (
+
+      !oldMetadata
+
+    ) {
+
       return {
-        success: false,
 
-        error: "Reservation metadata could not be read.",
+        success:
+
+          false,
+
+
+
+        error:
+
+          'Reservation metadata could not be read.',
+
       };
+
     }
 
-    const allocation = await findAllocation(
-      newDate,
 
-      newTime,
 
-      oldMetadata.partySize,
-    );
+    const allocation =
 
-    if (!allocation) {
+      await findAllocation(
+
+        newDate,
+
+        newTime,
+
+        oldMetadata.partySize
+
+      );
+
+
+
+    if (
+
+      !allocation
+
+    ) {
+
       return {
-        success: false,
 
-        reason: "unavailable",
+        success:
 
-        error: "The requested new time is no longer available.",
+          false,
+
+
+
+        reason:
+
+          'unavailable',
+
+
+
+        error:
+
+          'The requested new time is no longer available.',
+
       };
+
     }
 
-    const newEventIds = [...allocation.eventIds];
+
+
+    const newEventIds =
+
+      [
+
+        ...allocation.eventIds,
+
+      ];
+
+
 
     /**
 
@@ -1439,114 +3806,349 @@ export async function modifyOdooReservation(
 
      */
 
-    const oldSorted = [...oldMetadata.eventIds].sort((a, b) => a - b);
+    const oldSorted =
 
-    const newSorted = [...newEventIds].sort((a, b) => a - b);
+      [
+
+        ...oldMetadata.eventIds,
+
+      ].sort(
+
+        (a, b) =>
+
+          a - b
+
+      );
+
+
+
+    const newSorted =
+
+      [
+
+        ...newEventIds,
+
+      ].sort(
+
+        (a, b) =>
+
+          a - b
+
+      );
+
+
 
     if (
-      oldSorted.length === newSorted.length &&
+
+      oldSorted.length ===
+
+        newSorted.length &&
+
       oldSorted.every(
+
         (
+
           value,
 
-          index,
-        ) => value === newSorted[index],
+          index
+
+        ) =>
+
+          value ===
+
+          newSorted[index]
+
       )
+
     ) {
+
       return {
-        success: true,
+
+        success:
+
+          true,
+
       };
+
     }
 
-    const newEvents = await readEvents(newEventIds);
 
-    if (newEvents.length !== newEventIds.length) {
+
+    const newEvents =
+
+      await readEvents(
+
+        newEventIds
+
+      );
+
+
+
+    if (
+
+      newEvents.length !==
+
+      newEventIds.length
+
+    ) {
+
       return {
-        success: false,
 
-        reason: "unavailable",
+        success:
 
-        error: "The new reservation slot could not be loaded.",
+          false,
+
+
+
+        reason:
+
+          'unavailable',
+
+
+
+        error:
+
+          'The new reservation slot could not be loaded.',
+
       };
+
     }
 
-    for (const event of newEvents) {
+
+
+    for (
+
+      const event of
+
+      newEvents
+
+    ) {
+
       if (
+
         !event.name
 
           .toLowerCase()
 
-          .includes("placeholder")
+          .includes(
+            PUBLIC_PLACEHOLDER_NAME.toLowerCase()
+          )
+
       ) {
+
         return {
-          success: false,
 
-          reason: "unavailable",
+          success:
 
-          error: "The new reservation time was just taken.",
+            false,
+
+
+
+          reason:
+
+            'unavailable',
+
+
+
+          error:
+
+            'The new reservation time was just taken.',
+
         };
+
       }
+
     }
 
-    const partnerId = await getOrCreateReservationPartner({
-      name: oldMetadata.name,
 
-      phone: oldMetadata.phone,
 
-      reservationCode: oldMetadata.code,
-    });
+    const partnerId =
 
-    const newMetadata: ReservationMetadata = {
-      version: 2,
+      await getOrCreateCustomerPartner(
 
-      code: oldMetadata.code,
+        {
 
-      name: oldMetadata.name,
+          name:
 
-      phone: oldMetadata.phone,
+            oldMetadata.name,
 
-      partySize: oldMetadata.partySize,
 
-      date: newDate,
 
-      time: newTime,
+          phone:
 
-      status: "confirmed",
+            oldMetadata.phone,
 
-      partnerId,
+        }
 
-      eventIds: newEventIds,
+      );
 
-      resourceIds: allocation.resources.map((resource) => resource.id),
 
-      allocationType: allocation.type,
 
-      originalEvents: newEvents.map((event) => ({
-        id: event.id,
+    const newMetadata: ReservationMetadata =
 
-        name: event.name,
+      {
 
-        description: event.description,
+        version:
 
-        appointmentBookerId: event.appointment_booker_id
-          ? event.appointment_booker_id[0]
-          : false,
+          2,
 
-        phoneNumber: event.phone_number ?? false,
-      })),
 
-      createdAt: oldMetadata.createdAt,
 
-      updatedAt: new Date().toISOString(),
-    };
+        code:
 
-    const displayName = buildReservationDisplayName(
-      oldMetadata.name,
+          oldMetadata.code,
 
-      oldMetadata.phone,
 
-      oldMetadata.code,
-    );
+
+        name:
+
+          oldMetadata.name,
+
+
+
+        phone:
+
+          oldMetadata.phone,
+
+
+
+        partySize:
+
+          oldMetadata.partySize,
+
+
+
+        date:
+
+          newDate,
+
+
+
+        time:
+
+          newTime,
+
+
+
+        status:
+
+          'confirmed',
+
+
+
+        partnerId,
+
+
+
+        eventIds:
+
+          newEventIds,
+
+
+
+        resourceIds:
+
+          allocation.resources.map(
+
+            (
+
+              resource
+
+            ) =>
+
+              resource.id
+
+          ),
+
+
+
+        allocationType:
+
+          allocation.type,
+
+
+
+        originalEvents:
+
+          newEvents.map(
+
+            (
+
+              event
+
+            ) => ({
+
+              id:
+
+                event.id,
+
+
+
+              name:
+
+                event.name,
+
+
+
+              description:
+
+                event.description,
+
+
+
+              appointmentBookerId:
+
+                event.appointment_booker_id
+
+                  ? event
+
+                      .appointment_booker_id[0]
+
+                  : false,
+
+
+
+              phoneNumber:
+
+                event.phone_number ??
+
+                false,
+
+
+
+              color:
+
+                event.color ??
+
+                PLACEHOLDER_COLOR,
+
+            })
+
+          ),
+
+
+
+        createdAt:
+
+          oldMetadata.createdAt,
+
+
+
+        updatedAt:
+
+          new Date()
+
+            .toISOString(),
+
+      };
+
+
+
+    const displayName =
+
+      `${RESERVATION_NAME_PREFIX}${oldMetadata.name} [${oldMetadata.code}]`;
+
+
 
     /**
 
@@ -1555,28 +4157,67 @@ export async function modifyOdooReservation(
      */
 
     await odooCall<boolean>(
-      "calendar.event",
 
-      "write",
+      'calendar.event',
+
+      'write',
 
       [
+
         newEventIds,
 
+
+
         {
-          name: displayName,
 
-          appointment_booker_id: partnerId,
+          name:
 
-          phone_number: oldMetadata.phone,
+            displayName,
 
-          description: false,
 
-          [RESERVATION_META_FIELD]: encodeMetadata(newMetadata),
+
+          appointment_booker_id:
+
+            partnerId,
+
+
+
+          phone_number:
+
+            oldMetadata.phone,
+
+
+
+          description:
+
+            false,
+
+
+
+          color:
+
+            BOOKED_COLOR,
+
+
+
+          [RESERVATION_META_FIELD]:
+
+            encodeMetadata(
+
+              newMetadata
+
+            ),
+
         },
-      ],
+
+      ]
+
     );
 
+
+
     try {
+
       /**
 
        * Only after new allocation succeeds do we release the old
@@ -1585,13 +4226,27 @@ export async function modifyOdooReservation(
 
        */
 
-      await restorePlaceholderEvents(oldMetadata);
-    } catch (restoreError) {
-      console.error(
-        "Failed restoring previous reservation slots:",
+      await restorePlaceholderEvents(
 
-        restoreError,
+        oldMetadata
+
       );
+
+    } catch (
+
+      restoreError
+
+    ) {
+
+      console.error(
+
+        'Failed restoring previous reservation slots:',
+
+        restoreError
+
+      );
+
+
 
       /**
 
@@ -1600,40 +4255,134 @@ export async function modifyOdooReservation(
        */
 
       try {
-        await restorePlaceholderEvents(newMetadata);
-      } catch (rollbackError) {
-        console.error(
-          "Reservation modification rollback failed:",
 
-          rollbackError,
+        await restorePlaceholderEvents(
+
+          newMetadata
+
         );
+
+      } catch (
+
+        rollbackError
+
+      ) {
+
+        console.error(
+
+          'Reservation modification rollback failed:',
+
+          rollbackError
+
+        );
+
       }
 
-      return {
-        success: false,
 
-        error: "The reservation could not be moved safely.",
+
+      return {
+
+        success:
+
+          false,
+
+
+
+        error:
+
+          'The reservation could not be moved safely.',
+
       };
+
     }
 
-    return {
-      success: true,
-    };
-  } catch (error) {
-    console.error(
-      "modifyOdooReservation failed:",
 
-      error,
+
+    return {
+
+      success:
+
+        true,
+
+    };
+
+  } catch (
+
+    error
+
+  ) {
+
+    console.error(
+
+      'modifyOdooReservation failed:',
+
+      error
+
     );
 
+
+
     return {
-      success: false,
+
+      success:
+
+        false,
+
+
 
       error:
-        error instanceof Error ? error.message : "Unknown modification error.",
+
+        error instanceof Error
+
+          ? error.message
+
+          : 'Unknown modification error.',
+
     };
+
   }
+
 }
+
+
+
+/* ============================================================
+
+ * Compatibility exports
+
+ * ========================================================== */
+
+
+
+export const createReservation =
+
+  createOdooReservation;
+
+
+
+export const getReservationByCode =
+
+  getOdooReservationByCode;
+
+
+
+export const getReservationByPhone =
+
+  getOdooReservationByPhone;
+
+
+
+export const cancelReservationByCode =
+
+  cancelOdooReservationByCode;
+
+
+
+export const modifyReservation =
+
+  modifyOdooReservation;
+
+
 
 /* ============================================================
 
@@ -1641,24 +4390,96 @@ export async function modifyOdooReservation(
 
  * ========================================================== */
 
-export async function debugReservationByCode(code: string) {
-  const events = await findReservationEventsByCode(code);
+
+
+export async function debugReservationByCode(
+
+  code: string
+
+) {
+
+  const events =
+
+    await findReservationEventsByCode(
+
+      code
+
+    );
+
+
 
   return Promise.all(
-    events.map(async (event) => ({
-      id: event.id,
 
-      name: event.name,
+    events.map(
 
-      appointmentBooker: event.appointment_booker_id,
+      async (
 
-      phone: event.phone_number,
+        event
 
-      description: event.description,
+      ) => ({
 
-      metadataField: event[RESERVATION_META_FIELD],
+        id:
 
-      metadata: await hydrateMetadata(event),
-    })),
+          event.id,
+
+
+
+        name:
+
+          event.name,
+
+
+
+        color:
+
+          event.color,
+
+
+
+        appointmentBooker:
+
+          event.appointment_booker_id,
+
+
+
+        phone:
+
+          event.phone_number,
+
+
+
+        description:
+
+          event.description,
+
+
+
+        metadataField:
+
+          event[
+
+            RESERVATION_META_FIELD
+
+          ],
+
+
+
+        metadata:
+
+          await hydrateMetadata(
+
+            event
+
+          ),
+
+      })
+
+    )
+
   );
+
 }
+
+
+
+
