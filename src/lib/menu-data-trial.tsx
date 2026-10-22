@@ -42,7 +42,7 @@ export const menu: MenuTab[] = [
             name: "Chatti Idli",
             description:
               "Soft steamed idlis served in a traditional clay pot with house podi, tempered mustard, curry leaves and warm ghee.",
-            price: 15000,
+            price: 12000,
             tags: ["veggie"],
             image:
               "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581405/chatti.jpg",
@@ -76,7 +76,7 @@ export const menu: MenuTab[] = [
             name: "Signature",
             description:
               "Mashed potatoes, masala, roasted spices and curry leaf on the chef's own fermented batter.",
-            price: 15000,
+            price: 17000,
             tags: ["veggie"],
             image:
               "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/potatoe.jpg",
@@ -88,7 +88,7 @@ export const menu: MenuTab[] = [
             name: "Amma's",
             description:
               "Cold-pressed sesame and house podi, inspired by traditional home-style South Indian cooking.",
-            price: 15000,
+            price: 17000,
             tags: ["veggie", "nuts", "sesame", "vegan"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792601368/ammas.jpg",
             chefNote:
@@ -99,7 +99,7 @@ export const menu: MenuTab[] = [
             name: "Special",
             description:
               "Roasted onions, house podi and Uttukuli cow ghee, with fresh vegetables and aromatic spices.",
-            price: 15000,
+            price: 17000,
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598912/onion-dosa.jpg",
             chefNote:
@@ -110,7 +110,7 @@ export const menu: MenuTab[] = [
             name: "Street",
             description:
               "Mushrooms, cracked pepper and butter, packed with spiced vegetables and fresh herbs.",
-            price: 15000,
+            price: 20000,
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/mushroom.jpg",
             chefNote:
@@ -121,7 +121,7 @@ export const menu: MenuTab[] = [
             name: "Cheese",
             description:
               "Fresh paneer, cheese and mild spices, filled with melted mozzarella.",
-            price: 15000,
+            price: 20000,
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/cheese.jpg",
             chefNote:
@@ -142,7 +142,7 @@ export const menu: MenuTab[] = [
             name: "Onion Podi",
             description:
               "Onions, house podi and cold-pressed sesame oil on a soft South Indian uthappam.",
-            price: 16000,
+            price: 17000,
             tags: ["vegan", "nuts"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598913/onion-ut.jpg",
             chefNote:
@@ -153,7 +153,7 @@ export const menu: MenuTab[] = [
             name: "Beetroot",
             description:
               "Beetroot, coriander, green chili and curry leaves, freshly grated with onions and herbs.",
-            price: 16000,
+            price: 17000,
             tags: ["vegan"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598908/beetroot.jpg",
             chefNote:
@@ -164,7 +164,7 @@ export const menu: MenuTab[] = [
             name: "Garden",
             description:
               "Crisp onions, tomatoes, carrots, coriander and green chillies for a wholesome South Indian meal.",
-            price: 16000,
+            price: 17000,
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792585084/garden-ut.jpg",
             chefNote:
