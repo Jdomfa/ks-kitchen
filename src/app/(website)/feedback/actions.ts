@@ -2,97 +2,71 @@
 
 import { createServiceClient } from "@/lib/supabase/service";
 
-type Recommendation = "definitely" | "probably" | "unlikely" | "no";
+type FavouriteCategory =
+  | "drinks_chilled"
+  | "drinks_hot"
+  | "chati_idli"
+  | "dosa"
+  | "uthapam"
+  | "dessert";
 
 type SubmitFeedbackArgs = {
-  foodQuality: number;
-
-  menuVariety: number;
-
-  serviceSpeed: number;
-
-  staffFriendliness: number;
-
-  cleanlinessAtmosphere: number;
-
-  valueForMoney: number;
-
-  dishesOrdered?: string;
-
-  standoutFeedback?: string;
-
-  recommendation: Recommendation;
-
-  name?: string;
-
-  email?: string;
-
-  phone?: string;
-
-  mayContact?: boolean | null;
+  foodRating: number;
+  serviceRating: number;
+  favouriteCategory: FavouriteCategory;
+  feedback?: string;
 };
 
 function isValidRating(value: number) {
   return Number.isInteger(value) && value >= 1 && value <= 5;
 }
 
-export async function submitFeedback(args: SubmitFeedbackArgs): Promise<{
+export async function submitFeedback(
+  args: SubmitFeedbackArgs,
+): Promise<{
   success: boolean;
   error?: string;
 }> {
-  const ratings = [
-    args.foodQuality,
-    args.menuVariety,
-    args.serviceSpeed,
-    args.staffFriendliness,
-    args.cleanlinessAtmosphere,
-    args.valueForMoney,
-  ];
-
-  if (!ratings.every(isValidRating)) {
+  if (!isValidRating(args.foodRating)) {
     return {
       success: false,
-      error: "Please rate all dining experience categories.",
+      error: "Please rate the food.",
     };
   }
 
-  if (
-    !["definitely", "probably", "unlikely", "no"].includes(args.recommendation)
-  ) {
+  if (!isValidRating(args.serviceRating)) {
     return {
       success: false,
-      error: "Please select whether you would recommend us.",
+      error: "Please rate our service.",
+    };
+  }
+
+  const validCategories: FavouriteCategory[] = [
+    "drinks_chilled",
+    "drinks_hot",
+    "chati_idli",
+    "dosa",
+    "uthapam",
+    "dessert",
+  ];
+
+  if (!validCategories.includes(args.favouriteCategory)) {
+    return {
+      success: false,
+      error: "Please select your favourite category.",
     };
   }
 
   const supabase = createServiceClient();
 
   const { error } = await supabase.from("feedback").insert({
-    food_quality_rating: args.foodQuality,
+    food_quality_rating: args.foodRating,
+    service_speed_rating: args.serviceRating,
 
-    menu_variety_rating: args.menuVariety,
-
-    service_speed_rating: args.serviceSpeed,
-
-    staff_friendliness_rating: args.staffFriendliness,
-
-    cleanliness_atmosphere_rating: args.cleanlinessAtmosphere,
-
-    value_for_money_rating: args.valueForMoney,
-
-    dishes_ordered: args.dishesOrdered || null,
-
-    standout_feedback: args.standoutFeedback || null,
-
-    recommendation: args.recommendation,
-
-    customer_name: args.name || null,
-
-    customer_email: args.email || null,
-
-    customer_phone: args.phone || null,
-
-    may_contact: args.mayContact,
+    // Reusing the existing fields so we don't need
+    // to change the database schema yet.
+    dishes_ordered: args.favouriteCategory,
+    standout_feedback: args.feedback?.trim() || null,
   });
 
   if (error) {
