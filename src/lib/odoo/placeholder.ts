@@ -1,25 +1,15 @@
 const ODOO_URL = process.env.ODOO_URL!;
-
 const ODOO_DB = process.env.ODOO_DB!;
-
 const ODOO_USERNAME = process.env.ODOO_USERNAME!;
-
 const ODOO_API_KEY = process.env.ODOO_API_KEY!;
 
-const DEFAULT_PARTNER_ID = Number(process.env.ODOO_DEFAULT_PARTNER_ID ?? 3);
-
-const APPOINTMENT_TYPE_ID = Number(process.env.ODOO_APPOINTMENT_TYPE_ID ?? 1);
-
-/* ============================================================
- * JSON-RPC
- * ========================================================== */
+const LAGOS_UTC_OFFSET_HOURS = 1;
+const PUBLIC_PLACEHOLDER_NAME = "Public Placeholder";
 
 type JsonRpcResult<T> = {
   result?: T;
-
   error?: {
     message?: string;
-
     data?: {
       message?: string;
       debug?: string;
@@ -34,47 +24,42 @@ async function getUid(): Promise<number> {
     return cachedUid;
   }
 
-  const baseUrl = ODOO_URL.replace(/\/$/, "");
-
-  const res = await fetch(`${baseUrl}/jsonrpc`, {
+  const response = await fetch(`${ODOO_URL}/jsonrpc`, {
     method: "POST",
-
     headers: {
       "Content-Type": "application/json",
     },
-
     body: JSON.stringify({
       jsonrpc: "2.0",
-
       method: "call",
-
       params: {
         service: "common",
-
         method: "authenticate",
-
         args: [ODOO_DB, ODOO_USERNAME, ODOO_API_KEY, {}],
       },
+      id: Date.now(),
     }),
-
     cache: "no-store",
   });
 
-  if (!res.ok) {
+  if (!response.ok) {
     throw new Error(
-      `Odoo authentication HTTP error: ${res.status} ${res.statusText}`,
+      `Odoo authentication HTTP error: ${response.status} ${response.statusText}`,
     );
   }
 
-  const data = (await res.json()) as JsonRpcResult<number>;
+  const data = (await response.json()) as JsonRpcResult<number>;
 
-  if (typeof data.result !== "number") {
-    throw new Error("Odoo authentication failed.");
+  if (!data.result) {
+    throw new Error(
+      data.error?.data?.message ||
+        data.error?.message ||
+        "Odoo authentication failed.",
+    );
   }
 
   cachedUid = data.result;
-
-  return data.result;
+  return cachedUid;
 }
 
 async function odooCall<T>(
@@ -83,51 +68,39 @@ async function odooCall<T>(
   args: unknown[],
   kwargs: Record<string, unknown> = {},
 ): Promise<T> {
-  const baseUrl = ODOO_URL.replace(/\/$/, "");
-
-  const res = await fetch(`${baseUrl}/jsonrpc`, {
+  const response = await fetch(`${ODOO_URL}/jsonrpc`, {
     method: "POST",
-
     headers: {
       "Content-Type": "application/json",
     },
-
     body: JSON.stringify({
       jsonrpc: "2.0",
-
       method: "call",
-
       params: {
         service: "object",
-
         method: "execute_kw",
-
         args: [
           ODOO_DB,
-
           await getUid(),
-
           ODOO_API_KEY,
-
           model,
-
           method,
-
           args,
-
           kwargs,
         ],
       },
+      id: Date.now(),
     }),
-
     cache: "no-store",
   });
 
-  if (!res.ok) {
-    throw new Error(`Odoo HTTP error: ${res.status} ${res.statusText}`);
+  if (!response.ok) {
+    throw new Error(
+      `Odoo HTTP error: ${response.status} ${response.statusText}`,
+    );
   }
 
-  const data = (await res.json()) as JsonRpcResult<T>;
+  const data = (await response.json()) as JsonRpcResult<T>;
 
   if (data.error) {
     const detail =
@@ -146,58 +119,62 @@ async function odooCall<T>(
   return data.result;
 }
 
-/* ============================================================
- * Types
- * ========================================================== */
+function toOdooUtcDatetime(date: string, time: string): string {
+  const [hours, minutes] = time.split(":").map(Number);
 
-export type Placeholder = {
-  id: number;
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
+    throw new Error(`Invalid time value: "${time}"`);
+  }
 
-  name: string;
+  const dt = new Date(`${date}T00:00:00Z`);
 
-  start: string;
-  stop: string;
+  if (Number.isNaN(dt.getTime())) {
+    throw new Error(`Invalid date value: "${date}"`);
+  }
 
-  capacity: number;
+  dt.setUTCHours(hours - LAGOS_UTC_OFFSET_HOURS, minutes, 0, 0);
 
-  available: boolean;
+  return dt.toISOString().slice(0, 19).replace("T", " ");
+}
 
-  partnerId: number | false;
+function addDays(date: string, days: number): string {
+  const dt = new Date(`${date}T00:00:00Z`);
 
-  resourceId?: number;
+  if (Number.isNaN(dt.getTime())) {
+    throw new Error(`Invalid date value: "${date}"`);
+  }
 
-  resourceName?: string;
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
 
-  linkedResourceIds?: number[];
+function formatOdooUtcTimeForLagos(value: string): string {
+  const utc = new Date(`${value.replace(" ", "T")}Z`);
 
-  appointmentStatus?: string | false;
+  if (Number.isNaN(utc.getTime())) {
+    return value.slice(11, 16);
+  }
 
-  totalCapacityReserved?: number;
-
-  totalCapacityUsed?: number;
-
-  bookingLineIds?: number[];
-};
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Lagos",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(utc);
+}
 
 export type PlaceholderOption = {
   eventId: number;
-
   label: string;
 
+  time: string;
   start: string;
   stop: string;
 
-  /**
-   * Lagos local HH:mm
-   */
-  time: string;
-
   resourceId: number;
-
   resourceName: string;
 
   capacity: number;
-
   linkedResourceIds: number[];
 
   bookingLineIds: number[];
@@ -205,125 +182,21 @@ export type PlaceholderOption = {
 
 type CalendarEventRecord = {
   id: number;
-
   name: string;
-
   start: string;
   stop: string;
 
-  partner_id: [number, string] | false;
-
   resource_ids: number[];
-
   appointment_resource_ids: number[];
-
   booking_line_ids: number[];
-
-  appointment_status: string | false;
-
-  total_capacity_reserved: number | false;
-
-  total_capacity_used: number | false;
 };
 
 type AppointmentResourceRecord = {
   id: number;
-
   name: string;
-
   capacity: number | false;
-
   linked_resource_ids: number[];
-
-  appointment_type_ids?: number[];
 };
-
-/* ============================================================
- * Date helpers
- * ========================================================== */
-
-function assertDateOnly(date: string): void {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw new Error(`Invalid date "${date}". Expected YYYY-MM-DD.`);
-  }
-}
-
-function addDays(date: string, days: number): string {
-  assertDateOnly(date);
-
-  const parsed = new Date(`${date}T00:00:00Z`);
-
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Invalid date "${date}".`);
-  }
-
-  parsed.setUTCDate(parsed.getUTCDate() + days);
-
-  return parsed.toISOString().slice(0, 10);
-}
-
-/**
- * Lagos is UTC+1.
- *
- * 18:00 Lagos
- * becomes
- * 17:00 UTC for Odoo.
- */
-function toOdooUtcDatetime(date: string, time: string): string {
-  assertDateOnly(date);
-
-  const match = /^(\d{2}):(\d{2})$/.exec(time);
-
-  if (!match) {
-    throw new Error(`Invalid time "${time}".`);
-  }
-
-  const hours = Number(match[1]);
-
-  const minutes = Number(match[2]);
-
-  const [year, month, day] = date.split("-").map(Number);
-
-  const millis = Date.UTC(
-    year,
-
-    month - 1,
-
-    day,
-
-    hours - 1,
-
-    minutes,
-
-    0,
-
-    0,
-  );
-
-  return new Date(millis).toISOString().slice(0, 19).replace("T", " ");
-}
-
-function formatOdooUtcTimeForLagos(value: string): string {
-  const date = new Date(`${value.replace(" ", "T")}Z`);
-
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Africa/Lagos",
-
-    hour: "2-digit",
-
-    minute: "2-digit",
-
-    hour12: false,
-  }).format(date);
-}
-
-/* ============================================================
- * Resource helpers
- * ========================================================== */
-
-function isPlaceholderName(name: string): boolean {
-  return name.trim().toLowerCase().includes("placeholder");
-}
 
 function getPrimaryResourceId(
   record: Pick<
@@ -334,217 +207,67 @@ function getPrimaryResourceId(
   return record.resource_ids?.[0] ?? record.appointment_resource_ids?.[0];
 }
 
-function getResourceCapacity(
-  resource: AppointmentResourceRecord | undefined,
-): number {
-  if (!resource || typeof resource.capacity !== "number") {
-    return 0;
-  }
-
-  return resource.capacity;
-}
-
-async function getAppointmentResources(
-  resourceIds: number[],
-): Promise<Map<number, AppointmentResourceRecord>> {
-  if (resourceIds.length === 0) {
-    return new Map();
-  }
-
-  const resources = await odooCall<AppointmentResourceRecord[]>(
-    "appointment.resource",
-
-    "read",
-
-    [
-      resourceIds,
-
-      ["id", "name", "capacity", "linked_resource_ids", "appointment_type_ids"],
-    ],
-  );
-
-  return new Map(resources.map((resource) => [resource.id, resource]));
-}
-
-/* ============================================================
- * Dashboard / general event feed
- * ========================================================== */
-
-export async function getAllPlaceholders(): Promise<Placeholder[]> {
-  const records = await odooCall<CalendarEventRecord[]>(
-    "calendar.event",
-
-    "search_read",
-
-    [
-      [["appointment_type_id", "=", APPOINTMENT_TYPE_ID]],
-
-      [
-        "id",
-
-        "name",
-
-        "start",
-
-        "stop",
-
-        "partner_id",
-
-        "resource_ids",
-
-        "appointment_resource_ids",
-
-        "booking_line_ids",
-
-        "appointment_status",
-
-        "total_capacity_reserved",
-
-        "total_capacity_used",
-      ],
-    ],
-
-    {
-      order: "start asc",
-    },
-  );
-
-  const resourceIds = Array.from(
-    new Set(
-      records.flatMap((record) => [
-        ...(record.resource_ids ?? []),
-
-        ...(record.appointment_resource_ids ?? []),
-      ]),
-    ),
-  );
-
-  const resourceMap = await getAppointmentResources(resourceIds);
-
-  return records.map((record) => {
-    const resourceId = getPrimaryResourceId(record);
-
-    const resource = resourceId ? resourceMap.get(resourceId) : undefined;
-
-    return {
-      id: record.id,
-
-      name: record.name,
-
-      start: record.start,
-
-      stop: record.stop,
-
-      capacity: getResourceCapacity(resource),
-
-      available: isPlaceholderName(record.name),
-
-      partnerId: record.partner_id ? record.partner_id[0] : false,
-
-      resourceId,
-
-      resourceName: resource?.name,
-
-      linkedResourceIds: resource?.linked_resource_ids ?? [],
-
-      appointmentStatus: record.appointment_status,
-
-      totalCapacityReserved:
-        typeof record.total_capacity_reserved === "number"
-          ? record.total_capacity_reserved
-          : 0,
-
-      totalCapacityUsed:
-        typeof record.total_capacity_used === "number"
-          ? record.total_capacity_used
-          : 0,
-
-      bookingLineIds: record.booking_line_ids ?? [],
-    };
-  });
-}
-
-/* ============================================================
- * Reservation inventory
- * ========================================================== */
-
 /**
- * Returns ALL free placeholder tables for this date.
+ * Public website/WhatsApp reservation inventory.
  *
- * Notice there is NO party-size filter here.
- *
- * That is critical for merging.
+ * IMPORTANT:
+ * This intentionally reads ONLY events whose name contains
+ * "Public Placeholder". Family Placeholder events are excluded.
  */
 export async function getPlaceholderInventoryForDate(
   date: string,
 ): Promise<PlaceholderOption[]> {
-  assertDateOnly(date);
-
-  const startOfDay = toOdooUtcDatetime(date, "00:00");
-
+  const start = toOdooUtcDatetime(date, "00:00");
   const nextDate = addDays(date, 1);
-
-  const endOfDay = toOdooUtcDatetime(nextDate, "00:00");
+  const stop = toOdooUtcDatetime(nextDate, "00:00");
 
   const records = await odooCall<CalendarEventRecord[]>(
     "calendar.event",
-
     "search_read",
-
     [
       [
-        ["appointment_type_id", "=", APPOINTMENT_TYPE_ID],
-
-        ["name", "ilike", "Placeholder"],
-
-        ["start", ">=", startOfDay],
-
-        ["start", "<", endOfDay],
-      ],
-
-      [
-        "id",
-
-        "name",
-
-        "start",
-
-        "stop",
-
-        "partner_id",
-
-        "resource_ids",
-
-        "appointment_resource_ids",
-
-        "booking_line_ids",
-
-        "appointment_status",
-
-        "total_capacity_reserved",
-
-        "total_capacity_used",
+        ["name", "ilike", PUBLIC_PLACEHOLDER_NAME],
+        ["start", ">=", start],
+        ["start", "<", stop],
       ],
     ],
-
     {
+      fields: [
+        "id",
+        "name",
+        "start",
+        "stop",
+        "resource_ids",
+        "appointment_resource_ids",
+        "booking_line_ids",
+      ],
       order: "start asc, id asc",
     },
   );
 
   const resourceIds = Array.from(
     new Set(
-      records.flatMap((record) => [
-        ...(record.resource_ids ?? []),
-
-        ...(record.appointment_resource_ids ?? []),
-      ]),
+      records
+        .map((record) => getPrimaryResourceId(record))
+        .filter((id): id is number => typeof id === "number"),
     ),
   );
 
-  const resourceMap = await getAppointmentResources(resourceIds);
+  if (resourceIds.length === 0) {
+    return [];
+  }
 
-  const options: PlaceholderOption[] = [];
+  const resources = await odooCall<AppointmentResourceRecord[]>(
+    "appointment.resource",
+    "read",
+    [resourceIds, ["id", "name", "capacity", "linked_resource_ids"]],
+  );
+
+  const resourceMap = new Map(
+    resources.map((resource) => [resource.id, resource]),
+  );
+
+  const inventory: PlaceholderOption[] = [];
 
   for (const record of records) {
     const resourceId = getPrimaryResourceId(record);
@@ -559,179 +282,124 @@ export async function getPlaceholderInventoryForDate(
       continue;
     }
 
-    const capacity = getResourceCapacity(resource);
+    const capacity =
+      typeof resource.capacity === "number" ? resource.capacity : 0;
 
     if (capacity <= 0) {
       continue;
     }
 
-    options.push({
+    inventory.push({
       eventId: record.id,
-
-      label: record.name,
-
-      start: record.start,
-
-      stop: record.stop,
+      label: record.name || `${PUBLIC_PLACEHOLDER_NAME} ${record.id}`,
 
       time: formatOdooUtcTimeForLagos(record.start),
+      start: record.start,
+      stop: record.stop,
 
       resourceId,
-
       resourceName: resource.name,
 
       capacity,
-
       linkedResourceIds: resource.linked_resource_ids ?? [],
 
       bookingLineIds: record.booking_line_ids ?? [],
     });
   }
 
-  return options;
+  return inventory;
 }
 
 /* ============================================================
- * Dashboard tester compatibility
+ * Claim a placeholder (used by src/lib/reservations/slots.ts)
  * ========================================================== */
 
-export async function findAvailablePlaceholders(
-  date: string,
-  partySize: number,
-): Promise<PlaceholderOption[]> {
-  const inventory = await getPlaceholderInventoryForDate(date);
+const RESERVATION_NAME_PREFIX = "Table Reservation — ";
 
-  return inventory
-    .filter((option) => option.capacity >= partySize)
-    .sort((a, b) => {
-      if (a.start !== b.start) {
-        return a.start.localeCompare(b.start);
-      }
+type PartnerRecord = { id: number };
 
-      if (a.capacity !== b.capacity) {
-        return a.capacity - b.capacity;
-      }
+async function getOrCreatePartner(
+  name: string,
+  phone: string | undefined,
+): Promise<number | false> {
+  const cleanPhone = phone?.trim();
 
-      return a.resourceId - b.resourceId;
-    });
+  if (!cleanPhone) {
+    return false;
+  }
+
+  const existing = await odooCall<PartnerRecord[]>(
+    "res.partner",
+    "search_read",
+    [[["phone", "=", cleanPhone]]],
+    { fields: ["id"], limit: 1 },
+  );
+
+  if (existing.length > 0) {
+    return existing[0].id;
+  }
+
+  return odooCall<number>("res.partner", "create", [
+    {
+      name: name.trim(),
+      phone: cleanPhone,
+      customer_rank: 1,
+    },
+  ]);
 }
 
-/* ============================================================
- * Claim one placeholder
- * ========================================================== */
-
+/**
+ * Turns a still-free "Public Placeholder" event into a booked reservation.
+ * Fails (without writing) if the event no longer looks like a free placeholder.
+ */
 export async function claimPlaceholder(
   eventId: number,
+  details: { name: string; phone?: string; reservationCode?: string },
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const events = await odooCall<Array<{ id: number; name: string }>>(
+      "calendar.event",
+      "read",
+      [[eventId], ["id", "name"]],
+    );
 
-  details: {
-    name: string;
+    if (events.length === 0) {
+      return { success: false, error: "Placeholder event no longer exists." };
+    }
 
-    phone?: string;
+    if (
+      !events[0].name
+        .toLowerCase()
+        .includes(PUBLIC_PLACEHOLDER_NAME.toLowerCase())
+    ) {
+      return {
+        success: false,
+        error: "That table was just taken by another reservation.",
+      };
+    }
 
-    reservationCode?: string;
+    const partnerId = await getOrCreatePartner(details.name, details.phone);
+    const codeSuffix = details.reservationCode
+      ? ` [${details.reservationCode}]`
+      : "";
 
-    partnerId?: number;
-  },
-): Promise<{
-  success: boolean;
-
-  error?: string;
-}> {
-  const [current] = await odooCall<CalendarEventRecord[]>(
-    "calendar.event",
-
-    "read",
-
-    [
+    await odooCall<boolean>("calendar.event", "write", [
       [eventId],
-
-      [
-        "id",
-
-        "name",
-
-        "start",
-
-        "stop",
-
-        "partner_id",
-
-        "resource_ids",
-
-        "appointment_resource_ids",
-
-        "booking_line_ids",
-
-        "appointment_status",
-
-        "total_capacity_reserved",
-
-        "total_capacity_used",
-      ],
-    ],
-  );
-
-  if (!current) {
-    return {
-      success: false,
-
-      error: "The reservation slot no longer exists.",
-    };
-  }
-
-  /**
-   * The name is currently our inventory marker.
-   *
-   * Once another reservation converts it, it no longer qualifies.
-   */
-  if (!isPlaceholderName(current.name)) {
-    return {
-      success: false,
-
-      error: "That table was just taken by another reservation.",
-    };
-  }
-
-  const displayName =
-    `Table Reservation — ${details.name.trim()}` +
-    (details.reservationCode ? ` [${details.reservationCode}]` : "");
-
-  const partnerId = details.partnerId ?? DEFAULT_PARTNER_ID;
-
-  /**
-   * Only use event fields we have already seen on this database.
-   *
-   * We deliberately do NOT modify booking_line_ids here yet.
-   */
-  const written = await odooCall<boolean>(
-    "calendar.event",
-
-    "write",
-
-    [
-      [eventId],
-
       {
-        name: displayName,
-
-        partner_id: partnerId,
-
+        name: `${RESERVATION_NAME_PREFIX}${details.name.trim()}${codeSuffix}`,
         appointment_booker_id: partnerId,
-
         phone_number: details.phone?.trim() || false,
+        description: false,
       },
-    ],
-  );
+    ]);
 
-  if (!written) {
+    return { success: true };
+  } catch (error) {
+    console.error("claimPlaceholder failed:", error);
+
     return {
       success: false,
-
-      error: "Odoo did not confirm the event update.",
+      error: error instanceof Error ? error.message : "Unknown claim error.",
     };
   }
-
-  return {
-    success: true,
-  };
 }

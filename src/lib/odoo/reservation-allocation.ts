@@ -60,17 +60,15 @@ function findSingleAllocations(
 
       return a.resourceId - b.resourceId;
     })
-    .map(
-      (option): ReservationAllocation => ({
-        type: "single",
-        time: option.time,
-        start: option.start,
-        stop: option.stop,
-        capacity: option.capacity,
-        eventIds: [option.eventId],
-        resources: [toResource(option)],
-      }),
-    );
+    .map((option): ReservationAllocation => ({
+      type: "single",
+      time: option.time,
+      start: option.start,
+      stop: option.stop,
+      capacity: option.capacity,
+      eventIds: [option.eventId],
+      resources: [toResource(option)],
+    }));
 }
 
 function findMergedAllocations(
@@ -84,7 +82,9 @@ function findMergedAllocations(
   const twoSeatTables = placeholders
     .filter((option) => option.capacity === 2)
     .sort((a, b) => a.resourceId - b.resourceId);
+
   const allocations: ReservationAllocation[] = [];
+  const seen = new Set<string>();
 
   for (let i = 0; i < twoSeatTables.length; i++) {
     for (let j = i + 1; j < twoSeatTables.length; j++) {
@@ -95,18 +95,28 @@ function findMergedAllocations(
         continue;
       }
 
-      const capacity = left.capacity + right.capacity;
+      const combinedCapacity = left.capacity + right.capacity;
 
-      if (capacity < partySize) {
+      if (combinedCapacity < partySize) {
         continue;
       }
+
+      const key = [left.resourceId, right.resourceId]
+        .sort((a, b) => a - b)
+        .join(":");
+
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
 
       allocations.push({
         type: "merged",
         time: left.time,
         start: left.start,
         stop: left.stop,
-        capacity,
+        capacity: combinedCapacity,
         eventIds: [left.eventId, right.eventId],
         resources: [toResource(left), toResource(right)],
       });
@@ -146,6 +156,7 @@ export async function getReservationAllocations(
   }
 
   const inventory = await getPlaceholderInventoryForDate(date);
+
   const byPeriod = new Map<string, PlaceholderOption[]>();
 
   for (const placeholder of inventory) {
@@ -178,7 +189,9 @@ export async function getBookableReservationTimes(
 ): Promise<string[]> {
   const allocations = await getReservationAllocations(date, partySize);
 
-  return Array.from(new Set(allocations.map((allocation) => allocation.time)));
+  return Array.from(
+    new Set(allocations.map((allocation) => allocation.time)),
+  );
 }
 
 export async function findBestAllocation(
