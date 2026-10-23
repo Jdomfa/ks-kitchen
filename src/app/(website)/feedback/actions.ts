@@ -57,28 +57,42 @@ export async function submitFeedback(
     };
   }
 
-  const supabase = createServiceClient();
+  try {
+    const supabase = createServiceClient();
 
-  const { error } = await supabase.from("feedback").insert({
-    food_quality_rating: args.foodRating,
-    service_speed_rating: args.serviceRating,
+    const { error } = await supabase.from("feedback").insert({
+      food_rating: args.foodRating,
+      service_rating: args.serviceRating,
+      favourite_category: args.favouriteCategory,
+      feedback: args.feedback?.trim() || null,
+    });
 
-    // Reusing the existing fields so we don't need
-    // to change the database schema yet.
-    dishes_ordered: args.favouriteCategory,
-    standout_feedback: args.feedback?.trim() || null,
-  });
+    if (error) {
+      console.error("Feedback insert failed:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
 
-  if (error) {
-    console.error("Feedback insert failed:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Feedback submission failed:", error);
 
     return {
       success: false,
-      error: "Something went wrong — please try again.",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Something went wrong — please try again.",
     };
   }
-
-  return {
-    success: true,
-  };
 }
