@@ -1,3 +1,10 @@
+import {
+  findBestAllocation,
+  type ReservationAllocation,
+} from "@/lib/odoo/reservation-allocation";
+
+export type { ReservationAllocation };
+
 const ODOO_URL = process.env.ODOO_URL!;
 
 const ODOO_DB = process.env.ODOO_DB!;
@@ -95,94 +102,6 @@ type Many2One =
   | [number, string]
 
   | false;
-
-
-
-type AllocationResource = {
-
-  id: number;
-
-  name: string;
-
-  capacity: number;
-
-};
-
-
-
-export type ReservationAllocation =
-
-  | {
-
-      type: 'single';
-
-
-
-      time: string;
-
-
-
-      start: string;
-
-      stop: string;
-
-
-
-      capacity: number;
-
-
-
-      eventIds: [number];
-
-
-
-      resources: [
-
-        AllocationResource
-
-      ];
-
-    }
-
-  | {
-
-      type: 'merged';
-
-
-
-      time: string;
-
-
-
-      start: string;
-
-      stop: string;
-
-
-
-      capacity: number;
-
-
-
-      eventIds: [
-
-        number,
-
-        number
-
-      ];
-
-
-
-      resources: [
-
-        AllocationResource,
-
-        AllocationResource
-
-      ];
-
-    };
 
 
 
@@ -1511,35 +1430,9 @@ async function findAllocation(
   partySize: number
 
 ): Promise<ReservationAllocation | null> {
-
-  const module =
-
-    (await import(
-
-      '@/lib/odoo/reservation-allocation'
-
-    )) as unknown as {
-
-      findBestAllocation: (
-
-        date: string,
-
-        time: string,
-
-        partySize: number
-
-      ) => Promise<ReservationAllocation | null>;
-
-    };
-
-
-
-  return module.findBestAllocation(
-
+  return findBestAllocation(
     date,
-
     time,
-
     partySize
 
   );
@@ -4479,7 +4372,5 @@ export async function debugReservationByCode(
   );
 
 }
-
-
 
 

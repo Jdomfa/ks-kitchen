@@ -5,15 +5,10 @@ import { getBookableReservationTimes } from "@/lib/odoo/reservation-allocation";
 import {
 
   createOdooReservation,
-
   getOdooReservationByCode,
-
   getOdooReservationByPhone,
-
-  cancelOdooReservation,
-
+  cancelOdooReservationByCode,
   modifyOdooReservation,
-
 } from "@/lib/odoo/reservations";
 
 
@@ -2542,22 +2537,13 @@ async function handleReservationConfirm(
 
 
   const result = await createOdooReservation({
-
     name,
-
-
 
     phone,
 
-
-
-    partySize,
-
-
+    party_size: partySize,
 
     date,
-
-
 
     time,
 
@@ -2589,7 +2575,7 @@ async function handleReservationConfirm(
 
 
 
-      reservationCode: result.reservationCode,
+      reservationCode: result.reservation_code,
 
 
 
@@ -2611,9 +2597,8 @@ async function handleReservationConfirm(
 
 
 
-    const codeLine = result.reservationCode
-
-      ? `\n\nYour reservation code is ${result.reservationCode} — keep it handy if you need to change or cancel later.`
+    const codeLine = result.reservation_code
+      ? `\n\nYour reservation code is ${result.reservation_code} — keep it handy if you need to change or cancel later.`
 
       : "";
 
@@ -2834,13 +2819,9 @@ async function handleManageCode(
 
 
     return showManageSummary(
-
       result,
 
-
-
-      result.reservationCode,
-
+      result.reservation_code,
     );
 
   }
@@ -2886,10 +2867,7 @@ async function handleManageCode(
 
 
   return showManageSummary(
-
     result,
-
-
 
     code,
 
@@ -2914,37 +2892,21 @@ async function handleManageCode(
 function showManageSummary(
 
   result: {
-
     success: boolean;
-
-
 
     name?: string;
 
-
-
     phone?: string;
 
+    party_size?: number;
 
+    reservation_date?: string;
 
-    partySize?: number;
-
-
-
-    date?: string;
-
-
-
-    time?: string;
-
-
+    reservation_time?: string;
 
     status?: string;
 
-
-
-    reservationCode?: string;
-
+    reservation_code?: string;
   },
 
 
@@ -2975,11 +2937,9 @@ function showManageSummary(
 
 
 
-  const displayTime = result.time
-
+  const displayTime = result.reservation_time
     ? formatDisplayTime(
-
-        result.time.slice(
+        result.reservation_time.slice(
 
           0,
 
@@ -3031,7 +2991,7 @@ function showManageSummary(
 
 
 
-          value: String(result.partySize ?? ""),
+          value: String(result.party_size ?? ""),
 
         },
 
@@ -3043,7 +3003,7 @@ function showManageSummary(
 
 
 
-          value: result.date ?? "",
+          value: result.reservation_date ?? "",
 
         },
 
@@ -3099,7 +3059,7 @@ function showManageSummary(
 
 
 
-      managePartySize: result.partySize,
+      managePartySize: result.party_size,
 
 
 
@@ -3133,7 +3093,7 @@ function showManageSummary(
 
 
 
-        value: String(result.partySize ?? ""),
+        value: String(result.party_size ?? ""),
 
       },
 
@@ -3145,7 +3105,7 @@ function showManageSummary(
 
 
 
-        value: result.date ?? "",
+        value: result.reservation_date ?? "",
 
       },
 
@@ -3293,7 +3253,7 @@ async function handleManageAction(
 
   if (normalized === "1" || normalized.includes("cancel")) {
 
-    const result = await cancelOdooReservation(code);
+    const result = await cancelOdooReservationByCode(code);
 
 
 
