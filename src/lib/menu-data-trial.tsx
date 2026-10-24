@@ -237,7 +237,7 @@ export const menu: MenuTab[] = [
           },
           {
             id: "aqua-panna",
-            name: "Aqua Panna Still Water",
+            name: "Aqua Panna Still Water (750ml)",
             description: "Smooth, naturally filtered premium bottled water.",
             price: 7000,
             tags: [],
