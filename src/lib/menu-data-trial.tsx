@@ -110,7 +110,7 @@ export const menu: MenuTab[] = [
             name: "Street",
             description:
               "Mushrooms, cracked pepper and butter, packed with spiced vegetables and fresh herbs.",
-            price: 20000,
+            price: 18000,
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/mushroom.jpg",
             chefNote:
@@ -121,7 +121,7 @@ export const menu: MenuTab[] = [
             name: "Cheese",
             description:
               "Fresh paneer, cheese and mild spices, filled with melted mozzarella.",
-            price: 20000,
+            price: 18000,
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/cheese.jpg",
             chefNote:
