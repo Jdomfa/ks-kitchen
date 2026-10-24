@@ -209,6 +209,13 @@ export const menu: MenuTab[] = [
     label: "Drinks",
     categories: [
       {
+        id: "the-bar",
+        name: "The Bar",
+        image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792618060/drinks-cat.jpg",
+        items: [  
+        ]
+      },
+      {
         id: "chilled",
         name: "Chilled",
         items: [
@@ -232,7 +239,7 @@ export const menu: MenuTab[] = [
             id: "aqua-panna",
             name: "Aqua Panna Still Water",
             description: "Smooth, naturally filtered premium bottled water.",
-            price: 4000,
+            price: 7000,
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616917/aquapanna.jpg",
           },
@@ -241,7 +248,7 @@ export const menu: MenuTab[] = [
             name: "Voss Still",
             description:
               "Premium Norwegian still water with exceptional purity.",
-            price: 6000,
+            price: 7000,
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792618386/voss-new.jpg",
           },

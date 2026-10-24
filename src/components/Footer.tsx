@@ -207,7 +207,12 @@ export function Footer() {
                 Reservations
               </h3>
               <p className="text-coconut-cream/70 leading-relaxed">
-                {siteConfig.reservationPhone}
+                <a
+                  href={`tel:${siteConfig.reservationPhone.replace(/[^\d+]/g, "")}`}
+                  className="underline decoration-dotted underline-offset-4 hover:text-coconut-cream"
+                >
+                  {siteConfig.reservationPhone}
+                </a>
                 <br />
                 {siteConfig.reservationEmail}
               </p>
