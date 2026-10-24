@@ -283,13 +283,7 @@ export const menu: MenuTab[] = [
             chefNote:
               "Poured free at roadside neer mor stalls through Tamil summers, and just the thing to cool down anything spicy",
           },
-        ],
-      },
-      {
-        id: "hot-iced",
-        name: "Hot",
-        items: [
-          {
+             {
             id: "iced-filter-coffee",
             name: "Signature Iced Filter Coffee",
             description:
@@ -310,6 +304,12 @@ export const menu: MenuTab[] = [
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598905/lemongrass.jpg",
             chefNote: "Cold-brewed and unsweetened, so the bright, citrusy lemongrass and the warm bite of ginger come through first; sweeten it your way.",
           },
+        ],
+      },
+      {
+        id: "hot-iced",
+        name: "Hot",
+        items: [
           {
             id: "zafarani-tea",
             name: "Zafarani Tea",
