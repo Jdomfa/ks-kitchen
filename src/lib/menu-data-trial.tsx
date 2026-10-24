@@ -228,6 +228,31 @@ export const menu: MenuTab[] = [
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792617638/house-still.jpg",
           },
           {
+            id: "aqua-panna",
+            name: "Aqua Panna Still 200ml",
+            description: "Smooth, naturally filtered premium bottled water from Tuscany.",
+            price: 4000,
+            tags: [],
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616917/aquapanna.jpg",
+          },
+          {
+            id: "aqua-panna",
+            name: "Aqua Panna Still 750ml",
+            description: "Smooth, naturally filtered premium bottled water from Tuscany.",
+            price: 10000,
+            tags: [],
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616917/aquapanna.jpg",
+          },
+          {
+            id: "voss-still",
+            name: "Voss Still 375ml",
+            description:
+              "Premium Norwegian still water with exceptional purity.",
+            price: 7000,
+            tags: [],
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792618386/voss-new.jpg",
+          },
+          {
             id: "house-sparkling",
             name: "House Sparkling",
             description: "Light sparkling water with a refreshing finish.",
@@ -236,36 +261,30 @@ export const menu: MenuTab[] = [
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792617635/house-sparkling.jpg",
           },
           {
-            id: "aqua-panna",
-            name: "Aqua Panna Still Water (750ml)",
-            description: "Smooth, naturally filtered premium bottled water.",
-            price: 7000,
-            tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616917/aquapanna.jpg",
-          },
-          {
-            id: "voss-still",
-            name: "Voss Still",
-            description:
-              "Premium Norwegian still water with exceptional purity.",
-            price: 7000,
-            tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792618386/voss-new.jpg",
-          },
-          {
             id: "perrier",
-            name: "Sparkling Perrier",
+            name: "Perrier Sparkling",
             description:
-              "Naturally sparkling mineral water with a crisp finish.",
-            price: 9000,
+              "Naturally sparkling mineral water from France.",
+            price: 10000,
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792618385/spark-new.jpg",
           },
           {
-            id: "lemonade-mint",
-            name: "Lemonade – Mint",
+            id: "spiced-buttermilk",
+            name: "Spiced Butter Milk",
             description:
-              "Fresh lemonade with cooling mint and vibrant citrus flavour.",
+              "Refreshing South Indian spiced buttermilk blended with herbs.",
+            price: 8000,
+            tags: [],
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792602144/spiced-butter.jpg",
+            chefNote:
+              "Poured free at roadside neer mor stalls through Tamil summers, and just the thing to cool down anything spicy",
+          },
+          {
+            id: "lemonade-mint",
+            name: "Lemon – Mint",
+            description:
+              "Crushed Ice with cooling mint and vibrant citrus.",
             price: 10000,
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616295/Lemonade-mint-new.jpg",
@@ -273,36 +292,25 @@ export const menu: MenuTab[] = [
               "Squeezed by hand and blended to a frosty slush, made for a hot Lagos afternoon.",
           },
           {
-            id: "spiced-buttermilk",
-            name: "Spiced Butter Milk",
-            description:
-              "Refreshing South Indian spiced buttermilk blended with herbs.",
-            price: 10000,
-            tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792602144/spiced-butter.jpg",
-            chefNote:
-              "Poured free at roadside neer mor stalls through Tamil summers, and just the thing to cool down anything spicy",
-          },
-             {
-            id: "iced-filter-coffee",
-            name: "Signature Iced Filter Coffee",
-            description:
-              "Rich South Indian filter coffee, slow brewed and served over ice.",
-            price: 10000,
-            tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598904/spiced-butter-milk.jpg",
-            chefNote:
-              "Our ice cream is made from the very same kappi, so every sip stays coffee all the way down.",
-          },
-          {
             id: "lemongrass-iced-tea",
             name: "Cold Brew Lemongrass Iced Tea",
             description:
-              "Premium tea with fresh lemongrass and natural citrus notes.",
+              "Premium tea with fresh lemongrass slowly brewed for 24hrs.",
             price: 10000,
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598905/lemongrass.jpg",
             chefNote: "Cold-brewed and unsweetened, so the bright, citrusy lemongrass and the warm bite of ginger come through first; sweeten it your way.",
+          },
+          {
+            id: "iced-filter-coffee",
+            name: "Signature Iced Filter Coffee",
+            description:
+              "Rich South Indian filter coffee, slow dripped and served over ice.",
+            price: 12000,
+            tags: [],
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598904/spiced-butter-milk.jpg",
+            chefNote:
+              "Our ice cream is made from the very same kappi, so every sip stays coffee all the way down.",
           },
         ],
       },
@@ -310,6 +318,17 @@ export const menu: MenuTab[] = [
         id: "hot-iced",
         name: "Hot",
         items: [
+          {
+            id: "house-filter-coffee",
+            name: "House Filter Coffee",
+            description:
+              "Traditionally filter-brewed South Indian coffee, rich aroma and a bold finish.",
+            price: 10000,
+            tags: [],
+            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792602142/house-filter.jpg",
+            chefNote:
+              "Served in a dabara and tumbler, so pour it back and forth to cool it and raise the froth, the way Chennai starts its day.",
+          },
           {
             id: "zafarani-tea",
             name: "Zafarani Tea",
@@ -330,17 +349,7 @@ export const menu: MenuTab[] = [
             chefNote:
               "Brewed strong and milky like the tea kadais on Chennai’s street corners; just ask if you take sugar.",
           },
-          {
-            id: "house-filter-coffee",
-            name: "House Filter Coffee",
-            description:
-              "Traditionally filter-brewed South Indian coffee, rich aroma and a bold finish.",
-            price: 12000,
-            tags: [],
-            image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792602142/house-filter.jpg",
-            chefNote:
-              "Served in a dabara and tumbler, so pour it back and forth to cool it and raise the froth, the way Chennai starts its day.",
-          },
+          
         ],
       },
     ],
