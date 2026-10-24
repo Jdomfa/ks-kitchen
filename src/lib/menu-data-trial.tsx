@@ -236,7 +236,7 @@ export const menu: MenuTab[] = [
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616917/aquapanna.jpg",
           },
           {
-            id: "aqua-panna",
+            id: "aqua-panna-large",
             name: "Aqua Panna Still 750ml",
             description: "Smooth, naturally filtered premium bottled water from Tuscany.",
             price: 10000,
