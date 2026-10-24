@@ -146,7 +146,7 @@ export const menu: MenuTab[] = [
             tags: ["vegan", "nuts"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598913/onion-ut.jpg",
             chefNote:
-              "The podi is roasted fresh each morning — it loses its punch after a day.",
+              "Made the way it is at home, from the last of the batter: thick, tangy and edged with a crisp, toasted crust.",
           },
           {
             id: "uthappam-beetroot",
@@ -157,7 +157,7 @@ export const menu: MenuTab[] = [
             tags: ["vegan"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598908/beetroot.jpg",
             chefNote:
-              "The colour is all beetroot — nothing added, nothing dyed.",
+              "The beetroot bleeds deep magenta into the batter as it cooks, sweet and earthy against the chilli’s bite.",
           },
           {
             id: "uthappam-garden",
@@ -168,7 +168,7 @@ export const menu: MenuTab[] = [
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792585084/garden-ut.jpg",
             chefNote:
-              "Whatever's freshest at the market that week ends up here.",
+              "Our lightest uthappam, a confetto of colour pressed into the batter, soft below and still crunchy on top.",
           },
         ],
       },
@@ -187,7 +187,7 @@ export const menu: MenuTab[] = [
             tags: ["vegan", "nuts"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598909/payasam.jpg",
             chefNote:
-              "Served at every festival in our family — this is the recipe we grew up on.",
+              "We dry-roast the moong first for a toasty depth, the way it’s made for festivals and wedding feasts back home.",
           },
           {
             id: "kesari",
@@ -198,7 +198,7 @@ export const menu: MenuTab[] = [
             tags: ["veggie", "nuts"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792599170/Kesari.jpg",
             chefNote:
-              "A generous pinch of real saffron — you'll see it, not just taste it.",
+              "The sweet Tamil homes make when good news arrives, glowing gold and best eaten warm.",
           },
         ],
       },
@@ -209,9 +209,8 @@ export const menu: MenuTab[] = [
     label: "Drinks",
     categories: [
       {
-        id: "the-bar",
-        name: "The Bar",
-        image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792618060/drinks-cat.jpg",
+        id: "chilled",
+        name: "Chilled",
         items: [
           {
             id: "house-still",
@@ -264,14 +263,8 @@ export const menu: MenuTab[] = [
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616295/Lemonade-mint-new.jpg",
             chefNote:
-              "Muddled to order — the mint should still smell green when it hits the glass.",
+              "Squeezed by hand and blended to a frosty slush, made for a hot Lagos afternoon.",
           },
-        ],
-      },
-      {
-        id: "hot-iced",
-        name: "Hot & Iced",
-        items: [
           {
             id: "spiced-buttermilk",
             name: "Spiced Butter Milk",
@@ -281,18 +274,24 @@ export const menu: MenuTab[] = [
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792602144/spiced-butter.jpg",
             chefNote:
-              "Curry leaf and ginger go in last, so they stay fragrant, not boiled out.",
+              "Poured free at roadside neer mor stalls through Tamil summers, and just the thing to cool down anything spicy",
           },
+        ],
+      },
+      {
+        id: "hot-iced",
+        name: "Hot",
+        items: [
           {
             id: "iced-filter-coffee",
             name: "Signature Iced Filter Coffee",
             description:
               "Rich South Indian filter coffee, slow brewed and served over ice.",
-            price: 12000,
+            price: 10000,
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598904/spiced-butter-milk.jpg",
             chefNote:
-              "Brewed hot through a traditional filter first, then cooled — never brewed over ice.",
+              "Our ice cream is made from the very same kappi, so every sip stays coffee all the way down.",
           },
           {
             id: "lemongrass-iced-tea",
@@ -302,7 +301,7 @@ export const menu: MenuTab[] = [
             price: 10000,
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598905/lemongrass.jpg",
-            chefNote: "Cold-brewed overnight for a smoother, less bitter cup.",
+            chefNote: "Cold-brewed and unsweetened, so the bright, citrusy lemongrass and the warm bite of ginger come through first; sweeten it your way.",
           },
           {
             id: "zafarani-tea",
@@ -311,7 +310,7 @@ export const menu: MenuTab[] = [
             price: 12000,
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598904/zafarani.jpg",
-            chefNote: "Steeped with whole saffron threads, not extract.",
+            chefNote: "The saffron rests in the milk overnight, turning it soft gold before it ever meets the tea.",
           },
           {
             id: "masala-chai",
@@ -322,7 +321,7 @@ export const menu: MenuTab[] = [
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792616963/tea-2.jpg",
             chefNote:
-              "Our spice blend is ground fresh weekly — it's the first thing regulars notice.",
+              "Brewed strong and milky like the tea kadais on Chennai’s street corners; just ask if you take sugar.",
           },
           {
             id: "house-filter-coffee",
@@ -333,7 +332,7 @@ export const menu: MenuTab[] = [
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792602142/house-filter.jpg",
             chefNote:
-              "Served the traditional way — in a davara and tumbler, poured tableside.",
+              "Served in a dabara and tumbler, so pour it back and forth to cool it and raise the froth, the way Chennai starts its day.",
           },
         ],
       },

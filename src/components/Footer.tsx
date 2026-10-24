@@ -157,7 +157,7 @@ export function Footer() {
               alt="K's Kitchen"
               width={120}
               height={92}
-              className="h-16 w-auto invert opacity-90"
+              className="h-16 w-auto"
             />
             <div className="flex gap-4">
               <Link

@@ -67,7 +67,6 @@ function formatBookingDateLabel(dateISO: string, suffix?: string): string {
 
   const label = new Intl.DateTimeFormat("en-GB", {
     timeZone: "UTC",
-    weekday: "short",
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -231,7 +230,7 @@ export default function ReservationPageClient() {
       setInputValue("");
     } catch (err) {
       console.error("Reservation page error:", err);
-      setError("Something went wrong. Please try again.");
+      setError("Something went wrong. Please try again, or call us directly.");
     } finally {
       setIsSending(false);
     }
@@ -346,7 +345,7 @@ export default function ReservationPageClient() {
                     {currentScreen.summary.map((row, index) => (
                       <div
                         key={`${row.label}-${index}`}
-                        className={`flex items-center justify-between gap-6 px-5 py-3.5 ${
+                        className={`flex items-center justify-between px-5 py-3.5 ${
                           index !== currentScreen.summary!.length - 1
                             ? "border-b border-clay-pot/10"
                             : ""
@@ -355,7 +354,7 @@ export default function ReservationPageClient() {
                         <span className="text-xs font-medium uppercase tracking-wide text-roasted-coffee/50">
                           {row.label}
                         </span>
-                        <span className="text-right text-sm font-semibold text-roasted-coffee">
+                        <span className="text-sm font-semibold text-roasted-coffee">
                           {row.value}
                         </span>
                       </div>
@@ -401,24 +400,16 @@ export default function ReservationPageClient() {
                         }}
                       />
 
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <button
-                          type="button"
-                          onClick={() => setInputValue(todayISO)}
-                          className="rounded-xl border border-clay-pot/25 bg-surface px-4 py-3 text-left text-sm text-roasted-coffee transition hover:border-clay-pot hover:bg-clay-pot/10"
-                        >
-                          <span className="block text-xs uppercase tracking-wide opacity-75">
-                            Today
-                          </span>
-                          <span className="mt-1 block font-semibold">
-                            {formatBookingDateLabel(todayISO)}
-                          </span>
-                        </button>
-
+                      <div className="grid grid-cols-2 gap-3">
                         <button
                           type="button"
                           onClick={() => setInputValue(tomorrowISO)}
-                          className="rounded-xl border border-clay-pot/25 bg-surface px-4 py-3 text-left text-sm text-roasted-coffee transition hover:border-clay-pot hover:bg-clay-pot/10"
+                          disabled={isSending}
+                          className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass ${
+                            inputValue === tomorrowISO
+                              ? "border-banana-leaf bg-banana-leaf text-white"
+                              : "border-banana-leaf/25 bg-surface text-banana-leaf hover:bg-banana-leaf/10"
+                          }`}
                         >
                           <span className="block text-xs uppercase tracking-wide opacity-75">
                             Tomorrow
@@ -431,7 +422,12 @@ export default function ReservationPageClient() {
                         <button
                           type="button"
                           onClick={() => setInputValue(dayAfterISO)}
-                          className="rounded-xl border border-clay-pot/25 bg-surface px-4 py-3 text-left text-sm text-roasted-coffee transition hover:border-clay-pot hover:bg-clay-pot/10"
+                          disabled={isSending}
+                          className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass ${
+                            inputValue === dayAfterISO
+                              ? "border-banana-leaf bg-banana-leaf text-white"
+                              : "border-banana-leaf/25 bg-surface text-banana-leaf hover:bg-banana-leaf/10"
+                          }`}
                         >
                           <span className="block text-xs uppercase tracking-wide opacity-75">
                             Day after
@@ -452,7 +448,7 @@ export default function ReservationPageClient() {
                     </form>
                   ) : currentScreen.session.step === "RESERVATION_PHONE" ? (
                     <form onSubmit={handlePhoneSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1.85fr)]">
+                      <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1.85fr)] gap-3">
                         <select
                           value={phoneCountry}
                           onChange={(event) => {
@@ -483,6 +479,7 @@ export default function ReservationPageClient() {
                           placeholder="Phone number"
                           disabled={isSending}
                           className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
+                          style={{ boxSizing: "border-box" }}
                         />
                       </div>
 
@@ -515,6 +512,7 @@ export default function ReservationPageClient() {
                         placeholder="Type your answer..."
                         disabled={isSending}
                         className="w-full min-w-0 rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
+                        style={{ boxSizing: "border-box" }}
                       />
 
                       <button
@@ -522,7 +520,7 @@ export default function ReservationPageClient() {
                         disabled={isSending || !inputValue.trim()}
                         className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
                       >
-                        Continue
+                        Send
                       </button>
                     </form>
                   )}
