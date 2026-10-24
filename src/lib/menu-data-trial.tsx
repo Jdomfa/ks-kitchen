@@ -47,7 +47,7 @@ export const menu: MenuTab[] = [
             image:
               "https://res.cloudinary.com/dodmtgsij/image/upload/v1792581405/chatti.jpg",
             chefNote:
-              "Steamed low and slow in the clay pot itself — it's what keeps the crumb this soft.",
+              "Tear one open and watch the steam rise from its soft, spongy centre.",
           },
         ],
       },
@@ -69,7 +69,7 @@ export const menu: MenuTab[] = [
             image:
               "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598911/classic.jpg",
             chefNote:
-              "Our batter ferments for 18 hours — the tang you taste is time, not shortcuts.",
+              "Spread paper-thin and cooked until the edges turn lacy, bronze and shatter at the first touch.",
           },
           {
             id: "dosa-signature",
@@ -81,7 +81,7 @@ export const menu: MenuTab[] = [
             image:
               "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/potatoe.jpg",
             chefNote:
-              "The potato masala recipe hasn't changed since our very first pop-up.",
+              ": The crisp dosa cracks open onto a warm heart best scooped up by hand.",
           },
           {
             id: "dosa-ammas",
@@ -92,7 +92,7 @@ export const menu: MenuTab[] = [
             tags: ["veggie", "nuts", "sesame", "vegan"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792601368/ammas.jpg",
             chefNote:
-              "Named for the way it's made at home — no restaurant polish, just the real thing.",
+              "Our podi travels to us from our home kitchen in Chennai, coarse, red-brown and smelling of roasted lentils and chilli. ",
           },
           {
             id: "dosa-special",
@@ -103,7 +103,7 @@ export const menu: MenuTab[] = [
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598912/onion-dosa.jpg",
             chefNote:
-              "The onions go in while they still have a little bite — texture matters here.",
+              "Uttukuli is a small Tamil town famous for its ghee, and you’ll smell why before the plate reaches you.",
           },
           {
             id: "dosa-street",
@@ -114,7 +114,7 @@ export const menu: MenuTab[] = [
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/mushroom.jpg",
             chefNote:
-              "Inspired by the late-night carts of Chennai — built for heat and speed.",
+              "A street-stall dosa at heart, finished with our homemade butter and a crackle of fried curry leaves.",
           },
           {
             id: "dosa-cheese",
@@ -125,7 +125,7 @@ export const menu: MenuTab[] = [
             tags: ["veggie"],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792598914/cheese.jpg",
             chefNote:
-              "Our most-requested dish by kids — and more than a few adults.",
+              "Our paneer is made every day from fresh cow’s milk, with peppers and onions folded through",
           },
         ],
       },
@@ -329,7 +329,7 @@ export const menu: MenuTab[] = [
             name: "House Filter Coffee",
             description:
               "Traditionally filter-brewed South Indian coffee, rich aroma and a bold finish.",
-            price: 10000,
+            price: 12000,
             tags: [],
             image: "https://res.cloudinary.com/dodmtgsij/image/upload/v1792602142/house-filter.jpg",
             chefNote:
