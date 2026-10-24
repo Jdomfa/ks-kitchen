@@ -85,7 +85,7 @@ export const menu: MenuTab[] = [
           },
           {
             id: "dosa-ammas",
-            name: "Amma's",
+            name: "Spiced",
             description:
               "Cold-pressed sesame and house podi, inspired by traditional home-style South Indian cooking.",
             price: 17000,
