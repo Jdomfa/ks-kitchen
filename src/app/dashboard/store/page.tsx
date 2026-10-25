@@ -1,8 +1,8 @@
-import Link from "next/link";
-
 import { createClient } from "@/lib/supabase/server";
 
 import { StoreManager } from "./StoreManager";
+
+export const dynamic = "force-dynamic";
 
 type Product = {
   id: string;
@@ -21,35 +21,24 @@ export default async function DashboardStorePage() {
   const { data: products, error } = await supabase
     .from("products")
     .select("*")
-    .order("sort_order", {
-      ascending: true,
-    });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  const items = (products ?? []) as Product[];
+    .order("sort_order", { ascending: true });
 
   return (
-    <div className="min-h-screen bg-coconut-cream px-6 py-16">
-      <div className="mx-auto max-w-4xl">
-        {/* BACK TO DASHBOARD */}
-        <Link
-          href="/dashboard"
-          className="font-sans text-sm text-roasted-coffee/60 hover:text-clay-pot"
+    <div className="mx-auto max-w-4xl">
+      <p className="mb-8 font-sans text-sm text-admin-muted">
+        Photos upload to Cloudinary; the link is saved with the product.
+      </p>
+
+      {error ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-alert/20 bg-alert/10 px-4 py-3 font-sans text-sm text-alert"
         >
-          ← Dashboard
-        </Link>
-
-        {/* PAGE TITLE */}
-        <h1 className="mt-3 mb-8 font-display text-3xl text-roasted-coffee">
-          Store
-        </h1>
-
-        {/* STORE MANAGER */}
-        <StoreManager products={items} />
-      </div>
+          Couldn&apos;t load the store: {error.message}
+        </p>
+      ) : (
+        <StoreManager products={(products ?? []) as Product[]} />
+      )}
     </div>
   );
 }

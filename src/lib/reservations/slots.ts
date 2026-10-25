@@ -193,7 +193,8 @@ export async function createSlotReservation(args: {
    * There is already an Odoo placeholder event.
    *
    * We convert that existing event into the reservation instead
-   * of creating another event.
+   * of creating another event: title "Name / Phone / Guests",
+   * status Booked, and the real guest count on the table.
    */
   const claimResult = await claimAllocation(
     allocation,
@@ -204,6 +205,8 @@ export async function createSlotReservation(args: {
       phone: args.phone,
 
       reservationCode: result.reservation_code,
+
+      partySize: args.party_size,
     },
   );
 
@@ -273,6 +276,8 @@ async function claimAllocation(
     phone?: string;
 
     reservationCode?: string;
+
+    partySize: number;
   },
 ): Promise<{
   success: boolean;
@@ -280,27 +285,41 @@ async function claimAllocation(
   error?: string;
 }> {
   if (allocation.type === "single") {
-    return claimPlaceholder(
-      allocation.eventIds[0],
+    return claimPlaceholder(allocation.eventIds[0], {
+      ...details,
 
-      details,
-    );
+      guests: details.partySize,
+    });
   }
 
   /**
    * Merged:
    *
-   * claim both actual Odoo placeholder events.
+   * claim both actual Odoo placeholder events, splitting the party
+   * across the two tables (first table filled up to its capacity).
    */
   const [firstEventId, secondEventId] = allocation.eventIds;
 
-  const first = await claimPlaceholder(firstEventId, details);
+  const firstGuests = Math.min(
+    allocation.resources[0]?.capacity ?? details.partySize,
+    details.partySize,
+  );
+
+  const first = await claimPlaceholder(firstEventId, {
+    ...details,
+
+    guests: firstGuests,
+  });
 
   if (!first.success) {
     return first;
   }
 
-  const second = await claimPlaceholder(secondEventId, details);
+  const second = await claimPlaceholder(secondEventId, {
+    ...details,
+
+    guests: details.partySize - firstGuests,
+  });
 
   if (!second.success) {
     /**

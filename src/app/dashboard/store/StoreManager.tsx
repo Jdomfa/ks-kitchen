@@ -1,8 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 
+import { ImageUploader } from "../_components/ImageUploader";
+import { Modal } from "../_components/Modal";
+import { FormError, SubmitButton } from "../_components/SubmitButton";
+import type { ActionResult } from "../_components/types";
 import { createProduct, updateProduct, deleteProduct } from "./actions";
 
 type Product = {
@@ -22,38 +26,65 @@ function formatNaira(amount: number) {
   return `NGN ${amount.toLocaleString("en-NG")}`;
 }
 
+const labelClass =
+  "mb-1 block font-sans text-xs uppercase tracking-wide text-roasted-coffee/60";
+
+const inputClass =
+  "w-full rounded-lg border border-roasted-coffee/20 bg-white px-3 py-2 font-sans text-sm transition-colors duration-150 focus:border-clay-pot focus:outline-none";
+
+const iconButton =
+  "flex h-8 w-8 items-center justify-center rounded-full border border-roasted-coffee/20 transition-[transform,border-color,opacity] duration-150 ease-out active:scale-[0.92] disabled:opacity-40 [@media(hover:hover)]:hover:border-clay-pot";
+
 export function StoreManager({ products }: { products: Product[] }) {
   const [editingProduct, setEditingProduct] = useState<Product | "new" | null>(
     null,
   );
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const sortedProducts = [...products].sort(
     (a, b) => a.sort_order - b.sort_order,
   );
 
+  async function handleDelete(product: Product) {
+    if (!confirm(`Delete "${product.name}"?`)) return;
+
+    setNotice(null);
+    setDeletingId(product.id);
+
+    const formData = new FormData();
+    formData.set("id", product.id);
+
+    const result = await deleteProduct(formData);
+
+    setDeletingId(null);
+
+    if (!result.ok) setNotice(result.error);
+  }
+
   return (
     <div>
       {/* HEADER */}
       <div className="mb-8 flex items-center justify-between">
-        <div>
-          <p className="font-sans text-xs uppercase tracking-[0.18em] text-roasted-coffee/50">
-            Store
-          </p>
-
-          <p className="mt-1 font-sans text-sm text-roasted-coffee/60">
-            {products.length} {products.length === 1 ? "product" : "products"}
-          </p>
-        </div>
+        <p className="font-sans text-sm text-roasted-coffee/60">
+          {products.length} {products.length === 1 ? "product" : "products"}
+        </p>
 
         <button
           type="button"
           onClick={() => setEditingProduct("new")}
-          className="inline-flex items-center gap-1.5 rounded-full bg-clay-pot px-5 py-2.5 font-sans text-sm text-coconut-cream hover:opacity-90"
+          className="inline-flex items-center gap-1.5 rounded-full bg-clay-pot px-5 py-2.5 font-sans text-sm text-coconut-cream transition-[transform,opacity] duration-150 ease-out active:scale-[0.97] [@media(hover:hover)]:hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
           Add product
         </button>
       </div>
+
+      {notice && (
+        <div className="mb-6">
+          <FormError message={notice} />
+        </div>
+      )}
 
       {/* PRODUCTS */}
       {sortedProducts.length === 0 ? (
@@ -65,7 +96,7 @@ export function StoreManager({ products }: { products: Product[] }) {
           <button
             type="button"
             onClick={() => setEditingProduct("new")}
-            className="mt-4 inline-flex items-center gap-1.5 font-sans text-sm text-clay-pot"
+            className="mt-4 inline-flex items-center gap-1.5 font-sans text-sm text-clay-pot transition-transform duration-150 ease-out active:scale-[0.97]"
           >
             <Plus className="h-4 w-4" />
             Add your first product
@@ -77,13 +108,14 @@ export function StoreManager({ products }: { products: Product[] }) {
             <ProductCard
               key={product.id}
               product={product}
+              deleting={deletingId === product.id}
               onEdit={() => setEditingProduct(product)}
+              onDelete={() => handleDelete(product)}
             />
           ))}
         </div>
       )}
 
-      {/* PRODUCT MODAL */}
       {editingProduct && (
         <ProductModal
           product={editingProduct === "new" ? null : editingProduct}
@@ -94,23 +126,21 @@ export function StoreManager({ products }: { products: Product[] }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────── */
-/* PRODUCT CARD                                                */
-/* ─────────────────────────────────────────────────────────── */
-
 function ProductCard({
   product,
+  deleting,
   onEdit,
+  onDelete,
 }: {
   product: Product;
+  deleting: boolean;
   onEdit: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div className="rounded-2xl border border-roasted-coffee/10 bg-white/40 p-6">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        {/* PRODUCT INFO */}
         <div className="flex min-w-0 items-center gap-4">
-          {/* IMAGE */}
           {product.image ? (
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-roasted-coffee/5">
               <img
@@ -159,7 +189,6 @@ function ProductCard({
           </div>
         </div>
 
-        {/* PRICE + ACTIONS */}
         <div className="flex shrink-0 items-center gap-3">
           <span className="font-sans text-xs text-brushed-brass">
             {formatNaira(product.price)}
@@ -168,79 +197,26 @@ function ProductCard({
           <button
             type="button"
             onClick={onEdit}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-roasted-coffee/20 hover:border-clay-pot"
+            className={iconButton}
             aria-label={`Edit ${product.name}`}
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
 
-          <form action={deleteProduct}>
-            <input type="hidden" name="id" value={product.id} />
-
-            <button
-              type="submit"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-roasted-coffee/20 text-clay-pot hover:border-clay-pot"
-              aria-label={`Delete ${product.name}`}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────── */
-/* MODAL                                                       */
-/* ─────────────────────────────────────────────────────────── */
-
-function Modal({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-roasted-coffee/50 p-6"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-coconut-cream p-6"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-display text-lg text-roasted-coffee">{title}</h3>
-
-          <button type="button" onClick={onClose} aria-label="Close">
-            <X className="h-5 w-5 text-roasted-coffee/60" />
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleting}
+            className={`${iconButton} text-clay-pot`}
+            aria-label={`Delete ${product.name}`}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
-
-        {children}
       </div>
     </div>
   );
 }
-
-/* ─────────────────────────────────────────────────────────── */
-/* FIELD                                                       */
-/* ─────────────────────────────────────────────────────────── */
-
-function field(label: string) {
-  return "block font-sans text-xs uppercase tracking-wide text-roasted-coffee/60 mb-1";
-}
-
-const inputClass =
-  "w-full rounded-lg border border-roasted-coffee/20 bg-white px-3 py-2 font-sans text-sm focus:outline-none focus:border-clay-pot";
-
-/* ─────────────────────────────────────────────────────────── */
-/* PRODUCT MODAL                                               */
-/* ─────────────────────────────────────────────────────────── */
 
 function ProductModal({
   product,
@@ -249,25 +225,31 @@ function ProductModal({
   product: Product | null;
   onClose: () => void;
 }) {
+  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
   return (
     <Modal title={product ? "Edit product" : "New product"} onClose={onClose}>
       <form
         action={async (formData) => {
+          setError(null);
+
+          let result: ActionResult;
+
           if (product) {
             formData.set("id", product.id);
-            await updateProduct(formData);
+            result = await updateProduct(formData);
           } else {
-            await createProduct(formData);
+            result = await createProduct(formData);
           }
 
-          onClose();
+          if (result.ok) onClose();
+          else setError(result.error);
         }}
         className="space-y-4"
       >
-        {/* NAME */}
         <div>
-          <label className={field("Name")}>Name</label>
-
+          <label className={labelClass}>Name</label>
           <input
             name="name"
             defaultValue={product?.name ?? ""}
@@ -277,10 +259,8 @@ function ProductModal({
           />
         </div>
 
-        {/* DESCRIPTION */}
         <div>
-          <label className={field("Description")}>Description</label>
-
+          <label className={labelClass}>Description</label>
           <textarea
             name="description"
             defaultValue={product?.description ?? ""}
@@ -291,10 +271,8 @@ function ProductModal({
           />
         </div>
 
-        {/* SIZE */}
         <div>
-          <label className={field("Size")}>Size</label>
-
+          <label className={labelClass}>Size</label>
           <input
             name="size"
             defaultValue={product?.size ?? ""}
@@ -303,10 +281,8 @@ function ProductModal({
           />
         </div>
 
-        {/* PRICE */}
         <div>
-          <label className={field("Price (NGN)")}>Price (NGN)</label>
-
+          <label className={labelClass}>Price (NGN)</label>
           <input
             name="price"
             type="number"
@@ -319,10 +295,8 @@ function ProductModal({
           />
         </div>
 
-        {/* TAGS */}
         <div>
-          <label className={field("Tags")}>Dietary tags</label>
-
+          <span className={labelClass}>Dietary tags</span>
           <div className="flex flex-wrap gap-3">
             {ALL_TAGS.map((tag) => (
               <label
@@ -335,40 +309,23 @@ function ProductModal({
                   value={tag}
                   defaultChecked={product?.tags?.includes(tag) ?? false}
                 />
-
                 {tag}
               </label>
             ))}
           </div>
         </div>
 
-        {/* IMAGE */}
         <div>
-          <label className={field("Image URL")}>Image URL</label>
-
-          <input
-            name="image"
-            defaultValue={product?.image ?? ""}
-            className={inputClass}
-            placeholder="https://..."
+          <span className={labelClass}>Image</span>
+          <ImageUploader
+            folder="store"
+            defaultValue={product?.image}
+            onBusyChange={setUploading}
           />
         </div>
 
-        {/* IMAGE PREVIEW */}
-        {product?.image && (
-          <div className="overflow-hidden rounded-xl">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="h-40 w-full object-cover"
-            />
-          </div>
-        )}
-
-        {/* SORT ORDER */}
         <div>
-          <label className={field("Sort order")}>Sort order</label>
-
+          <label className={labelClass}>Sort order</label>
           <input
             name="sort_order"
             type="number"
@@ -377,13 +334,15 @@ function ProductModal({
           />
         </div>
 
-        {/* SAVE */}
-        <button
-          type="submit"
-          className="w-full rounded-full bg-clay-pot px-6 py-2.5 font-sans text-sm text-coconut-cream hover:opacity-90"
-        >
-          {product ? "Save changes" : "Create product"}
-        </button>
+        <FormError message={error} />
+
+        <SubmitButton disabled={uploading}>
+          {uploading
+            ? "Uploading image…"
+            : product
+              ? "Save changes"
+              : "Create product"}
+        </SubmitButton>
       </form>
     </Modal>
   );

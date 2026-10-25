@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+
+import { ImageUploader } from "../_components/ImageUploader";
+import { Modal } from "../_components/Modal";
+import { FormError, SubmitButton } from "../_components/SubmitButton";
+import type { ActionResult } from "../_components/types";
 import {
   createCategory,
   updateCategory,
@@ -38,6 +43,32 @@ function formatNaira(amount: number) {
   return `NGN ${amount.toLocaleString("en-NG")}`;
 }
 
+const labelClass =
+  "mb-1 block font-sans text-xs uppercase tracking-wide text-roasted-coffee/60";
+
+const inputClass =
+  "w-full rounded-lg border border-roasted-coffee/20 bg-white px-3 py-2 font-sans text-sm transition-colors duration-150 focus:border-clay-pot focus:outline-none";
+
+const iconButton =
+  "flex items-center justify-center rounded-full border border-roasted-coffee/20 transition-[transform,border-color,opacity] duration-150 ease-out active:scale-[0.92] disabled:opacity-40 [@media(hover:hover)]:hover:border-clay-pot";
+
+function Thumb({ src, alt, size }: { src: string | null; alt: string; size: string }) {
+  return src ? (
+    <img
+      src={src}
+      alt={alt}
+      className={`${size} shrink-0 rounded-lg bg-roasted-coffee/5 object-cover`}
+    />
+  ) : (
+    <div
+      aria-hidden="true"
+      className={`${size} flex shrink-0 items-center justify-center rounded-lg bg-roasted-coffee/5 font-display text-roasted-coffee/20`}
+    >
+      K
+    </div>
+  );
+}
+
 export function MenuManager({
   tabs,
   categories,
@@ -55,20 +86,49 @@ export function MenuManager({
     item: Item | "new";
     categoryId: string;
   } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const visibleCategories = categories.filter((c) => c.tab_id === activeTab);
 
+  async function runDelete(
+    id: string,
+    confirmText: string,
+    action: (formData: FormData) => Promise<ActionResult>,
+  ) {
+    if (!confirm(confirmText)) return;
+
+    setNotice(null);
+    setDeletingId(id);
+
+    const formData = new FormData();
+    formData.set("id", id);
+
+    const result = await action(formData);
+
+    setDeletingId(null);
+
+    if (!result.ok) setNotice(result.error);
+  }
+
   return (
     <div>
+      {notice && (
+        <div className="mb-6">
+          <FormError message={notice} />
+        </div>
+      )}
+
       {/* Tab switcher */}
-      <div className="flex gap-2 mb-8">
+      <div className="mb-8 flex flex-wrap gap-2">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-2 rounded-full font-sans text-sm border ${
+            className={`rounded-full border px-5 py-2 font-sans text-sm transition-[transform,background-color,color,border-color] duration-150 ease-out active:scale-[0.97] ${
               activeTab === tab.id
-                ? "bg-clay-pot text-coconut-cream border-clay-pot"
+                ? "border-clay-pot bg-clay-pot text-coconut-cream"
                 : "border-roasted-coffee/20 text-roasted-coffee"
             }`}
           >
@@ -82,40 +142,48 @@ export function MenuManager({
           key={cat.id}
           className="mb-8 rounded-2xl border border-roasted-coffee/10 bg-white/40 p-6"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="font-display text-xl text-roasted-coffee">
-                {cat.name}
-              </h2>
-              {cat.description && (
-                <p className="mt-1 font-sans text-sm text-roasted-coffee/60 max-w-md">
-                  {cat.description}
-                </p>
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-4">
+              {cat.image && (
+                <Thumb src={cat.image} alt={cat.name} size="h-14 w-14" />
               )}
+              <div className="min-w-0">
+                <h2 className="font-display text-xl text-roasted-coffee">
+                  {cat.name}
+                </h2>
+                {cat.description && (
+                  <p className="mt-1 max-w-md font-sans text-sm text-roasted-coffee/60">
+                    {cat.description}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2 shrink-0">
+
+            <div className="flex shrink-0 gap-2">
               <button
+                type="button"
                 onClick={() => setEditingCategory(cat)}
-                className="h-8 w-8 flex items-center justify-center rounded-full border border-roasted-coffee/20 hover:border-clay-pot"
-                aria-label="Edit category"
+                className={`${iconButton} h-8 w-8`}
+                aria-label={`Edit ${cat.name}`}
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
-              <form
-                action={async (fd) => {
-                  if (!confirm(`Delete "${cat.name}" and all its items?`))
-                    return;
-                  fd.set("id", cat.id);
-                  await deleteCategory(fd);
-                }}
+
+              <button
+                type="button"
+                disabled={deletingId === cat.id}
+                onClick={() =>
+                  runDelete(
+                    cat.id,
+                    `Delete "${cat.name}" and all its items?`,
+                    deleteCategory,
+                  )
+                }
+                className={`${iconButton} h-8 w-8 text-clay-pot`}
+                aria-label={`Delete ${cat.name}`}
               >
-                <button
-                  className="h-8 w-8 flex items-center justify-center rounded-full border border-roasted-coffee/20 hover:border-clay-pot text-clay-pot"
-                  aria-label="Delete category"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </form>
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
             </div>
           </div>
 
@@ -127,49 +195,55 @@ export function MenuManager({
                   key={item.id}
                   className="flex items-center justify-between gap-4 py-3"
                 >
-                  <div className="min-w-0">
-                    <p className="font-sans text-sm text-roasted-coffee">
-                      {item.name}
-                    </p>
-                    <p className="font-sans text-xs text-roasted-coffee/50 truncate max-w-sm">
-                      {item.description}
-                    </p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Thumb src={item.image} alt={item.name} size="h-10 w-10" />
+
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm text-roasted-coffee">
+                        {item.name}
+                      </p>
+                      <p className="max-w-sm truncate font-sans text-xs text-roasted-coffee/50">
+                        {item.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
+
+                  <div className="flex shrink-0 items-center gap-3">
                     <span className="font-sans text-xs text-brushed-brass">
                       {formatNaira(item.price)}
                     </span>
+
                     <button
+                      type="button"
                       onClick={() =>
                         setEditingItem({ item, categoryId: cat.id })
                       }
-                      className="h-7 w-7 flex items-center justify-center rounded-full border border-roasted-coffee/20 hover:border-clay-pot"
-                      aria-label="Edit item"
+                      className={`${iconButton} h-7 w-7`}
+                      aria-label={`Edit ${item.name}`}
                     >
                       <Pencil className="h-3 w-3" />
                     </button>
-                    <form
-                      action={async (fd) => {
-                        if (!confirm(`Delete "${item.name}"?`)) return;
-                        fd.set("id", item.id);
-                        await deleteItem(fd);
-                      }}
+
+                    <button
+                      type="button"
+                      disabled={deletingId === item.id}
+                      onClick={() =>
+                        runDelete(item.id, `Delete "${item.name}"?`, deleteItem)
+                      }
+                      className={`${iconButton} h-7 w-7 text-clay-pot`}
+                      aria-label={`Delete ${item.name}`}
                     >
-                      <button
-                        className="h-7 w-7 flex items-center justify-center rounded-full border border-roasted-coffee/20 hover:border-clay-pot text-clay-pot"
-                        aria-label="Delete item"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </form>
+                      <Trash2 className="h-3 w-3" />
+                    </button>
                   </div>
                 </div>
               ))}
           </div>
 
           <button
+            type="button"
             onClick={() => setEditingItem({ item: "new", categoryId: cat.id })}
-            className="mt-4 inline-flex items-center gap-1.5 font-sans text-sm text-clay-pot"
+            className="mt-4 inline-flex items-center gap-1.5 font-sans text-sm text-clay-pot transition-transform duration-150 ease-out active:scale-[0.97]"
           >
             <Plus className="h-4 w-4" /> Add item
           </button>
@@ -177,8 +251,9 @@ export function MenuManager({
       ))}
 
       <button
+        type="button"
         onClick={() => setEditingCategory("new")}
-        className="inline-flex items-center gap-1.5 rounded-full border border-roasted-coffee/20 px-5 py-2 font-sans text-sm text-roasted-coffee hover:border-clay-pot"
+        className="inline-flex items-center gap-1.5 rounded-full border border-roasted-coffee/20 px-5 py-2 font-sans text-sm text-roasted-coffee transition-[transform,border-color] duration-150 ease-out active:scale-[0.97] [@media(hover:hover)]:hover:border-clay-pot"
       >
         <Plus className="h-4 w-4" /> Add category
       </button>
@@ -202,71 +277,41 @@ export function MenuManager({
   );
 }
 
-function Modal({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-roasted-coffee/50 p-6"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-lg rounded-2xl bg-coconut-cream p-6 max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display text-lg text-roasted-coffee">{title}</h3>
-          <button onClick={onClose} aria-label="Close">
-            <X className="h-5 w-5 text-roasted-coffee/60" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function field(label: string) {
-  return "block font-sans text-xs uppercase tracking-wide text-roasted-coffee/60 mb-1";
-}
-const inputClass =
-  "w-full rounded-lg border border-roasted-coffee/20 bg-white px-3 py-2 font-sans text-sm focus:outline-none focus:border-clay-pot";
-
 function CategoryModal({
   category,
   tabId,
   onClose,
 }: {
   category: Category | null;
-  tabId: string;
+  tabId: string | undefined;
   onClose: () => void;
 }) {
+  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
   return (
-    <Modal
-      title={category ? "Edit category" : "New category"}
-      onClose={onClose}
-    >
+    <Modal title={category ? "Edit category" : "New category"} onClose={onClose}>
       <form
-        action={async (fd) => {
+        action={async (formData) => {
+          setError(null);
+
+          let result: ActionResult;
+
           if (category) {
-            fd.set("id", category.id);
-            await updateCategory(fd);
+            formData.set("id", category.id);
+            result = await updateCategory(formData);
           } else {
-            fd.set("tab_id", tabId);
-            await createCategory(fd);
+            formData.set("tab_id", tabId ?? "");
+            result = await createCategory(formData);
           }
-          onClose();
+
+          if (result.ok) onClose();
+          else setError(result.error);
         }}
         className="space-y-4"
       >
         <div>
-          <label className={field("Name")}>Name</label>
+          <label className={labelClass}>Name</label>
           <input
             name="name"
             defaultValue={category?.name}
@@ -274,8 +319,9 @@ function CategoryModal({
             className={inputClass}
           />
         </div>
+
         <div>
-          <label className={field("Description")}>Description</label>
+          <label className={labelClass}>Description</label>
           <textarea
             name="description"
             defaultValue={category?.description ?? ""}
@@ -283,16 +329,18 @@ function CategoryModal({
             className={inputClass}
           />
         </div>
+
         <div>
-          <label className={field("Image URL")}>Image URL</label>
-          <input
-            name="image"
-            defaultValue={category?.image ?? ""}
-            className={inputClass}
+          <span className={labelClass}>Image</span>
+          <ImageUploader
+            folder="menu"
+            defaultValue={category?.image}
+            onBusyChange={setUploading}
           />
         </div>
+
         <div>
-          <label className={field("Sort order")}>Sort order</label>
+          <label className={labelClass}>Sort order</label>
           <input
             name="sort_order"
             type="number"
@@ -300,9 +348,12 @@ function CategoryModal({
             className={inputClass}
           />
         </div>
-        <button className="w-full rounded-full bg-clay-pot px-6 py-2.5 font-sans text-sm text-coconut-cream">
-          Save
-        </button>
+
+        <FormError message={error} />
+
+        <SubmitButton disabled={uploading}>
+          {uploading ? "Uploading image…" : "Save"}
+        </SubmitButton>
       </form>
     </Modal>
   );
@@ -317,23 +368,32 @@ function ItemModal({
   categoryId: string;
   onClose: () => void;
 }) {
+  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
   return (
     <Modal title={item ? "Edit item" : "New item"} onClose={onClose}>
       <form
-        action={async (fd) => {
+        action={async (formData) => {
+          setError(null);
+
+          let result: ActionResult;
+
           if (item) {
-            fd.set("id", item.id);
-            await updateItem(fd);
+            formData.set("id", item.id);
+            result = await updateItem(formData);
           } else {
-            fd.set("category_id", categoryId);
-            await createItem(fd);
+            formData.set("category_id", categoryId);
+            result = await createItem(formData);
           }
-          onClose();
+
+          if (result.ok) onClose();
+          else setError(result.error);
         }}
         className="space-y-4"
       >
         <div>
-          <label className={field("Name")}>Name</label>
+          <label className={labelClass}>Name</label>
           <input
             name="name"
             defaultValue={item?.name}
@@ -341,8 +401,9 @@ function ItemModal({
             className={inputClass}
           />
         </div>
+
         <div>
-          <label className={field("Description")}>Description</label>
+          <label className={labelClass}>Description</label>
           <textarea
             name="description"
             defaultValue={item?.description}
@@ -351,18 +412,21 @@ function ItemModal({
             className={inputClass}
           />
         </div>
+
         <div>
-          <label className={field("Price (NGN)")}>Price (NGN)</label>
+          <label className={labelClass}>Price (NGN)</label>
           <input
             name="price"
             type="number"
+            min="0"
             defaultValue={item?.price}
             required
             className={inputClass}
           />
         </div>
+
         <div>
-          <label className={field("Tags")}>Dietary tags</label>
+          <span className={labelClass}>Dietary tags</span>
           <div className="flex flex-wrap gap-3">
             {ALL_TAGS.map((tag) => (
               <label
@@ -380,16 +444,18 @@ function ItemModal({
             ))}
           </div>
         </div>
+
         <div>
-          <label className={field("Image URL")}>Image URL</label>
-          <input
-            name="image"
-            defaultValue={item?.image ?? ""}
-            className={inputClass}
+          <span className={labelClass}>Image</span>
+          <ImageUploader
+            folder="menu"
+            defaultValue={item?.image}
+            onBusyChange={setUploading}
           />
         </div>
+
         <div>
-          <label className={field("Chef's note")}>Chef&apos;s note</label>
+          <label className={labelClass}>Chef&apos;s note</label>
           <textarea
             name="chef_note"
             defaultValue={item?.chef_note ?? ""}
@@ -397,8 +463,9 @@ function ItemModal({
             className={inputClass}
           />
         </div>
+
         <div>
-          <label className={field("Sort order")}>Sort order</label>
+          <label className={labelClass}>Sort order</label>
           <input
             name="sort_order"
             type="number"
@@ -406,9 +473,12 @@ function ItemModal({
             className={inputClass}
           />
         </div>
-        <button className="w-full rounded-full bg-clay-pot px-6 py-2.5 font-sans text-sm text-coconut-cream">
-          Save
-        </button>
+
+        <FormError message={error} />
+
+        <SubmitButton disabled={uploading}>
+          {uploading ? "Uploading image…" : "Save"}
+        </SubmitButton>
       </form>
     </Modal>
   );

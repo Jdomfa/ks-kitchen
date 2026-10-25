@@ -314,7 +314,46 @@ export async function getPlaceholderInventoryForDate(
  * Claim a placeholder (used by src/lib/reservations/slots.ts)
  * ========================================================== */
 
-const RESERVATION_NAME_PREFIX = "Table Reservation — ";
+type CalendarFieldInfo = { hasStatus: boolean; bookedValue: string };
+
+let calendarFieldInfo: CalendarFieldInfo | null = null;
+
+/** Finds out whether this Odoo has appointment_status and what "Booked" is called. */
+async function getCalendarFieldInfo(): Promise<CalendarFieldInfo> {
+  if (calendarFieldInfo) {
+    return calendarFieldInfo;
+  }
+
+  const info: CalendarFieldInfo = { hasStatus: false, bookedValue: "booked" };
+
+  try {
+    const fields = await odooCall<
+      Record<string, { selection?: [string, string][] }>
+    >("calendar.event", "fields_get", [["appointment_status"]], {
+      attributes: ["selection"],
+    });
+
+    const status = fields.appointment_status;
+
+    if (status) {
+      info.hasStatus = true;
+
+      const booked = status.selection?.find(
+        ([key, label]) => key === "booked" || /booked/i.test(label),
+      );
+
+      if (booked) {
+        info.bookedValue = booked[0];
+      }
+    }
+  } catch (error) {
+    console.error("Could not read calendar.event status field:", error);
+  }
+
+  calendarFieldInfo = info;
+
+  return info;
+}
 
 type PartnerRecord = { id: number };
 
@@ -348,20 +387,44 @@ async function getOrCreatePartner(
   ]);
 }
 
+/** Event title: just "Name / Phone / Guests". */
+function reservationTitle(
+  name: string,
+  phone: string | undefined,
+  partySize: number | undefined,
+): string {
+  return [name.trim(), phone?.trim(), partySize]
+    .filter((part) => part !== undefined && part !== "")
+    .join(" / ");
+}
+
 /**
- * Turns a still-free "Public Placeholder" event into a booked reservation.
+ * Turns a still-free "Public Placeholder" event into a booked reservation:
+ *  - title becomes "Name / Phone / Guests"
+ *  - status becomes Booked
+ *  - the table's "people" number becomes the real guest count
+ *
+ * `partySize` is the whole party (for the title); `guests` is how many of
+ * them sit at this event's table (differs only for merged tables).
  * Fails (without writing) if the event no longer looks like a free placeholder.
  */
 export async function claimPlaceholder(
   eventId: number,
-  details: { name: string; phone?: string; reservationCode?: string },
+  details: {
+    name: string;
+    phone?: string;
+    reservationCode?: string;
+    partySize?: number;
+    guests?: number;
+  },
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const events = await odooCall<Array<{ id: number; name: string }>>(
-      "calendar.event",
-      "read",
-      [[eventId], ["id", "name"]],
-    );
+    const events = await odooCall<
+      Array<{ id: number; name: string; booking_line_ids?: number[] }>
+    >("calendar.event", "read", [
+      [eventId],
+      ["id", "name", "booking_line_ids"],
+    ]);
 
     if (events.length === 0) {
       return { success: false, error: "Placeholder event no longer exists." };
@@ -379,19 +442,33 @@ export async function claimPlaceholder(
     }
 
     const partnerId = await getOrCreatePartner(details.name, details.phone);
-    const codeSuffix = details.reservationCode
-      ? ` [${details.reservationCode}]`
-      : "";
+    const { hasStatus, bookedValue } = await getCalendarFieldInfo();
 
     await odooCall<boolean>("calendar.event", "write", [
       [eventId],
       {
-        name: `${RESERVATION_NAME_PREFIX}${details.name.trim()}${codeSuffix}`,
+        name: reservationTitle(details.name, details.phone, details.partySize),
         appointment_booker_id: partnerId,
         phone_number: details.phone?.trim() || false,
         description: false,
+        ...(hasStatus ? { appointment_status: bookedValue } : {}),
       },
     ]);
+
+    // Real guest count in the table's "people" number (best effort).
+    const guests = details.guests ?? details.partySize;
+    const lineIds = events[0].booking_line_ids ?? [];
+
+    if (guests !== undefined && lineIds.length > 0) {
+      try {
+        await odooCall<boolean>("appointment.booking.line", "write", [
+          [lineIds[0]],
+          { capacity_reserved: guests },
+        ]);
+      } catch (error) {
+        console.error("Could not set guest count on booking line:", error);
+      }
+    }
 
     return { success: true };
   } catch (error) {

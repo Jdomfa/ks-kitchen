@@ -11,7 +11,6 @@ const ODOO_USERNAME = process.env.ODOO_USERNAME!;
 const ODOO_API_KEY = process.env.ODOO_API_KEY!;
 const RESERVATION_META_FIELD = "x_studio_reservation_metadata_1";
 const LEGACY_META_PREFIX = "KK_RESERVATION_META:";
-const RESERVATION_NAME_PREFIX = "Table Reservation — ";
 const PUBLIC_PLACEHOLDER_NAME = "Public Placeholder";
 /**
  * The "people" number shown on the Odoo calendar event form.
@@ -19,6 +18,9 @@ const PUBLIC_PLACEHOLDER_NAME = "Public Placeholder";
  */
 const CAPACITY_FIELD = "resource_total_capacity_reserved";
 let hasCapacityField = false;
+let hasStatusField = false;
+/** Selection key for "Booked" on calendar.event.appointment_status. */
+let bookedStatusValue = "booked";
 type JsonRpcResult<T> = {
   result?: T;
   error?: {
@@ -37,6 +39,10 @@ type OriginalEventState = {
   appointmentBookerId: number | false;
   phoneNumber: string | false;
   capacityReserved?: number | false;
+  /** appointment_status before booking (e.g. "request"). */
+  appointmentStatus?: string;
+  /** Original per-table "people" values, restored on cancel. */
+  bookingLines?: { id: number; capacityReserved: number }[];
 };
 type ReservationMetadata = {
   version: 2;
@@ -186,7 +192,7 @@ async function validateOdooFields() {
     "fields_get",
     [],
     {
-      attributes: ["string", "type", "readonly"],
+      attributes: ["string", "type", "readonly", "selection"],
     },
   );
   if (!fields[RESERVATION_META_FIELD]) {
@@ -196,6 +202,17 @@ async function validateOdooFields() {
     throw new Error("calendar.event does not expose appointment_booker_id.");
   }
   hasCapacityField = Boolean(fields[CAPACITY_FIELD]);
+  const statusField = fields.appointment_status as
+    { selection?: [string, string][] } | undefined;
+  hasStatusField = Boolean(statusField);
+  if (statusField?.selection) {
+    const booked = statusField.selection.find(
+      ([key, label]) => key === "booked" || /booked/i.test(label),
+    );
+    if (booked) {
+      bookedStatusValue = booked[0];
+    }
+  }
 }
 /* ============================================================
  * Phone helpers
@@ -230,8 +247,12 @@ function makeReservationCode(): string {
 /* ============================================================
  * Metadata
  * ========================================================== */
+/**
+ * Stored as plain JSON so the reservation code can be searched in Odoo
+ * without putting it in the event title. Older base64 values still decode.
+ */
 function encodeMetadata(metadata: ReservationMetadata): string {
-  return Buffer.from(JSON.stringify(metadata), "utf8").toString("base64url");
+  return JSON.stringify(metadata);
 }
 function decodeMetadata(
   raw: string | false | undefined,
@@ -240,6 +261,13 @@ function decodeMetadata(
     return null;
   }
   let encoded = raw.trim();
+  if (encoded.startsWith("{")) {
+    try {
+      return JSON.parse(encoded) as ReservationMetadata;
+    } catch {
+      return null;
+    }
+  }
   if (encoded.startsWith(LEGACY_META_PREFIX)) {
     encoded = encoded.slice(LEGACY_META_PREFIX.length);
   }
@@ -347,10 +375,52 @@ const EVENT_FIELDS = [
   RESERVATION_META_FIELD,
 ];
 function eventFields(): string[] {
-  return hasCapacityField ? [...EVENT_FIELDS, CAPACITY_FIELD] : EVENT_FIELDS;
+  return [
+    ...EVENT_FIELDS,
+    ...(hasCapacityField ? [CAPACITY_FIELD] : []),
+    ...(hasStatusField ? ["appointment_status"] : []),
+  ];
 }
-function snapshotEvent(event: CalendarEventRecord): OriginalEventState {
+type BookingLine = {
+  id: number;
+  appointment_resource_id: Many2One;
+  capacity_reserved: number;
+};
+/** The per-table "people" rows behind each calendar event. */
+async function readBookingLines(
+  events: CalendarEventRecord[],
+): Promise<Map<number, BookingLine[]>> {
+  const result = new Map<number, BookingLine[]>();
+  const ids = events.flatMap((event) => event.booking_line_ids ?? []);
+  if (ids.length === 0) {
+    return result;
+  }
+  try {
+    const lines = await odooCall<BookingLine[]>(
+      "appointment.booking.line",
+      "read",
+      [ids, ["id", "appointment_resource_id", "capacity_reserved"]],
+    );
+    const byId = new Map(lines.map((line) => [line.id, line]));
+    for (const event of events) {
+      result.set(
+        event.id,
+        (event.booking_line_ids ?? [])
+          .map((id) => byId.get(id))
+          .filter((line): line is BookingLine => Boolean(line)),
+      );
+    }
+  } catch (error) {
+    console.error("Could not read appointment booking lines:", error);
+  }
+  return result;
+}
+function snapshotEvent(
+  event: CalendarEventRecord,
+  lines: BookingLine[] = [],
+): OriginalEventState {
   const capacity = event[CAPACITY_FIELD];
+  const status = event.appointment_status;
   return {
     id: event.id,
     name: event.name,
@@ -360,39 +430,78 @@ function snapshotEvent(event: CalendarEventRecord): OriginalEventState {
       : false,
     phoneNumber: event.phone_number ?? false,
     capacityReserved: typeof capacity === "number" ? capacity : undefined,
+    appointmentStatus: typeof status === "string" ? status : undefined,
+    bookingLines: lines.map((line) => ({
+      id: line.id,
+      capacityReserved: line.capacity_reserved,
+    })),
   };
 }
-function guestLabel(partySize: number): string {
-  return `${partySize} ${partySize === 1 ? "guest" : "guests"}`;
+/** Event title: just "Name / Phone / Guests". */
+function reservationTitle(
+  name: string,
+  phone: string,
+  partySize: number,
+): string {
+  return `${name} / ${phone} / ${partySize}`;
+}
+/** Extra fields written when a placeholder becomes a booking. */
+function bookedStatusFields(): Record<string, unknown> {
+  return hasStatusField ? { appointment_status: bookedStatusValue } : {};
 }
 /**
- * Best-effort: shows the real guest count in the "people" field.
- * A failure here never fails the booking.
+ * Sets the real number of guests in the event's "people" field.
+ * The per-table booking line is the source of truth; the event total is
+ * written too where Odoo allows it. Never fails the booking.
  */
 async function writeGuestCount(
   eventIds: number[],
   capacities: number[],
   partySize: number,
 ): Promise<void> {
-  if (!hasCapacityField) {
-    return;
-  }
-  let remaining = partySize;
-  for (let i = 0; i < eventIds.length; i++) {
-    const isLast = i === eventIds.length - 1;
-    const share = isLast
-      ? remaining
-      : Math.min(capacities[i] ?? remaining, remaining);
-    remaining -= share;
-    try {
-      await odooCall<boolean>("calendar.event", "write", [
-        [eventIds[i]],
-        { [CAPACITY_FIELD]: share },
-      ]);
-    } catch (error) {
-      console.error("Could not write guest count to Odoo event:", error);
-      return;
+  try {
+    const events = await readEvents(eventIds);
+    const lineMap = await readBookingLines(events);
+    let remaining = partySize;
+    for (let i = 0; i < eventIds.length; i++) {
+      const isLast = i === eventIds.length - 1;
+      const share = isLast
+        ? remaining
+        : Math.min(capacities[i] ?? remaining, remaining);
+      remaining -= share;
+      const lines = lineMap.get(eventIds[i]) ?? [];
+      if (lines.length > 0) {
+        await odooCall<boolean>("appointment.booking.line", "write", [
+          [lines[0].id],
+          { capacity_reserved: share },
+        ]);
+      }
+      if (hasCapacityField) {
+        try {
+          await odooCall<boolean>("calendar.event", "write", [
+            [eventIds[i]],
+            { [CAPACITY_FIELD]: share },
+          ]);
+        } catch {
+          // Computed from the booking line on some versions; ignore.
+        }
+      }
     }
+    if (hasCapacityField) {
+      const check = await readEvents(eventIds);
+      const total = check.reduce(
+        (sum, event) => sum + Number(event[CAPACITY_FIELD] ?? 0),
+        0,
+      );
+      if (total !== partySize) {
+        console.warn(
+          `Guest count mismatch on events ${eventIds.join(",")}: ` +
+            `expected ${partySize}, Odoo shows ${total}.`,
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Could not write guest count to Odoo event:", error);
   }
 }
 async function readEvents(ids: number[]): Promise<CalendarEventRecord[]> {
@@ -571,6 +680,7 @@ export async function createOdooReservation(
     });
     const code = makeReservationCode();
     const now = new Date().toISOString();
+    const createLines = await readBookingLines(events);
     const metadata: ReservationMetadata = {
       version: 2,
       code,
@@ -584,11 +694,13 @@ export async function createOdooReservation(
       eventIds,
       resourceIds: allocation.resources.map((resource) => resource.id),
       allocationType: allocation.type,
-      originalEvents: events.map(snapshotEvent),
+      originalEvents: events.map((event) =>
+        snapshotEvent(event, createLines.get(event.id)),
+      ),
       createdAt: now,
       updatedAt: now,
     };
-    const displayName = `${RESERVATION_NAME_PREFIX}${name} (${guestLabel(partySize)}) [${code}]`;
+    const displayName = reservationTitle(name, phone, partySize);
     /**
      * Three important changes happen here:
      *
@@ -605,6 +717,7 @@ export async function createOdooReservation(
         appointment_booker_id: partnerId,
         phone_number: phone,
         description: false,
+        ...bookedStatusFields(),
         [RESERVATION_META_FIELD]: encodeMetadata(metadata),
       },
     ]);
@@ -641,7 +754,13 @@ async function findReservationEventsByCode(
   return odooCall<CalendarEventRecord[]>(
     "calendar.event",
     "search_read",
-    [[["name", "ilike", `[${normalized}]`]]],
+    [
+      [
+        "|",
+        ["name", "ilike", `[${normalized}]`],
+        [RESERVATION_META_FIELD, "ilike", `"code":"${normalized}"`],
+      ],
+    ],
     {
       fields: eventFields(),
       order: "start asc",
@@ -719,7 +838,7 @@ export async function getOdooReservationByPhone(
     const events = await odooCall<CalendarEventRecord[]>(
       "calendar.event",
       "search_read",
-      [[["name", "ilike", RESERVATION_NAME_PREFIX]]],
+      [[[RESERVATION_META_FIELD, "!=", false]]],
       {
         fields: eventFields(),
         order: "start desc",
@@ -814,8 +933,21 @@ async function restorePlaceholderEvents(
          * Remove internal reservation data.
          */
         [RESERVATION_META_FIELD]: false,
+        ...(hasStatusField && original.appointmentStatus
+          ? { appointment_status: original.appointmentStatus }
+          : {}),
       },
     ]);
+    for (const line of original.bookingLines ?? []) {
+      try {
+        await odooCall<boolean>("appointment.booking.line", "write", [
+          [line.id],
+          { capacity_reserved: line.capacityReserved },
+        ]);
+      } catch (error) {
+        console.error("Could not restore placeholder booking line:", error);
+      }
+    }
     if (typeof original.capacityReserved === "number") {
       try {
         await odooCall<boolean>("calendar.event", "write", [
@@ -943,6 +1075,7 @@ export async function modifyOdooReservation(
       name: oldMetadata.name,
       phone: oldMetadata.phone,
     });
+    const newLines = await readBookingLines(newEvents);
     const newMetadata: ReservationMetadata = {
       version: 2,
       code: oldMetadata.code,
@@ -956,11 +1089,17 @@ export async function modifyOdooReservation(
       eventIds: newEventIds,
       resourceIds: allocation.resources.map((resource) => resource.id),
       allocationType: allocation.type,
-      originalEvents: newEvents.map(snapshotEvent),
+      originalEvents: newEvents.map((event) =>
+        snapshotEvent(event, newLines.get(event.id)),
+      ),
       createdAt: oldMetadata.createdAt,
       updatedAt: new Date().toISOString(),
     };
-    const displayName = `${RESERVATION_NAME_PREFIX}${oldMetadata.name} (${guestLabel(oldMetadata.partySize)}) [${oldMetadata.code}]`;
+    const displayName = reservationTitle(
+      oldMetadata.name,
+      oldMetadata.phone,
+      oldMetadata.partySize,
+    );
     /**
      * Claim new allocation first.
      */
@@ -971,6 +1110,7 @@ export async function modifyOdooReservation(
         appointment_booker_id: partnerId,
         phone_number: oldMetadata.phone,
         description: false,
+        ...bookedStatusFields(),
         [RESERVATION_META_FIELD]: encodeMetadata(newMetadata),
       },
     ]);

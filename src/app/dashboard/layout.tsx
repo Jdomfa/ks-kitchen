@@ -14,6 +14,7 @@ const navigation = [
   { href: "/dashboard/reservations", label: "Reservations", icon: "calendar" },
   { href: "/dashboard/menu", label: "Menu", icon: "utensils" },
   { href: "/dashboard/store", label: "Store", icon: "store" },
+  { href: "/dashboard/feedback", label: "Feedback", icon: "star" },
   { href: "/dashboard/contacts", label: "Messages", icon: "message" },
 ];
 
@@ -65,6 +66,12 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
           <path d="M3 10l2-6h14l2 6" />
           <path d="M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" />
           <path d="M9 20v-5h6v5" />
+        </svg>
+      );
+    case "star":
+      return (
+        <svg {...props}>
+          <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.9L12 3.5Z" />
         </svg>
       );
     case "message":
