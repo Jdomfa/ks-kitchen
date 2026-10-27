@@ -136,6 +136,10 @@ export default function DashboardLayout({
   const pageTitle = activeItem?.label ?? "Overview";
   const sidebarWidth = isCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
 
+  if (pathname === "/dashboard/login") {
+    return <>{children}</>;
+  }
+
   return (
     <div className="min-h-screen bg-admin-bg text-admin-ink">
       <a

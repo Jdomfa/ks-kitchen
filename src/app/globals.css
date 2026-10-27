@@ -52,6 +52,7 @@
   --color-admin-ink: var(--color-admin-ink);
   --color-admin-muted: var(--color-admin-muted);
   --color-admin-subtle: var(--color-admin-subtle);
+  --color-alert: var(--color-alert);
 }
 
 body {
