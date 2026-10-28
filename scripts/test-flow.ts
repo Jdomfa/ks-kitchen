@@ -1,4 +1,4 @@
-import { processFlowMessage, INITIAL_STATE, FlowState } from '@/lib/flows/reservationFlow';
+import { processFlowMessage, type FlowState } from '@/lib/flows/reservationFlow';
 
 let passed = 0;
 let failed = 0;
@@ -29,7 +29,7 @@ async function run() {
 
   console.log('\n--- Invalid phone number is rejected, stays on same step ---');
   {
-    let state: FlowState = { step: 'RESERVATION_PHONE', draft: { name: 'Test', partySize: 2, date: '2026-10-05', time: '16:00' } };
+    const state: FlowState = { step: 'RESERVATION_PHONE', draft: { name: 'Test', partySize: 2, date: '2026-10-05', time: '16:00' } };
     const result = await processFlowMessage({ text: '123', state });
 
     assert(result.state.step === 'RESERVATION_PHONE', 'Stays on phone step for invalid input');
@@ -50,9 +50,6 @@ async function run() {
 
   console.log('\n--- A genuinely full slot is not offered as a button ---');
   {
-    // Requires a slot with zero availability for a large party size —
-    // adjust the test date/party size to a scenario you know is full,
-    // e.g. after running the Test 3 scenario from the SQL test pass.
     const dateState: FlowState = { step: 'RESERVATION_DATE', draft: { partySize: 40 } };
     const result = await processFlowMessage({ text: '2026-10-05', state: dateState });
 
@@ -74,15 +71,12 @@ async function run() {
 
   console.log('\n--- Manage by phone: multiple matches asks for the code instead ---');
   {
-    // Requires two active reservations already existing on the same
-    // phone number in your test data — insert two via SQL first if
-    // this doesn't already reflect real test data.
     const state: FlowState = { step: 'MANAGE_CODE', draft: {} };
-    const result = await processFlowMessage({ text: '08010000001', state }); // adjust to a known multi-match number
+    const result = await processFlowMessage({ text: '08010000001', state });
 
     assert(
       result.reply.toLowerCase().includes('code') || result.state.step === 'MANAGE_CODE',
-      'Multiple matches falls back to asking for the code'
+      'Multiple matches falls back to asking for the code',
     );
   }
 
@@ -90,4 +84,4 @@ async function run() {
   process.exit(failed > 0 ? 1 : 0);
 }
 
-run();
+void run();

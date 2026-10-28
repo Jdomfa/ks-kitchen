@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 
 const NAV = [

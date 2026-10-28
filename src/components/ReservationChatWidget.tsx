@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { buildTimeOptions } from "@/lib/reservations/time-slots";
 
 import {
   getCountries,
@@ -25,12 +26,16 @@ type FlowState = {
   alternatives?: string[];
 };
 
+type TimeOption = { value: string; label: string; disabled: boolean };
+
 type Screen = {
   reply: string;
 
   buttons?: FlowButton[];
 
-  inputType?: "date";
+  inputType?: "date" | "time";
+
+  timeOptions?: TimeOption[];
 
   summary?: SummaryRow[];
 
@@ -196,6 +201,8 @@ export default function ReservationChatWidget() {
 
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
+  const [timeValue, setTimeValue] = useState("");
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -316,6 +323,12 @@ export default function ReservationChatWidget() {
       return;
     }
 
+    if (currentScreen?.inputType === "time") {
+      setTimeValue("");
+
+      return;
+    }
+
     if (currentScreen?.session.step === "RESERVATION_PHONE") {
       setPhoneNational("");
 
@@ -360,6 +373,8 @@ export default function ReservationChatWidget() {
           buttons: data.buttons,
 
           inputType: data.inputType,
+
+          timeOptions: data.timeOptions,
 
           summary: data.summary,
 
@@ -410,6 +425,8 @@ export default function ReservationChatWidget() {
           buttons: data.buttons,
 
           inputType: data.inputType,
+
+          timeOptions: data.timeOptions,
 
           summary: data.summary,
 
@@ -468,6 +485,8 @@ export default function ReservationChatWidget() {
 
         inputType: data.inputType,
 
+        timeOptions: data.timeOptions,
+
         summary: data.summary,
 
         session: data.session ?? currentScreen.session,
@@ -515,6 +534,14 @@ export default function ReservationChatWidget() {
     e.preventDefault();
 
     advance(inputValue);
+  }
+
+  function handleTimeSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!timeValue) return;
+
+    void advance(timeValue); // "16:00" ... "22:00"
   }
 
   function handlePhoneSubmit(e: React.FormEvent) {
@@ -718,6 +745,41 @@ export default function ReservationChatWidget() {
                             </button>
                           ))}
                         </div>
+                      ) : currentScreen.inputType === "time" ? (
+                        <form onSubmit={handleTimeSubmit} className="space-y-4">
+                          <select
+                            key={(currentScreen.timeOptions ?? buildTimeOptions(currentScreen.session.alternatives)).map((o) => o.value + (o.disabled ? "x" : "")).join(",")}
+                            value={timeValue}
+                            onChange={(e) => setTimeValue(e.target.value)}
+                            disabled={isSending}
+                            aria-label="Reservation time"
+                            className="block w-full rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
+                          >
+                            <option value="">
+                              Select a time
+                            </option>
+                            {(
+                              currentScreen.timeOptions ??
+                              buildTimeOptions(currentScreen.session.alternatives)
+                            ).map((option) => (
+                              <option
+                                key={option.value}
+                                value={option.value}
+                                disabled={option.disabled}
+                              >
+                                {option.disabled ? `${option.label} (fully booked)` : option.label}
+                              </option>
+                            ))}
+                          </select>
+
+                          <button
+                            type="submit"
+                            disabled={isSending || !timeValue}
+                            className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
+                          >
+                            Continue
+                          </button>
+                        </form>
                       ) : currentScreen.inputType === "date" ? (
                         <form
                           onSubmit={handleTextSubmit}

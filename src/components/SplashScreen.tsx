@@ -70,7 +70,7 @@ export function SplashScreen() {
     if (!visible || !assetsReady || !reducedMotion) return;
     const timer = setTimeout(() => dismiss(), MIN_DISPLAY_MS);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [visible, assetsReady, reducedMotion]);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export function SplashScreen() {
     }, FLIP_INTERVAL_MS);
 
     return () => clearInterval(flipTimer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [visible, assetsReady, reducedMotion]);
 
   useEffect(() => {

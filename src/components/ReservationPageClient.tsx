@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { buildTimeOptions } from "@/lib/reservations/time-slots";
 import {
   getCountries,
   getCountryCallingCode,
@@ -16,10 +17,12 @@ type FlowState = {
   draft: Record<string, unknown>;
   alternatives?: string[];
 };
+type TimeOption = { value: string; label: string; disabled: boolean };
 type Screen = {
   reply: string;
   buttons?: FlowButton[];
-  inputType?: "date";
+  inputType?: "date" | "time";
+  timeOptions?: TimeOption[];
   summary?: SummaryRow[];
   session: FlowState;
 };
@@ -27,7 +30,8 @@ type Screen = {
 type ReservationApiResponse = {
   message?: string;
   buttons?: FlowButton[];
-  inputType?: "date";
+  inputType?: "date" | "time";
+  timeOptions?: TimeOption[];
   summary?: SummaryRow[];
   session?: FlowState;
 };
@@ -123,6 +127,7 @@ export default function ReservationPageClient() {
   const [phoneCountry, setPhoneCountry] = useState<CountryCode>("NG");
   const [phoneNational, setPhoneNational] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [timeValue, setTimeValue] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const currentScreen = screens[screenIndex];
@@ -132,6 +137,32 @@ export default function ReservationPageClient() {
   const isFirstLoad = isSending && screens.length === 0;
   const isAwaitingReply = isSending && screens.length > 0;
 
+  const startReservation = async () => {
+    setError(null);
+    setIsSending(true);
+    setDirection(1);
+
+    try {
+      const menuData = await requestFlow("menu_reservation", INITIAL_SESSION);
+      const menuScreen = toScreen(menuData, INITIAL_SESSION);
+
+      if (menuScreen.session.step === "RESERVATION_MENU") {
+        const bookingData = await requestFlow("new", menuScreen.session);
+        setScreens([toScreen(bookingData, menuScreen.session)]);
+      } else {
+        setScreens([menuScreen]);
+      }
+
+      setScreenIndex(0);
+      setInputValue("");
+    } catch (err) {
+      console.error("Reservation page start error:", err);
+      setError("Unable to open reservations right now. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   useEffect(() => {
     void startReservation();
   }, []);
@@ -139,6 +170,11 @@ export default function ReservationPageClient() {
   useEffect(() => {
     if (currentScreen?.inputType === "date") {
       setInputValue((current) => current || getLagosTodayISO());
+      return;
+    }
+
+    if (currentScreen?.inputType === "time") {
+      setTimeValue("");
       return;
     }
 
@@ -174,38 +210,12 @@ export default function ReservationPageClient() {
       reply: data.message ?? "",
       buttons: visiblePageButtons(data.buttons),
       inputType: data.inputType,
+      timeOptions: data.timeOptions,
       summary: data.summary,
       session,
     };
   }
 
-  async function startReservation() {
-    setError(null);
-    setIsSending(true);
-    setDirection(1);
-
-    try {
-      const menuData = await requestFlow("menu_reservation", INITIAL_SESSION);
-      const menuScreen = toScreen(menuData, INITIAL_SESSION);
-
-      // The full reservation page skips both the site main menu and the
-      // reservation submenu. It goes straight into a new booking.
-      if (menuScreen.session.step === "RESERVATION_MENU") {
-        const bookingData = await requestFlow("new", menuScreen.session);
-        setScreens([toScreen(bookingData, menuScreen.session)]);
-      } else {
-        setScreens([menuScreen]);
-      }
-
-      setScreenIndex(0);
-      setInputValue("");
-    } catch (err) {
-      console.error("Reservation page start error:", err);
-      setError("Unable to open reservations right now. Please try again.");
-    } finally {
-      setIsSending(false);
-    }
-  }
 
   async function advance(rawValue: string, buttonId?: string) {
     if (isSending || !currentScreen) return;
@@ -251,6 +261,12 @@ export default function ReservationPageClient() {
   function handleTextSubmit(event: FormEvent) {
     event.preventDefault();
     void advance(inputValue);
+  }
+
+  function handleTimeSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!timeValue) return;
+    void advance(timeValue); // "16:00" ... "22:00"
   }
 
   function handlePhoneSubmit(event: FormEvent) {
@@ -376,6 +392,41 @@ export default function ReservationPageClient() {
                         </button>
                       ))}
                     </div>
+                  ) : currentScreen.inputType === "time" ? (
+                        <form onSubmit={handleTimeSubmit} className="space-y-4">
+                          <select
+                            key={(currentScreen.timeOptions ?? buildTimeOptions(currentScreen.session.alternatives)).map((o) => o.value + (o.disabled ? "x" : "")).join(",")}
+                            value={timeValue}
+                            onChange={(e) => setTimeValue(e.target.value)}
+                            disabled={isSending}
+                            aria-label="Reservation time"
+                            className="block w-full rounded-xl border border-tamarind-bark/20 bg-surface px-4 py-3 text-base text-roasted-coffee outline-none transition-colors duration-200 focus:border-brushed-brass focus-visible:ring-2 focus-visible:ring-brushed-brass/50 disabled:opacity-60"
+                          >
+                            <option value="">
+                              Select a time
+                            </option>
+                            {(
+                              currentScreen.timeOptions ??
+                              buildTimeOptions(currentScreen.session.alternatives)
+                            ).map((option) => (
+                              <option
+                                key={option.value}
+                                value={option.value}
+                                disabled={option.disabled}
+                              >
+                                {option.disabled ? `${option.label} (fully booked)` : option.label}
+                              </option>
+                            ))}
+                          </select>
+
+                          <button
+                            type="submit"
+                            disabled={isSending || !timeValue}
+                            className="w-full rounded-xl bg-clay-pot px-5 py-3 text-base font-medium text-coconut-cream transition-all duration-200 hover:bg-terracotta active:scale-[0.98] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brushed-brass focus-visible:ring-offset-2 focus-visible:ring-offset-coconut-cream"
+                          >
+                            Continue
+                          </button>
+                        </form>
                   ) : currentScreen.inputType === "date" ? (
                     <form onSubmit={handleTextSubmit} className="min-w-0 space-y-4">
                       <div className="text-sm font-medium text-roasted-coffee">

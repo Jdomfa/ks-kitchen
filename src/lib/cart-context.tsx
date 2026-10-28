@@ -112,7 +112,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch {
       // Corrupt or inaccessible storage — start with an empty cart.
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // Persist on every change.

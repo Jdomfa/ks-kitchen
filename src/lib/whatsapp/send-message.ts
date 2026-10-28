@@ -1,10 +1,5 @@
 const GRAPH_VERSION = "v23.0";
 
-type WhatsAppButton = {
-  id: string;
-  title: string;
-};
-
 export async function sendWhatsAppMainMenu(to: string): Promise<unknown> {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;

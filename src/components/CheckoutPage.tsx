@@ -63,7 +63,7 @@ export function CheckoutPage() {
           <p className="mt-2 font-sans text-sm text-roasted-coffee/60">
             Thanks, {form.name.split(" ")[0] || "friend"} — this is a demo
             checkout, so nothing was actually charged. A real confirmation flow
-            (and payment) will go here once it's wired up.
+            (and payment) will go here once it is wired up.
           </p>
           <Link
             href="/store"

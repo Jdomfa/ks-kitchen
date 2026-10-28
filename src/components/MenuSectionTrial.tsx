@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { PlayCircle, ChevronRight, ArrowLeftRight } from "lucide-react";
-import { menu, MenuItem } from "@/lib/menu-data-trial";
+import { ChevronRight, ArrowLeftRight } from "lucide-react";
+import { menu, type MenuItem } from "@/lib/menu-data-trial";
 import { DietaryTags } from "./DietaryIcons";
 import { BrandPattern } from "./BrandPattern";
-import { VideoModal } from "./VideoModal";
 import { ItemModalTrial } from "./ItemModal";
 
 const containerVariants = {
@@ -29,9 +28,6 @@ function formatNaira(amount: number) {
   return `NGN ${amount.toLocaleString("en-NG")}`;
 }
 
-const DOSA_VIDEO_SRC =
-  "https://player.cloudinary.com/embed/?cloud_name=ansp9yim&public_id=0_Masala_Dosa_Indian_Food_3840x2160";
-
 /**
  * TRIAL VERSION — reads from menu-data-trial.tsx and renders ItemModalTrial.
  * Kept as a separate component from the production MenuSection so the live
@@ -39,7 +35,6 @@ const DOSA_VIDEO_SRC =
  */
 export function MenuSectionTrial() {
   const [activeTab, setActiveTab] = useState(menu[0].id);
-  const [videoOpen, setVideoOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{
     item: MenuItem;
     categoryImage?: string;

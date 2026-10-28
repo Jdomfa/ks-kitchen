@@ -1,4 +1,5 @@
 import { getBookableReservationTimes } from "@/lib/odoo/reservation-allocation";
+import { RESERVATION_TIMES } from "@/lib/reservations/time-slots";
 import {
   createOdooReservation,
   getOdooReservationByCode,
@@ -58,6 +59,11 @@ export type FlowButton = {
   title: string;
   url?: string;
 };
+export type TimeOption = {
+  value: string;
+  label: string;
+  disabled: boolean;
+};
 export type SummaryRow = {
   label: string;
   value: string;
@@ -66,7 +72,9 @@ export type FlowResult = {
   reply: string;
   state: FlowState;
   buttons?: FlowButton[];
-  inputType?: "date";
+  inputType?: "date" | "time";
+  /** Website time dropdown: every hourly slot, full ones disabled. */
+  timeOptions?: TimeOption[];
   summary?: SummaryRow[];
 };
 /* ============================================================
@@ -173,6 +181,38 @@ function getReservationTimeButtons(
     buttons.push({ id: "choose_another_date", title: "Choose another date" });
   }
   return buttons;
+}
+/**
+ * Website: one dropdown of every hourly slot (4 PM-10 PM), full ones disabled.
+ * WhatsApp (and the "nothing left" case): tappable buttons as before.
+ */
+function buildTimeChoice(
+  channel: "website" | "whatsapp",
+  available: string[],
+  draft: ReservationDraft,
+  mode: "reserve" | "manage",
+): Pick<FlowResult, "buttons" | "inputType" | "timeOptions"> {
+  if (channel === "website" && available.length > 0) {
+    return {
+      inputType: "time",
+      timeOptions: RESERVATION_TIMES.map((value) => ({
+        value,
+        label: formatDisplayTime(value),
+        disabled: !available.includes(value),
+      })),
+    };
+  }
+  if (mode === "manage") {
+    return {
+      buttons: withWhatsAppAgent(
+        available.map((option) => ({
+          id: option,
+          title: formatDisplayTime(option),
+        })),
+      ),
+    };
+  }
+  return { buttons: getReservationTimeButtons(available, draft) };
 }
 /* ============================================================
  * Enquiries
@@ -408,7 +448,7 @@ export async function processFlowMessage({
     case "RESERVATION_DATE":
       return handleReservationDate(input, state, channel);
     case "RESERVATION_TIME":
-      return handleReservationTime(input, state);
+      return handleReservationTime(input, state, channel);
     case "RESERVATION_NAME":
       return handleReservationName(input, state);
     case "RESERVATION_PHONE":
@@ -619,13 +659,17 @@ async function handleReservationDate(
       draft,
       alternatives: bookableSlots,
     },
-    buttons: getReservationTimeButtons(bookableSlots, draft),
+    ...buildTimeChoice(channel, bookableSlots, draft, "reserve"),
   };
 }
 /* ============================================================
  * Reservation time
  * ========================================================== */
-function handleReservationTime(input: string, state: FlowState): FlowResult {
+function handleReservationTime(
+  input: string,
+  state: FlowState,
+  channel: "website" | "whatsapp",
+): FlowResult {
   const time = input.trim();
   const options = state.alternatives ?? [];
   if (time === "choose_another_date") {
@@ -640,9 +684,9 @@ function handleReservationTime(input: string, state: FlowState): FlowResult {
   }
   if (!options.includes(time)) {
     return {
-      reply: "Please choose one of the available times below.",
+      reply: "Please choose one of the available times.",
       state,
-      buttons: getReservationTimeButtons(options, state.draft),
+      ...buildTimeChoice(channel, options, state.draft, "reserve"),
     };
   }
   const draft = { ...state.draft, time };
@@ -804,12 +848,7 @@ async function handleReservationConfirm(
       draft: { ...state.draft, time: undefined },
       alternatives: bookableSlots,
     },
-    buttons: withWhatsAppAgent(
-      bookableSlots.map((option) => ({
-        id: option,
-        title: formatDisplayTime(option),
-      })),
-    ),
+    ...buildTimeChoice(channel, bookableSlots, state.draft, "manage"),
   };
 }
 /* ============================================================
@@ -1097,12 +1136,7 @@ async function handleManageModifyDate(
       managePhone: state.managePhone,
       alternatives: bookableSlots,
     },
-    buttons: withWhatsAppAgent(
-      bookableSlots.map((option) => ({
-        id: option,
-        title: formatDisplayTime(option),
-      })),
-    ),
+    ...buildTimeChoice(channel, bookableSlots, state.draft, "manage"),
   };
 }
 /* ============================================================
@@ -1120,14 +1154,9 @@ async function handleManageModifyTime(
   const options = state.alternatives ?? [];
   if (!options.includes(time)) {
     return {
-      reply: "Please choose one of the available times below.",
+      reply: "Please choose one of the available times.",
       state,
-      buttons: withWhatsAppAgent(
-        options.map((option) => ({
-          id: option,
-          title: formatDisplayTime(option),
-        })),
-      ),
+      ...buildTimeChoice(channel, options, state.draft, "manage"),
     };
   }
   if (!date || !code) {
@@ -1207,12 +1236,7 @@ async function handleManageModifyTime(
       managePhone: state.managePhone,
       alternatives: refreshedSlots,
     },
-    buttons: withWhatsAppAgent(
-      refreshedSlots.map((option) => ({
-        id: option,
-        title: formatDisplayTime(option),
-      })),
-    ),
+    ...buildTimeChoice(channel, refreshedSlots, state.draft, "manage"),
   };
 }
 /* ============================================================

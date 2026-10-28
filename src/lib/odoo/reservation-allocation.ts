@@ -1,7 +1,11 @@
+import { odooCall, odooUtcRange } from "@/lib/odoo/rpc";
 import {
-  getPlaceholderInventoryForDate,
-  type PlaceholderOption,
-} from "@/lib/odoo/placeholder";
+  RESERVATION_DURATION_HOURS,
+  RESERVATION_TIMES,
+  isValidReservationTime,
+} from "@/lib/reservations/time-slots";
+
+const APPOINTMENT_TYPE_ID = Number(process.env.ODOO_APPOINTMENT_TYPE_ID);
 
 export type AllocationResource = {
   id: number;
@@ -9,197 +13,219 @@ export type AllocationResource = {
   capacity: number;
 };
 
-export type ReservationAllocation =
-  | {
-      type: "single";
-      time: string;
-      start: string;
-      stop: string;
-      capacity: number;
-      eventIds: [number];
-      resources: [AllocationResource];
-    }
-  | {
-      type: "merged";
-      time: string;
-      start: string;
-      stop: string;
-      capacity: number;
-      eventIds: [number, number];
-      resources: [AllocationResource, AllocationResource];
-    };
+export type ReservationAllocation = {
+  type: "single" | "merged";
+  time: string; // "HH:MM" Lagos
+  start: string; // Odoo UTC
+  stop: string; // Odoo UTC
+  capacity: number;
+  resources: AllocationResource[];
+};
 
-function toResource(option: PlaceholderOption): AllocationResource {
-  return {
-    id: option.resourceId,
-    name: option.resourceName,
-    capacity: option.capacity,
-  };
+type ResourceRecord = {
+  id: number;
+  name: string;
+  capacity: number | false;
+  linked_resource_ids: number[];
+};
+
+type BusyEvent = {
+  id: number;
+  start: string;
+  stop: string;
+  resource_ids?: number[];
+  appointment_resource_ids?: number[];
+};
+
+type DayState = {
+  resources: ResourceRecord[];
+  busy: BusyEvent[];
+};
+
+function assertConfigured() {
+  if (!Number.isInteger(APPOINTMENT_TYPE_ID) || APPOINTMENT_TYPE_ID <= 0) {
+    throw new Error("ODOO_APPOINTMENT_TYPE_ID is missing or invalid.");
+  }
 }
 
-function areLinked(
-  left: PlaceholderOption,
-  right: PlaceholderOption,
-): boolean {
-  return (
-    left.linkedResourceIds.includes(right.resourceId) ||
-    right.linkedResourceIds.includes(left.resourceId)
-  );
+/**
+ * Loads the tables and every live booking for the day in two calls, so all
+ * slots can be evaluated in memory.
+ *
+ * Unclaimed "... Placeholder" events (public or family) are ignored: they are
+ * leftover inventory, not bookings. Archived (cancelled) events are excluded
+ * by Odoo's default active filter.
+ */
+async function loadDayState(
+  date: string,
+  excludeEventIds: number[],
+): Promise<DayState> {
+  assertConfigured();
+
+  const dayStart = odooUtcRange(date, RESERVATION_TIMES[0], 0).start;
+  const dayEnd = odooUtcRange(
+    date,
+    RESERVATION_TIMES[RESERVATION_TIMES.length - 1],
+    RESERVATION_DURATION_HOURS,
+  ).stop;
+
+  const [resources, busy] = await Promise.all([
+    odooCall<ResourceRecord[]>(
+      "appointment.resource",
+      "search_read",
+      [[["appointment_type_ids", "in", [APPOINTMENT_TYPE_ID]]]],
+      { fields: ["id", "name", "capacity", "linked_resource_ids"] },
+    ),
+    odooCall<BusyEvent[]>(
+      "calendar.event",
+      "search_read",
+      [
+        [
+          ["start", "<", dayEnd],
+          ["stop", ">", dayStart],
+          ["name", "not ilike", "Placeholder"],
+          ["id", "not in", excludeEventIds],
+        ],
+      ],
+      {
+        fields: ["id", "start", "stop", "resource_ids", "appointment_resource_ids"],
+      },
+    ),
+  ]);
+
+  return { resources, busy };
 }
 
-function findSingleAllocations(
-  placeholders: PlaceholderOption[],
+function allocateSlot(
+  state: DayState,
+  date: string,
+  time: string,
   partySize: number,
-): ReservationAllocation[] {
-  return placeholders
-    .filter((option) => option.capacity >= partySize)
-    .sort((a, b) => {
-      if (a.capacity !== b.capacity) {
-        return a.capacity - b.capacity;
-      }
+): ReservationAllocation | null {
+  if (!isValidReservationTime(time)) return null;
 
-      return a.resourceId - b.resourceId;
-    })
-    .map((option): ReservationAllocation => ({
+  const { start, stop } = odooUtcRange(date, time, RESERVATION_DURATION_HOURS);
+
+  // No bookings in the past.
+  if (new Date(`${start.replace(" ", "T")}Z`).getTime() <= Date.now()) {
+    return null;
+  }
+
+  // Odoo UTC strings compare correctly as text.
+  const blocked = new Set<number>();
+  for (const event of state.busy) {
+    if (event.start < stop && event.stop > start) {
+      for (const id of event.resource_ids ?? []) blocked.add(id);
+      for (const id of event.appointment_resource_ids ?? []) blocked.add(id);
+    }
+  }
+
+  const free = state.resources
+    .filter(
+      (r) => !blocked.has(r.id) && typeof r.capacity === "number" && r.capacity > 0,
+    )
+    .sort(
+      (a, b) => (a.capacity as number) - (b.capacity as number) || a.id - b.id,
+    );
+
+  const toResource = (r: ResourceRecord): AllocationResource => ({
+    id: r.id,
+    name: r.name,
+    capacity: r.capacity as number,
+  });
+
+  // 1. Smallest single table that fits.
+  const single = free.find((r) => (r.capacity as number) >= partySize);
+  if (single) {
+    return {
       type: "single",
-      time: option.time,
-      start: option.start,
-      stop: option.stop,
-      capacity: option.capacity,
-      eventIds: [option.eventId],
-      resources: [toResource(option)],
-    }));
-}
-
-function findMergedAllocations(
-  placeholders: PlaceholderOption[],
-  partySize: number,
-): ReservationAllocation[] {
-  if (partySize < 3 || partySize > 4) {
-    return [];
+      time,
+      start,
+      stop,
+      capacity: single.capacity as number,
+      resources: [toResource(single)],
+    };
   }
 
-  const twoSeatTables = placeholders
-    .filter((option) => option.capacity === 2)
-    .sort((a, b) => a.resourceId - b.resourceId);
+  // 2. Same rule as before: parties of 3-4 may use two linked 2-seat tables.
+  if (partySize >= 3 && partySize <= 4) {
+    const twoSeaters = free.filter((r) => r.capacity === 2);
+    for (let i = 0; i < twoSeaters.length; i++) {
+      for (let j = i + 1; j < twoSeaters.length; j++) {
+        const left = twoSeaters[i];
+        const right = twoSeaters[j];
+        const linked =
+          (left.linked_resource_ids ?? []).includes(right.id) ||
+          (right.linked_resource_ids ?? []).includes(left.id);
+        if (!linked) continue;
 
-  const allocations: ReservationAllocation[] = [];
-  const seen = new Set<string>();
-
-  for (let i = 0; i < twoSeatTables.length; i++) {
-    for (let j = i + 1; j < twoSeatTables.length; j++) {
-      const left = twoSeatTables[i];
-      const right = twoSeatTables[j];
-
-      if (!areLinked(left, right)) {
-        continue;
+        return {
+          type: "merged",
+          time,
+          start,
+          stop,
+          capacity: 4,
+          resources: [toResource(left), toResource(right)],
+        };
       }
-
-      const combinedCapacity = left.capacity + right.capacity;
-
-      if (combinedCapacity < partySize) {
-        continue;
-      }
-
-      const key = [left.resourceId, right.resourceId]
-        .sort((a, b) => a - b)
-        .join(":");
-
-      if (seen.has(key)) {
-        continue;
-      }
-
-      seen.add(key);
-
-      allocations.push({
-        type: "merged",
-        time: left.time,
-        start: left.start,
-        stop: left.stop,
-        capacity: combinedCapacity,
-        eventIds: [left.eventId, right.eventId],
-        resources: [toResource(left), toResource(right)],
-      });
     }
   }
 
-  return allocations;
+  return null;
 }
 
-function compareAllocations(
-  left: ReservationAllocation,
-  right: ReservationAllocation,
-): number {
-  const timeComparison = left.start.localeCompare(right.start);
-
-  if (timeComparison !== 0) {
-    return timeComparison;
-  }
-
-  if (left.resources.length !== right.resources.length) {
-    return left.resources.length - right.resources.length;
-  }
-
-  if (left.capacity !== right.capacity) {
-    return left.capacity - right.capacity;
-  }
-
-  return left.resources[0].id - right.resources[0].id;
-}
-
+/** One best allocation per bookable hour. */
 export async function getReservationAllocations(
   date: string,
   partySize: number,
+  options: { excludeEventIds?: number[] } = {},
 ): Promise<ReservationAllocation[]> {
   if (!Number.isInteger(partySize) || partySize < 1 || partySize > 4) {
     return [];
   }
+  const state = await loadDayState(date, options.excludeEventIds ?? []);
 
-  const inventory = await getPlaceholderInventoryForDate(date);
+  console.log("[availability] input", { date, partySize, typeId: APPOINTMENT_TYPE_ID });
+  console.log(
+    "[availability] resources",
+    state.resources.map((r) => ({ id: r.id, name: r.name, cap: r.capacity })),
+  );
+  console.log(
+    "[availability] busy events",
+    state.busy.map((e) => ({
+      id: e.id,
+      start: e.start,
+      stop: e.stop,
+      res: [...(e.resource_ids ?? []), ...(e.appointment_resource_ids ?? [])],
+    })),
+  );
 
-  const byPeriod = new Map<string, PlaceholderOption[]>();
+  const result = RESERVATION_TIMES.map((time) =>
+    allocateSlot(state, date, time, partySize),
+  ).filter((a): a is ReservationAllocation => a !== null);
 
-  for (const placeholder of inventory) {
-    const key = `${placeholder.start}::${placeholder.stop}`;
-    const group = byPeriod.get(key) ?? [];
-
-    group.push(placeholder);
-    byPeriod.set(key, group);
-  }
-
-  const allocations: ReservationAllocation[] = [];
-
-  for (const group of byPeriod.values()) {
-    const singles = findSingleAllocations(group, partySize);
-
-    if (singles.length > 0) {
-      allocations.push(...singles);
-      continue;
-    }
-
-    allocations.push(...findMergedAllocations(group, partySize));
-  }
-
-  return allocations.sort(compareAllocations);
+  console.log("[availability] bookable", result.map((a) => a.time));
+  return result;
 }
 
+/** Times ("16:00") that still have a table. Used by the chat flow. */
 export async function getBookableReservationTimes(
   date: string,
   partySize: number,
 ): Promise<string[]> {
   const allocations = await getReservationAllocations(date, partySize);
-
-  return Array.from(
-    new Set(allocations.map((allocation) => allocation.time)),
-  );
+  return allocations.map((a) => a.time);
 }
 
 export async function findBestAllocation(
   date: string,
   time: string,
   partySize: number,
+  options: { excludeEventIds?: number[] } = {},
 ): Promise<ReservationAllocation | null> {
-  const allocations = await getReservationAllocations(date, partySize);
-
-  return allocations.find((allocation) => allocation.time === time) ?? null;
+  if (!Number.isInteger(partySize) || partySize < 1 || partySize > 4) {
+    return null;
+  }
+  const state = await loadDayState(date, options.excludeEventIds ?? []);
+  return allocateSlot(state, date, time, partySize);
 }

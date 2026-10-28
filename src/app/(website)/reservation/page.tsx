@@ -1,6 +1,5 @@
 import { Footer } from "@/components/Footer";
 import ReservationPageClient from "@/components/ReservationPageClient";
-import { ReservationSection } from "@/components/ReservationSection";
 
 export default function ReservationPage() {
   return (

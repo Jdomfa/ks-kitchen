@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MapPin, Tag, Clock, ChevronUp, ArrowRight } from "lucide-react";
+import { MapPin, Tag, Clock, ChevronUp } from "lucide-react";
 import { siteConfig } from "@/lib/site-config";
 
 /* ---- Small brand icons (lucide dropped these; kept minimal/monoline) ---- */
@@ -23,20 +23,6 @@ function FacebookIcon() {
   );
 }
 
-function XIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231ZM17.083 19.77h1.833L7.084 4.126H5.117Z" />
-    </svg>
-  );
-}
-
 function InstagramIcon() {
   return (
     <svg
@@ -51,20 +37,6 @@ function InstagramIcon() {
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4.2" />
       <circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function TikTokIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M16.5 2h-3v13.6c0 1.5-1.2 2.7-2.7 2.7a2.7 2.7 0 0 1-2.7-2.7 2.7 2.7 0 0 1 2.7-2.7c.28 0 .55.04.8.12v-3.05a5.8 5.8 0 0 0-.8-.05A5.7 5.7 0 0 0 5.1 15.6a5.7 5.7 0 0 0 5.7 5.7 5.7 5.7 0 0 0 5.7-5.7V8.42a8.1 8.1 0 0 0 4.5 1.37V6.8a5.1 5.1 0 0 1-4.5-4.8Z" />
     </svg>
   );
 }
