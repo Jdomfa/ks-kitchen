@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ManageReservationPageClient from "@/components/ManageReservationClient";
+import ManageReservationPageClient from "@/components/reservation/ManageReservationClient";
 
 export const metadata: Metadata = {
   title: "Manage Reservation | K's Kitchen Gourmet",

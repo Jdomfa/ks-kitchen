@@ -1,5 +1,5 @@
-import { Footer } from "@/components/Footer";
-import ReservationPageClient from "@/components/ReservationPageClient";
+import { Footer } from "@/components/layout/Footer";
+import ReservationPageClient from "@/components/reservation/ReservationPageClient";
 
 export default function ReservationPage() {
   return (

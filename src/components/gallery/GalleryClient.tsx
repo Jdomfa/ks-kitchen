@@ -137,13 +137,8 @@ export default function GalleryClient({
       "all",
     );
 
-  const [
-    randomizedImages,
-    setRandomizedImages,
-  ] =
-    useState<
-      GalleryImage[]
-    >([]);
+  const [randomizedImages, setRandomizedImages] =
+    useState<GalleryImage[]>(() => shuffleImages(images));
 
   const [
     selectedImage,
@@ -153,15 +148,6 @@ export default function GalleryClient({
       null,
     );
 
-  useEffect(() => {
-    setRandomizedImages(
-      shuffleImages(
-        images,
-      ),
-    );
-  }, [
-    images,
-  ]);
 
   const filteredImages =
     useMemo(() => {

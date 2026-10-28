@@ -113,7 +113,10 @@ export default function DashboardLayout({
   // first client render match (avoids a hydration flash/mismatch).
   useEffect(() => {
     const saved = window.localStorage.getItem("kk-sidebar-collapsed");
-    if (saved === "true") setIsCollapsed(true);
+    if (saved === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsCollapsed(true);
+    }
     setHasMounted(true);
   }, []);
 

@@ -1,5 +1,5 @@
-import { Footer } from "@/components/Footer";
-import { MenuSectionTrial } from "@/components/MenuSectionTrial";
+import { Footer } from "@/components/layout/Footer";
+import { MenuSectionTrial } from "@/components/menu/MenuSectionTrial";
 
 export default function MenuPage() {
   return (

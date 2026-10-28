@@ -223,6 +223,7 @@ export default function FamilyReservationPage() {
       mode ===
       "reservation"
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void loadSlots();
     }
   }, [
@@ -287,6 +288,7 @@ export default function FamilyReservationPage() {
         date,
       )
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDate("");
       setTime("");
     }
@@ -807,7 +809,7 @@ export default function FamilyReservationPage() {
                         number,
                       );
 
-                      setDate("");
+      setDate("");
                       setTime("");
                     }}
                     className={`rounded-xl border py-3 font-medium transition ${
@@ -882,7 +884,7 @@ export default function FamilyReservationPage() {
               type="button"
               onClick={() => {
                 setError(null);
-                setDate("");
+      setDate("");
                 setTime("");
 
                 setMode(
